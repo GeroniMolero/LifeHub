@@ -21,6 +21,7 @@ services:
       - lifehub-network-dev
 
   backend:
+    platform: linux/arm64
     build:
       context: ./LifeHub-Backend
       dockerfile: Dockerfile.dev

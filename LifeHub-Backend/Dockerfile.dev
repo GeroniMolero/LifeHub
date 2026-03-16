@@ -9,11 +9,8 @@ ENV PATH="/root/.dotnet/tools:${PATH}"
 # Copiar archivos del proyecto
 COPY . .
 
-# Restaurar dependencias (sin usar cache si hay cambios en .csproj)
-RUN dotnet restore --no-cache
-
 # Exponer puerto
 EXPOSE 8080
 
-# Ejecutar en modo desarrollo
-CMD ["dotnet", "watch", "run", "--no-restore"]
+# Ejecutar en modo desarrollo (con restore, migraciones con retry, y watch)
+CMD ["sh", "-c", "dotnet restore --no-cache && while ! dotnet ef database update --no-build; do echo 'Esperando base de datos...'; sleep 5; done && dotnet watch run --no-restore"]
