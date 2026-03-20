@@ -8,6 +8,7 @@ namespace LifeHub.Models
     {
         public int Id { get; set; }
         public string UserId { get; set; } = null!;
+        public int? CreativeSpaceId { get; set; }
         public string Title { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty; // Contenido del documento
@@ -17,6 +18,8 @@ namespace LifeHub.Models
 
         // Navegación
         public ApplicationUser User { get; set; } = null!;
+        public CreativeSpace? CreativeSpace { get; set; }
+        public ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
     }
 
     public enum DocumentType

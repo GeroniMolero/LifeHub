@@ -4,6 +4,8 @@
 
 echo "🚀 Iniciando LifeHub con Docker..."
 echo ""
+echo "📘 Guia principal: revisa README.md para el flujo oficial de arranque"
+echo ""
 
 # Verificar si Docker está instalado
 if ! command -v docker &> /dev/null; then

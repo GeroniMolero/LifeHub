@@ -2,6 +2,8 @@
 
 Write-Host "🚀 Iniciando LifeHub con Docker..." -ForegroundColor Green
 Write-Host ""
+Write-Host "📘 Guia principal: revisa README.md para el flujo oficial de arranque" -ForegroundColor Yellow
+Write-Host ""
 
 # Verificar si Docker está instalado
 $dockerCheck = docker --version 2>$null

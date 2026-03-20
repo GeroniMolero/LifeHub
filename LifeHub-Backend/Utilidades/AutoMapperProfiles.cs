@@ -42,6 +42,25 @@ namespace LifeHub.Utilidades
             CreateMap<CreateDocumentDto, Document>();
             CreateMap<UpdateDocumentDto, Document>();
 
+            // Creative Space mappings
+            CreateMap<CreativeSpace, CreativeSpaceDto>()
+                .ForMember(d => d.Privacy, o => o.MapFrom(s => (int)s.Privacy))
+                .ReverseMap()
+                .ForMember(d => d.Privacy, o => o.MapFrom(s => (SpacePrivacy)s.Privacy));
+
+            CreateMap<CreateCreativeSpaceDto, CreativeSpace>()
+                .ForMember(d => d.Privacy, o => o.MapFrom(s => (SpacePrivacy)s.Privacy));
+
+            CreateMap<UpdateCreativeSpaceDto, CreativeSpace>()
+                .ForMember(d => d.Privacy, o => o.MapFrom(s => (SpacePrivacy)s.Privacy));
+
+            CreateMap<SpacePermission, SpacePermissionDto>()
+                .ForMember(d => d.PermissionLevel, o => o.MapFrom(s => (int)s.PermissionLevel))
+                .ReverseMap()
+                .ForMember(d => d.PermissionLevel, o => o.MapFrom(s => (SpacePermissionLevel)s.PermissionLevel));
+
+            CreateMap<DocumentVersion, DocumentVersionDto>().ReverseMap();
+
             // MusicFile mappings
             CreateMap<MusicFile, MusicFileDto>().ReverseMap();
             CreateMap<CreateMusicFileDto, MusicFile>();

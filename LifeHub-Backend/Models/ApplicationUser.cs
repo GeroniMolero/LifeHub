@@ -19,5 +19,10 @@ namespace LifeHub.Models
         public ICollection<RecommendationRating> RecommendationRatings { get; set; } = new List<RecommendationRating>();
         public ICollection<Document> Documents { get; set; } = new List<Document>();
         public ICollection<MusicFile> MusicFiles { get; set; } = new List<MusicFile>();
+        public ICollection<CreativeSpace> OwnedCreativeSpaces { get; set; } = new List<CreativeSpace>();
+        public ICollection<SpacePermission> SpacePermissions { get; set; } = new List<SpacePermission>();
+        public ICollection<SpacePermission> GrantedSpacePermissions { get; set; } = new List<SpacePermission>();
+        public ICollection<DocumentVersion> DocumentVersions { get; set; } = new List<DocumentVersion>();
+        public ICollection<ActivityLog> ActivityLogs { get; set; } = new List<ActivityLog>();
     }
 }
