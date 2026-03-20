@@ -80,6 +80,13 @@ Thumbs.db
 *.env
 
 #######################
+# Tokens y credenciales
+#######################
+token.txt
+*.token
+tokens/
+
+#######################
 # Base de datos
 #######################
 *.mdf
