@@ -1,7 +1,8 @@
 <div class="app-container">
   <header class="app-header">
     <div class="header-content">
-      <h1>LifeHub</h1>
+      <h1 class="app-title">LifeHub</h1>
+      
       <nav class="nav-menu" *ngIf="currentUser">
         <div class="user-info">
           <span class="user-name">{{ currentUser.fullName || currentUser.email }}</span>
@@ -16,9 +17,15 @@
     </div>
   </header>
 
-  <main class="app-main">
-    <router-outlet></router-outlet>
-  </main>
+  <div class="app-body">
+    <app-sidebar *ngIf="isAuthenticated"></app-sidebar>
+    
+    <main class="app-main">
+      <div class="app-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
 
   <footer class="app-footer">
     <p>&copy; 2026 LifeHub. Todos los derechos reservados.</p>

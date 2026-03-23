@@ -1,0 +1,27 @@
+<aside class="sidebar" [class.mobile-open]="isMobileOpen">
+
+
+  <nav class="sidebar-nav">
+    <ul class="nav-list">
+      <li *ngFor="let item of navItems">
+        <a [routerLink]="item.path" 
+           routerLinkActive="active" 
+           [routerLinkActiveOptions]="{ exact: false }"
+           (click)="closeMobileSidebar()"
+           class="nav-link">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <p class="version">v1.0</p>
+  </div>
+</aside>
+
+<div class="sidebar-overlay mobile-only" 
+     *ngIf="isMobileOpen"
+     (click)="closeMobileSidebar()">
+</div>
