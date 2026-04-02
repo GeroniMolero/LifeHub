@@ -1,32 +1,50 @@
 # LifeHub - Quick Start Script for Windows
 
-Write-Host "🚀 Iniciando LifeHub con Docker..." -ForegroundColor Green
+Write-Host "Starting LifeHub..." -ForegroundColor Green
 Write-Host ""
-Write-Host "📘 Guia principal: revisa README.md para el flujo oficial de arranque" -ForegroundColor Yellow
+Write-Host "Main guide: check README.md for startup options." -ForegroundColor Yellow
 Write-Host ""
 
-# Verificar si Docker está instalado
-$dockerCheck = docker --version 2>$null
+# Verify Docker is available
+$null = docker --version 2>$null
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Docker no está instalado. Por favor instala Docker desde https://www.docker.com/" -ForegroundColor Red
+    Write-Host "Docker is not installed or not available in PATH." -ForegroundColor Red
+    Write-Host "Install Docker Desktop from https://www.docker.com/" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✅ Docker está disponible" -ForegroundColor Green
+Write-Host "Docker detected." -ForegroundColor Green
 Write-Host ""
 
-# Opción de ejecución
-if ($args[0] -eq "dev") {
-    Write-Host "🔧 Iniciando en modo DESARROLLO con hot-reload..." -ForegroundColor Cyan
+$mode = ""
+if ($args.Count -gt 0) {
+    $mode = $args[0].ToLowerInvariant()
+}
+
+if ($mode -eq "dev") {
+    Write-Host "Starting DEV mode (Docker dev stack)..." -ForegroundColor Cyan
     docker compose -f docker-compose.dev.yml up --build
-} elseif ($args[0] -eq "prod") {
-    Write-Host "🏭 Iniciando en modo PRODUCCIÓN..." -ForegroundColor Cyan
+}
+elseif ($mode -eq "prod") {
+    Write-Host "Starting PROD mode (Docker full stack)..." -ForegroundColor Cyan
     docker compose up --build
-} else {
-    Write-Host "📚 USO:" -ForegroundColor Yellow
-    Write-Host "  .\start.ps1 dev    - Modo desarrollo (hot-reload activado)" -ForegroundColor Yellow
-    Write-Host "  .\start.ps1 prod   - Modo producción (optimizado)" -ForegroundColor Yellow
+}
+elseif ($mode -eq "local") {
+    Write-Host "Starting LOCAL mode (Docker backend+db, frontend local)..." -ForegroundColor Cyan
+    .\dev-local.ps1
+}
+elseif ($mode -eq "local-noinstall") {
+    Write-Host "Starting LOCAL mode without npm ci..." -ForegroundColor Cyan
+    .\dev-local.ps1 -SkipInstall
+}
+else {
+    Write-Host "USAGE:" -ForegroundColor Yellow
+    Write-Host "  .\start.ps1 dev               - Docker dev mode" -ForegroundColor Yellow
+    Write-Host "  .\start.ps1 prod              - Docker production mode" -ForegroundColor Yellow
+    Write-Host "  .\start.ps1 local             - Docker backend+db + local frontend (npm ci + ng serve)" -ForegroundColor Yellow
+    Write-Host "  .\start.ps1 local-noinstall   - Same as local, but skips npm ci" -ForegroundColor Yellow
+    Write-Host "  .\stop-local.ps1              - Stop local mode" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "🔧 Iniciando en modo DESARROLLO por defecto..." -ForegroundColor Cyan
+    Write-Host "No mode provided. Starting DEV mode by default..." -ForegroundColor Cyan
     docker compose -f docker-compose.dev.yml up --build
 }

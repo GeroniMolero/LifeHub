@@ -63,49 +63,48 @@
 
 ## 🚀 Inicio Rápido
 
-### Opción 1: Desarrollo Híbrido (Recomendado - Mejor Rendimiento)
+### Opción Recomendada (más simple)
 
-**Requisitos:** Docker Desktop + Node.js 20+
+Usa backend + base de datos en Docker y frontend local con Angular.
+
+En Windows, desde la raíz del proyecto:
+
+```powershell
+.\start.ps1 local
+```
+
+Si ya tienes dependencias instaladas y quieres arrancar más rápido:
+
+```powershell
+.\start.ps1 local-noinstall
+```
+
+Para detener todo (frontend local y Docker dev):
+
+```powershell
+.\stop-local.ps1
+```
+
+### ¿Qué significa cada modo?
+
+```powershell
+.\start.ps1 local            # Recomendado: Docker (backend+db) + frontend local
+.\start.ps1 local-noinstall  # Igual que local, pero sin npm ci
+.\start.ps1 dev              # Todo el stack dev en Docker
+.\start.ps1 prod             # Stack de producción en Docker
+```
+
+### Si prefieres el flujo manual de siempre (2 terminales)
 
 **Terminal 1 - Backend + Database en Docker:**
-```bash
-docker compose -f docker-compose.dev.yml up
+```powershell
+docker compose -f docker-compose.dev.yml up -d mssql backend
 ```
 
 **Terminal 2 - Frontend Local:**
-```bash
+```powershell
 cd LifeHub-Frontend
-npm install
-npm start
-```
-
-✅ **Ventajas:**
-- Frontend ultra-rápido con hot-reload instantáneo
-- Backend y Database aislados en contenedores
-- Mejor experiencia de desarrollo
-
-### Opción 2: Todo en Docker
-
-```bash
-docker compose up
-```
-
-### Opción 3: Todo Local
-
-**Requisitos:** .NET 8 SDK + Node.js 20+ + SQL Server
-
-**Terminal 1 - Backend:**
-```bash
-cd LifeHub-Backend
-dotnet restore
-dotnet ef database update
-dotnet run
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd LifeHub-Frontend
-npm install
+npm ci
 npm start
 ```
 
@@ -115,50 +114,7 @@ npm start
 - Frontend: http://localhost:4200
 - Backend: http://localhost:5000
 - Swagger: http://localhost:5000/swagger
-
-## ⚡ Guía Detallada (Flujo Híbrido)
-
-El flujo habitual es arrancar **backend + base de datos en Docker** y el **frontend en local**:
-
-### Terminal 1 — Backend y base de datos
-
-```powershell
-docker compose -f docker-compose.dev.yml up -d mssql backend
-```
-
-Verificar que el backend responde:
-
-```powershell
-Invoke-WebRequest http://localhost:5000/swagger/v1/swagger.json -UseBasicParsing
-```
-
-Si devuelve `200`, el backend está listo.
-
-### Terminal 2 — Frontend local
-
-```powershell
-cd LifeHub-Frontend
-npm install
-npm run start
-```
-
-### Solución de problemas comunes
-
-**Puerto 4200 ocupado:**
-```powershell
-npm run start -- --port 4201
-```
-
-**Backend no responde:**
-```powershell
-docker compose -f docker-compose.dev.yml logs backend --tail 100
-```
-
-**Reiniciar Docker de desarrollo:**
-```powershell
-docker compose -f docker-compose.dev.yml down
-docker compose -f docker-compose.dev.yml up -d mssql backend
-```
+- SQL Server: localhost:1433
 
 ## 📁 Estructura del Proyecto
 
@@ -220,3 +176,4 @@ Para soporte y preguntas: support@lifehub.local
 ---
 
 **LifeHub** - Tu portal personal para herramientas útiles del día a día
+gemordz@gmail.com
