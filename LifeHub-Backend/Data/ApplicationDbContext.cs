@@ -94,7 +94,7 @@ namespace LifeHub.Data
                 .HasOne(d => d.CreativeSpace)
                 .WithMany(cs => cs.Documents)
                 .HasForeignKey(d => d.CreativeSpaceId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
 
             // ============ CREATIVE SPACES ============
             modelBuilder.Entity<CreativeSpace>()

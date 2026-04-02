@@ -4,6 +4,7 @@ namespace LifeHub.DTOs
     {
         public int Id { get; set; }
         public string UserId { get; set; } = null!;
+        public int? CreativeSpaceId { get; set; }
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string Content { get; set; } = null!;
@@ -18,6 +19,7 @@ namespace LifeHub.DTOs
         public string Description { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public int Type { get; set; }
+        public int? CreativeSpaceId { get; set; }
     }
 
     public class UpdateDocumentDto
@@ -25,5 +27,6 @@ namespace LifeHub.DTOs
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string Content { get; set; } = null!;
+        public int? CreativeSpaceId { get; set; }
     }
 }
