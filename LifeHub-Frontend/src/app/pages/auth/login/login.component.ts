@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
@@ -16,11 +16,13 @@ export class LoginComponent implements OnInit {
   loading = false;
   submitted = false;
   error = '';
+  returnUrl = '/spaces';
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -28,6 +30,8 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/spaces';
   }
 
   get f() {
@@ -45,7 +49,7 @@ export class LoginComponent implements OnInit {
     this.authService.login(this.f['email'].value, this.f['password'].value).subscribe({
       next: (response) => {
         if (response.success) {
-          this.router.navigate(['/home']);
+          this.router.navigateByUrl(this.returnUrl);
         } else {
           this.error = response.message || 'Login fallido';
           this.loading = false;

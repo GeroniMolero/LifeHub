@@ -4,7 +4,7 @@ import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/home',
+    redirectTo: '/spaces',
     pathMatch: 'full'
   },
   {
@@ -21,23 +21,13 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'spaces',
+    loadComponent: () => import('./pages/spaces/spaces.component').then(m => m.SpacesComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'profile',
     loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'friends',
-    loadComponent: () => import('./pages/friends/friends.component').then(m => m.FriendsComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'chat',
-    loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent),
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'recommendations',
-    loadComponent: () => import('./pages/recommendations/recommendations.component').then(m => m.RecommendationsComponent),
     canActivate: [AuthGuard]
   },
   {
@@ -46,12 +36,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'music',
-    loadComponent: () => import('./pages/music/music.component').then(m => m.MusicComponent),
-    canActivate: [AuthGuard]
-  },
-  {
     path: '**',
-    redirectTo: '/home'
+    redirectTo: '/spaces'
   }
 ];

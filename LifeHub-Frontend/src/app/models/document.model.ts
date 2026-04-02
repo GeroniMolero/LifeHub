@@ -1,6 +1,7 @@
 export interface Document {
   id: number;
   userId: string;
+  creativeSpaceId?: number;
   title: string;
   description: string;
   content: string;
@@ -20,10 +21,12 @@ export interface CreateDocumentRequest {
   description: string;
   content: string;
   type: DocumentType;
+  creativeSpaceId?: number;
 }
 
 export interface UpdateDocumentRequest {
   title: string;
   description: string;
   content: string;
+  creativeSpaceId?: number;
 }

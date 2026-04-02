@@ -1,14 +1,7 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  bio?: string;
-  profilePictureUrl?: string;
-}
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-profile',
@@ -20,15 +13,18 @@ interface User {
 export class ProfileComponent implements OnInit {
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
-  user: User | null = null;
   loading = false;
   success = '';
   error = '';
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private userService: UserService
+  ) {}
 
   ngOnInit(): void {
     this.initForms();
+    this.loadCurrentUser();
   }
 
   initForms(): void {
@@ -47,11 +43,74 @@ export class ProfileComponent implements OnInit {
 
   onProfileSubmit(): void {
     if (this.profileForm.invalid) return;
-    console.log('Profile update:', this.profileForm.value);
+
+    this.loading = true;
+    this.success = '';
+    this.error = '';
+
+    this.userService.updateProfile(this.profileForm.value).subscribe({
+      next: (user) => {
+        this.profileForm.patchValue({
+          fullName: user.fullName || '',
+          bio: user.bio || '',
+          profilePictureUrl: user.profilePictureUrl || ''
+        });
+        this.success = 'Perfil actualizado correctamente.';
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = err?.error?.message || 'No se pudo actualizar el perfil.';
+        this.loading = false;
+      }
+    });
   }
 
   onPasswordSubmit(): void {
     if (this.passwordForm.invalid) return;
-    console.log('Password change:', this.passwordForm.value);
+
+    const newPassword = this.passwordForm.get('newPassword')?.value;
+    const confirmPassword = this.passwordForm.get('confirmPassword')?.value;
+    if (newPassword !== confirmPassword) {
+      this.error = 'Las contraseñas no coinciden.';
+      this.success = '';
+      return;
+    }
+
+    this.loading = true;
+    this.success = '';
+    this.error = '';
+
+    this.userService.changePassword(
+      this.passwordForm.get('currentPassword')?.value,
+      newPassword
+    ).subscribe({
+      next: () => {
+        this.success = 'Contraseña actualizada correctamente.';
+        this.passwordForm.reset();
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = err?.error?.message || 'No se pudo actualizar la contraseña.';
+        this.loading = false;
+      }
+    });
+  }
+
+  private loadCurrentUser(): void {
+    this.loading = true;
+    this.userService.getCurrentUser().subscribe({
+      next: (user) => {
+        this.profileForm.patchValue({
+          fullName: user.fullName || '',
+          bio: user.bio || '',
+          profilePictureUrl: user.profilePictureUrl || ''
+        });
+        this.loading = false;
+      },
+      error: () => {
+        this.error = 'No se pudo cargar el perfil.';
+        this.loading = false;
+      }
+    });
   }
 }

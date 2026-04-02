@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Document, CreateDocumentRequest, UpdateDocumentRequest } from '../models/document.model';
+import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DocumentService {
-  private apiUrl = 'http://localhost:5000/api/documents';
+  private apiUrl = `${API_BASE_URL}/documents`;
 
   constructor(private http: HttpClient) {}
 

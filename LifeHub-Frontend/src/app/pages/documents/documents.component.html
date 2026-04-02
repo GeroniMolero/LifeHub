@@ -1,7 +1,7 @@
 <div class="documents-container">
   <h1>Mis Documentos</h1>
 
-  <button (click)="showForm = !showForm" class="btn-primary">
+  <button (click)="toggleForm()" class="btn-primary">
     {{ showForm ? 'Cancelar' : 'Nuevo Documento' }}
   </button>
 
@@ -40,8 +40,35 @@
         <textarea formControlName="content" rows="10"></textarea>
       </div>
       <button type="submit" class="btn-primary">Guardar</button>
-      <button type="button" (click)="selectedDocument = null" class="btn-secondary">Cancelar</button>
+      <button type="button" (click)="closeForm()" class="btn-secondary">Cancelar</button>
     </form>
+
+    <div class="versions-panel">
+      <h3>Historial de versiones</h3>
+      <div class="version-create">
+        <input
+          type="text"
+          [(ngModel)]="versionNote"
+          placeholder="Nota opcional para esta versión"
+        />
+        <button type="button" class="btn-primary" (click)="createVersion()">Crear versión</button>
+      </div>
+
+      <div *ngIf="versions.length === 0" class="empty-state">
+        <p>Aún no hay versiones guardadas.</p>
+      </div>
+
+      <div *ngIf="versions.length > 0" class="versions-list">
+        <div class="version-item" *ngFor="let version of versions">
+          <div>
+            <strong>Versión #{{ version.versionNumber }}</strong>
+            <p>{{ version.description }}</p>
+            <small>{{ version.createdAt | date:'short' }}</small>
+          </div>
+          <button type="button" class="btn-secondary" (click)="restoreVersion(version.id)">Restaurar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div *ngIf="loading" class="loading">Cargando...</div>

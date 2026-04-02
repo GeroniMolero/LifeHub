@@ -9,43 +9,31 @@ import { RouterModule } from '@angular/router';
   template: `
     <div class="home-container">
       <h1>Bienvenido a LifeHub</h1>
-      <p>Tu portal personal para herramientas útiles del día a día</p>
+      <p>Tu espacio creativo personal para escribir, organizar ideas y compartir contenido de forma controlada.</p>
       
       <div class="features-grid">
         <div class="feature-card">
-          <h3>👥 Amigos</h3>
-          <p>Gestiona tu lista de amigos</p>
-          <a routerLink="/friends" class="btn-primary">Ver Amigos</a>
+          <h3>🧩 Espacios creativos</h3>
+          <p>Crea y organiza tu trabajo en espacios privados o compartidos</p>
+          <a routerLink="/spaces" class="btn-primary">Mis Espacios</a>
         </div>
-        
+
         <div class="feature-card">
-          <h3>💬 Chat</h3>
-          <p>Comunícate en tiempo real</p>
-          <a routerLink="/chat" class="btn-primary">Abrir Chat</a>
-        </div>
-        
-        <div class="feature-card">
-          <h3>📚 Recomendaciones</h3>
-          <p>Recomienda películas y libros</p>
-          <a routerLink="/recommendations" class="btn-primary">Ver Recomendaciones</a>
-        </div>
-        
-        <div class="feature-card">
-          <h3>📄 Documentos</h3>
-          <p>Crea y edita documentos</p>
+          <h3>📄 Documentos creativos</h3>
+          <p>Crea, edita y versiona tus documentos</p>
           <a routerLink="/documents" class="btn-primary">Mis Documentos</a>
         </div>
         
         <div class="feature-card">
-          <h3>🎵 Música</h3>
-          <p>Reproductor de música local</p>
-          <a routerLink="/music" class="btn-primary">Mi Música</a>
+          <h3>🔒 Privacidad y perfil</h3>
+          <p>Actualiza tu perfil y controla la visibilidad</p>
+          <a routerLink="/profile" class="btn-primary">Mi Perfil</a>
         </div>
         
         <div class="feature-card">
-          <h3>👤 Perfil</h3>
-          <p>Actualiza tu perfil</p>
-          <a routerLink="/profile" class="btn-primary">Mi Perfil</a>
+          <h3>🧭 Flujo MVP</h3>
+          <p>Espacios → Documentos → Versiones</p>
+          <a routerLink="/spaces" class="btn-primary">Continuar</a>
         </div>
       </div>
     </div>
