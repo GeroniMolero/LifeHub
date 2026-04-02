@@ -26,6 +26,8 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 // CONTROLLERS
 // =============================
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 
 // =============================
 // SWAGGER + AUTH JWT

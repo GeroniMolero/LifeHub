@@ -2,6 +2,7 @@ using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,33 +12,36 @@ namespace LifeHub.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class DocumentVersionsController : ControllerBase
+    public class DocumentVersionsController : ApiControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IActivityLogService _activityLogService;
 
-        public DocumentVersionsController(ApplicationDbContext context, IMapper mapper)
+        public DocumentVersionsController(ApplicationDbContext context, IMapper mapper, IActivityLogService activityLogService)
         {
             _context = context;
             _mapper = mapper;
+            _activityLogService = activityLogService;
         }
-
-        private string GetUserId() => User.FindFirst("sub")?.Value ?? string.Empty;
 
         [HttpGet("document/{documentId:int}")]
         public async Task<IActionResult> GetDocumentVersions(int documentId)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var document = await _context.Documents
                 .Include(d => d.CreativeSpace)
                     .ThenInclude(cs => cs!.Permissions)
                 .FirstOrDefaultAsync(d => d.Id == documentId);
 
             if (document == null)
-                return NotFound();
+                return NotFoundError("Documento no encontrado.");
 
             if (!CanAccessDocument(document, userId))
-                return Forbid();
+                return ForbiddenError("No tienes permisos para ver las versiones de este documento.");
 
             var versions = await _context.DocumentVersions
                 .Where(v => v.DocumentId == documentId)
@@ -50,23 +54,28 @@ namespace LifeHub.Controllers
         [HttpPost("document/{documentId:int}/snapshot")]
         public async Task<IActionResult> CreateSnapshot(int documentId, [FromBody] CreateDocumentVersionDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var document = await _context.Documents
                 .Include(d => d.CreativeSpace)
                     .ThenInclude(cs => cs!.Permissions)
                 .FirstOrDefaultAsync(d => d.Id == documentId);
 
             if (document == null)
-                return NotFound();
+                return NotFoundError("Documento no encontrado.");
 
             if (!CanEditDocument(document, userId))
-                return Forbid();
+                return ForbiddenError("No tienes permisos para crear versiones de este documento.");
 
-            var nextVersion = await _context.DocumentVersions
+            var lastVersion = await _context.DocumentVersions
                 .Where(v => v.DocumentId == documentId)
-                .Select(v => v.VersionNumber)
-                .DefaultIfEmpty(0)
-                .MaxAsync() + 1;
+                .OrderByDescending(v => v.VersionNumber)
+                .Select(v => (int?)v.VersionNumber)
+                .FirstOrDefaultAsync();
+
+            var nextVersion = (lastVersion ?? 0) + 1;
 
             var version = new DocumentVersion
             {
@@ -81,7 +90,13 @@ namespace LifeHub.Controllers
             _context.DocumentVersions.Add(version);
             await _context.SaveChangesAsync();
 
-            await LogActivityAsync(userId, "document.version-created", nameof(Document), document.Id.ToString(), $"Created version {nextVersion}");
+            await _activityLogService.LogAsync(
+                userId,
+                "document.version-created",
+                nameof(Document),
+                document.Id.ToString(),
+                $"Created version {nextVersion}",
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
 
             return Created($"api/documentversions/{version.Id}", _mapper.Map<DocumentVersionDto>(version));
         }
@@ -89,7 +104,10 @@ namespace LifeHub.Controllers
         [HttpPost("{versionId:int}/restore")]
         public async Task<IActionResult> RestoreVersion(int versionId)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var version = await _context.DocumentVersions
                 .Include(v => v.Document)
                     .ThenInclude(d => d.CreativeSpace)
@@ -97,10 +115,10 @@ namespace LifeHub.Controllers
                 .FirstOrDefaultAsync(v => v.Id == versionId);
 
             if (version == null)
-                return NotFound();
+                return NotFoundError("Versión de documento no encontrada.");
 
             if (!CanEditDocument(version.Document, userId))
-                return Forbid();
+                return ForbiddenError("No tienes permisos para restaurar esta versión.");
 
             version.Document.Title = version.Title;
             version.Document.Description = version.Description;
@@ -109,7 +127,13 @@ namespace LifeHub.Controllers
 
             await _context.SaveChangesAsync();
 
-            await LogActivityAsync(userId, "document.version-restored", nameof(Document), version.DocumentId.ToString(), $"Restored version {version.VersionNumber}");
+            await _activityLogService.LogAsync(
+                userId,
+                "document.version-restored",
+                nameof(Document),
+                version.DocumentId.ToString(),
+                $"Restored version {version.VersionNumber}",
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
 
             return Ok(new { message = "Versión restaurada", documentId = version.DocumentId, restoredVersion = version.VersionNumber });
         }
@@ -141,19 +165,5 @@ namespace LifeHub.Controllers
             return space.Permissions.Any(p => p.UserId == userId && p.PermissionLevel == SpacePermissionLevel.Editor);
         }
 
-        private async Task LogActivityAsync(string userId, string action, string entityType, string entityId, string details)
-        {
-            _context.ActivityLogs.Add(new ActivityLog
-            {
-                UserId = userId,
-                Action = action,
-                EntityType = entityType,
-                EntityId = entityId,
-                Details = details,
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty
-            });
-
-            await _context.SaveChangesAsync();
-        }
     }
 }

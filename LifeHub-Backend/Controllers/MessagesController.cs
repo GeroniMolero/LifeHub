@@ -5,13 +5,14 @@ using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class MessagesController : ControllerBase
+    public class MessagesController : ApiControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -22,15 +23,13 @@ namespace LifeHub.Controllers
             _mapper = mapper;
         }
 
-        private string GetUserId()
-        {
-            return User.FindFirst("sub")?.Value ?? "";
-        }
-
         [HttpGet("conversation/{otherUserId}")]
         public async Task<IActionResult> GetConversation(string otherUserId)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var messages = await _context.Messages
                 .Where(m => 
                     (m.SenderId == userId && m.ReceiverId == otherUserId) ||
@@ -44,7 +43,17 @@ namespace LifeHub.Controllers
         [HttpPost]
         public async Task<IActionResult> SendMessage([FromBody] CreateMessageDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var sessionError = await EnsureActiveSessionAsync(_context, userId);
+            if (sessionError != null)
+                return sessionError;
+
+            var receiverExists = await _context.Users.AnyAsync(u => u.Id == dto.ReceiverId);
+            if (!receiverExists)
+                return BadRequestError("El usuario receptor no existe.");
 
             var message = new Message
             {
@@ -63,9 +72,16 @@ namespace LifeHub.Controllers
         [HttpPut("{id}/mark-read")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var message = await _context.Messages.FindAsync(id);
             if (message == null)
-                return NotFound();
+                return NotFoundError("Mensaje no encontrado.");
+
+            if (message.ReceiverId != userId)
+                return ForbiddenError("No tienes permisos para marcar este mensaje como leído.");
 
             message.IsRead = true;
             message.ReadAt = DateTime.UtcNow;
@@ -77,7 +93,10 @@ namespace LifeHub.Controllers
         [HttpGet("unread")]
         public async Task<IActionResult> GetUnreadMessages()
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var unreadCount = await _context.Messages
                 .Where(m => m.ReceiverId == userId && !m.IsRead)
                 .CountAsync();

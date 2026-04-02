@@ -5,13 +5,14 @@ using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class DocumentsController : ControllerBase
+    public class DocumentsController : ApiControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -22,15 +23,13 @@ namespace LifeHub.Controllers
             _mapper = mapper;
         }
 
-        private string GetUserId()
-        {
-            return User.FindFirst("sub")?.Value ?? "";
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetDocuments()
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var documents = await _context.Documents
                 .Where(d => d.UserId == userId)
                 .OrderByDescending(d => d.UpdatedAt)
@@ -42,11 +41,14 @@ namespace LifeHub.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDocument(int id)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId);
 
             if (document == null)
-                return NotFound();
+                return NotFoundError("Documento no encontrado.");
 
             return Ok(_mapper.Map<DocumentDto>(document));
         }
@@ -54,7 +56,13 @@ namespace LifeHub.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateDocument([FromBody] CreateDocumentDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var sessionError = await EnsureActiveSessionAsync(_context, userId);
+            if (sessionError != null)
+                return sessionError;
 
             var document = _mapper.Map<Document>(dto);
             document.UserId = userId;
@@ -68,11 +76,14 @@ namespace LifeHub.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateDocument(int id, [FromBody] UpdateDocumentDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId);
 
             if (document == null)
-                return NotFound();
+                return NotFoundError("Documento no encontrado.");
 
             _mapper.Map(dto, document);
             document.UpdatedAt = DateTime.UtcNow;
@@ -85,11 +96,14 @@ namespace LifeHub.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteDocument(int id)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId);
 
             if (document == null)
-                return NotFound();
+                return NotFoundError("Documento no encontrado.");
 
             _context.Documents.Remove(document);
             await _context.SaveChangesAsync();

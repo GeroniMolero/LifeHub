@@ -5,13 +5,14 @@ using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class RecommendationsController : ControllerBase
+    public class RecommendationsController : ApiControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -20,11 +21,6 @@ namespace LifeHub.Controllers
         {
             _context = context;
             _mapper = mapper;
-        }
-
-        private string GetUserId()
-        {
-            return User.FindFirst("sub")?.Value ?? "";
         }
 
         [HttpGet]
@@ -48,7 +44,7 @@ namespace LifeHub.Controllers
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (recommendation == null)
-                return NotFound();
+                return NotFoundError("Recomendación no encontrada.");
 
             return Ok(_mapper.Map<RecommendationDto>(recommendation));
         }
@@ -69,7 +65,13 @@ namespace LifeHub.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRecommendation([FromBody] CreateRecommendationDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var sessionError = await EnsureActiveSessionAsync(_context, userId);
+            if (sessionError != null)
+                return sessionError;
 
             var recommendation = _mapper.Map<Recommendation>(dto);
             recommendation.UserId = userId;
@@ -83,14 +85,17 @@ namespace LifeHub.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateRecommendation(int id, [FromBody] UpdateRecommendationDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var recommendation = await _context.Recommendations.FindAsync(id);
 
             if (recommendation == null)
-                return NotFound();
+                return NotFoundError("Recomendación no encontrada.");
 
             if (recommendation.UserId != userId)
-                return Forbid();
+                return ForbiddenError("No tienes permisos para actualizar esta recomendación.");
 
             _mapper.Map(dto, recommendation);
             recommendation.UpdatedAt = DateTime.UtcNow;
@@ -103,14 +108,17 @@ namespace LifeHub.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteRecommendation(int id)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var recommendation = await _context.Recommendations.FindAsync(id);
 
             if (recommendation == null)
-                return NotFound();
+                return NotFoundError("Recomendación no encontrada.");
 
             if (recommendation.UserId != userId)
-                return Forbid();
+                return ForbiddenError("No tienes permisos para eliminar esta recomendación.");
 
             _context.Recommendations.Remove(recommendation);
             await _context.SaveChangesAsync();
@@ -121,11 +129,14 @@ namespace LifeHub.Controllers
         [HttpPost("{id}/rate")]
         public async Task<IActionResult> RateRecommendation(int id, [FromBody] RecommendationRatingCreateDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var recommendation = await _context.Recommendations.FindAsync(id);
 
             if (recommendation == null)
-                return NotFound();
+                return NotFoundError("Recomendación no encontrada.");
 
             var existingRating = await _context.RecommendationRatings
                 .FirstOrDefaultAsync(r => r.RecommendationId == id && r.UserId == userId);

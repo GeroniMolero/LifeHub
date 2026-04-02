@@ -4,12 +4,13 @@ using Microsoft.AspNetCore.Identity;
 using AutoMapper;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+    public class UsersController : ApiControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
@@ -20,18 +21,13 @@ namespace LifeHub.Controllers
             _mapper = mapper;
         }
 
-        private string GetUserId()
-        {
-            return User.FindFirst("sub")?.Value ?? "";
-        }
-
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetUser(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
-                return NotFound();
+                return NotFoundError("Usuario no encontrado.");
 
             return Ok(_mapper.Map<UserDto>(user));
         }
@@ -40,11 +36,14 @@ namespace LifeHub.Controllers
         [Authorize]
         public async Task<IActionResult> GetCurrentUser()
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
-                return NotFound();
+                return UnauthorizedError("Sesión inválida. Inicia sesión de nuevo.");
 
             return Ok(_mapper.Map<UserDto>(user));
         }
@@ -53,11 +52,14 @@ namespace LifeHub.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
-                return NotFound();
+                return UnauthorizedError("Sesión inválida. Inicia sesión de nuevo.");
 
             user.FullName = dto.FullName;
             user.Bio = dto.Bio;
@@ -67,7 +69,7 @@ namespace LifeHub.Controllers
             var result = await _userManager.UpdateAsync(user);
 
             if (!result.Succeeded)
-                return BadRequest(result.Errors);
+                return BadRequestError("No se pudo actualizar el perfil.");
 
             return Ok(_mapper.Map<UserDto>(user));
         }
@@ -76,16 +78,19 @@ namespace LifeHub.Controllers
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
-                return NotFound();
+                return UnauthorizedError("Sesión inválida. Inicia sesión de nuevo.");
 
             var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
 
             if (!result.Succeeded)
-                return BadRequest(result.Errors);
+                return BadRequestError("No se pudo cambiar la contraseña. Revisa tus credenciales.");
 
             return Ok(new { message = "Contraseña cambiada exitosamente" });
         }

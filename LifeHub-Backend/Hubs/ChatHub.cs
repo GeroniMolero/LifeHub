@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using LifeHub.Data;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 
 namespace LifeHub.Hubs
 {
@@ -16,14 +17,17 @@ namespace LifeHub.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.User?.FindFirst("sub")?.Value ?? Context.ConnectionId;
+            var userId = Context.User.GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                userId = Context.ConnectionId;
+
             await Groups.AddToGroupAsync(Context.ConnectionId, userId);
             await base.OnConnectedAsync();
         }
 
         public async Task SendMessageAsync(string receiverId, string content)
         {
-            var senderId = Context.User?.FindFirst("sub")?.Value;
+            var senderId = Context.User.GetUserId();
             if (string.IsNullOrEmpty(senderId))
             {
                 await Clients.Caller.SendAsync("Error", "Usuario no autenticado");

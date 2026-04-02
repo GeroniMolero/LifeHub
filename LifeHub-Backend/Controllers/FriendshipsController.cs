@@ -5,14 +5,14 @@ using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
-using System.Security.Claims;
+using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class FriendshipsController : ControllerBase
+    public class FriendshipsController : ApiControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -23,15 +23,13 @@ namespace LifeHub.Controllers
             _mapper = mapper;
         }
 
-        private string GetUserId()
-        {
-            return User.FindFirst("sub")?.Value ?? "";
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetFriendships()
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var friendships = await _context.Friendships
                 .Where(f => f.RequesterId == userId || f.ReceiverId == userId)
                 .Include(f => f.Requester)
@@ -44,7 +42,10 @@ namespace LifeHub.Controllers
         [HttpGet("accepted")]
         public async Task<IActionResult> GetAcceptedFriends()
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var friends = await _context.Friendships
                 .Where(f => (f.RequesterId == userId || f.ReceiverId == userId) 
                     && f.Status == FriendshipStatus.Accepted)
@@ -58,10 +59,20 @@ namespace LifeHub.Controllers
         [HttpPost]
         public async Task<IActionResult> SendFriendRequest([FromBody] CreateFriendshipDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var sessionError = await EnsureActiveSessionAsync(_context, userId);
+            if (sessionError != null)
+                return sessionError;
 
             if (userId == dto.ReceiverId)
-                return BadRequest("No puedes enviarte una solicitud de amistad a ti mismo");
+                return BadRequestError("No puedes enviarte una solicitud de amistad a ti mismo.");
+
+            var receiverExists = await _context.Users.AnyAsync(u => u.Id == dto.ReceiverId);
+            if (!receiverExists)
+                return BadRequestError("El usuario receptor no existe.");
 
             var existingFriendship = await _context.Friendships
                 .FirstOrDefaultAsync(f => 
@@ -69,7 +80,7 @@ namespace LifeHub.Controllers
                     (f.RequesterId == dto.ReceiverId && f.ReceiverId == userId));
 
             if (existingFriendship != null)
-                return BadRequest("Ya existe una relación de amistad con este usuario");
+                return BadRequestError("Ya existe una relación de amistad con este usuario.");
 
             var friendship = new Friendship
             {
@@ -87,14 +98,17 @@ namespace LifeHub.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFriendship(int id, [FromBody] UpdateFriendshipDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var friendship = await _context.Friendships.FindAsync(id);
 
             if (friendship == null)
-                return NotFound();
+                return NotFoundError("Relación de amistad no encontrada.");
 
             if (friendship.ReceiverId != userId)
-                return Forbid();
+                return ForbiddenError("No tienes permisos para actualizar esta solicitud.");
 
             friendship.Status = (FriendshipStatus)dto.Status;
             friendship.UpdatedAt = DateTime.UtcNow;
@@ -107,14 +121,17 @@ namespace LifeHub.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFriendship(int id)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var friendship = await _context.Friendships.FindAsync(id);
 
             if (friendship == null)
-                return NotFound();
+                return NotFoundError("Relación de amistad no encontrada.");
 
             if (friendship.RequesterId != userId && friendship.ReceiverId != userId)
-                return Forbid();
+                return ForbiddenError("No tienes permisos para eliminar esta relación de amistad.");
 
             _context.Friendships.Remove(friendship);
             await _context.SaveChangesAsync();

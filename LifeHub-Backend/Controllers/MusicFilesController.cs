@@ -5,13 +5,14 @@ using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class MusicFilesController : ControllerBase
+    public class MusicFilesController : ApiControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -22,15 +23,13 @@ namespace LifeHub.Controllers
             _mapper = mapper;
         }
 
-        private string GetUserId()
-        {
-            return User.FindFirst("sub")?.Value ?? "";
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetMusicFiles()
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var files = await _context.MusicFiles
                 .Where(m => m.UserId == userId)
                 .OrderByDescending(m => m.CreatedAt)
@@ -42,11 +41,14 @@ namespace LifeHub.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetMusicFile(int id)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var file = await _context.MusicFiles.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             if (file == null)
-                return NotFound();
+                return NotFoundError("Archivo de música no encontrado.");
 
             return Ok(_mapper.Map<MusicFileDto>(file));
         }
@@ -54,7 +56,13 @@ namespace LifeHub.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateMusicFile([FromBody] CreateMusicFileDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var sessionError = await EnsureActiveSessionAsync(_context, userId);
+            if (sessionError != null)
+                return sessionError;
 
             var musicFile = _mapper.Map<MusicFile>(dto);
             musicFile.UserId = userId;
@@ -68,11 +76,14 @@ namespace LifeHub.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMusicFile(int id, [FromBody] UpdateMusicFileDto dto)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var musicFile = await _context.MusicFiles.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             if (musicFile == null)
-                return NotFound();
+                return NotFoundError("Archivo de música no encontrado.");
 
             _mapper.Map(dto, musicFile);
             musicFile.UpdatedAt = DateTime.UtcNow;
@@ -85,11 +96,14 @@ namespace LifeHub.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMusicFile(int id)
         {
-            var userId = GetUserId();
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
             var musicFile = await _context.MusicFiles.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
 
             if (musicFile == null)
-                return NotFound();
+                return NotFoundError("Archivo de música no encontrado.");
 
             _context.MusicFiles.Remove(musicFile);
             await _context.SaveChangesAsync();
