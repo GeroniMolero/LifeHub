@@ -56,6 +56,38 @@ export class AuthService {
     return this.userSubject.asObservable();
   }
 
+  refreshCurrentUser(): Observable<User> {
+    return this.http.get<User>(`${API_BASE_URL}/users/me`).pipe(
+      tap(user => {
+        localStorage.setItem('lifehub_user', JSON.stringify(user));
+        this.userSubject.next(user);
+      })
+    );
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.userSubject.value;
+    if (!user?.roles) {
+      return false;
+    }
+
+    return user.roles.some(r => r.toLowerCase() === role.toLowerCase());
+  }
+
+  hasClaim(type: string, value?: string): boolean {
+    const user = this.userSubject.value;
+    if (!user?.claims?.length) {
+      return false;
+    }
+
+    const expected = value ? `${type}:${value}` : `${type}:`;
+    return user.claims.some(c => (value ? c === expected : c.startsWith(expected)));
+  }
+
+  canViewAdmin(): boolean {
+    return this.hasRole('Admin') || this.hasClaim('permission', 'admin.users.view');
+  }
+
   private loadUser(): void {
     if (this.isAuthenticated()) {
       const storedUser = localStorage.getItem('lifehub_user');

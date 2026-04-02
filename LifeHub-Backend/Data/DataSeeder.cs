@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
+using System.Security.Claims;
 
 namespace LifeHub.Data
 {
@@ -43,6 +44,19 @@ namespace LifeHub.Data
                     if (result.Succeeded)
                     {
                         await userManager.AddToRoleAsync(admin, "Admin");
+                    }
+                }
+
+                // Asegurar claim de acceso a modulo Admin para usuarios con rol Admin
+                var adminUsers = await userManager.GetUsersInRoleAsync("Admin");
+                foreach (var admin in adminUsers)
+                {
+                    var claims = await userManager.GetClaimsAsync(admin);
+                    var hasAdminViewClaim = claims.Any(c => c.Type == "permission" && c.Value == "admin.users.view");
+
+                    if (!hasAdminViewClaim)
+                    {
+                        await userManager.AddClaimAsync(admin, new Claim("permission", "admin.users.view"));
                     }
                 }
 

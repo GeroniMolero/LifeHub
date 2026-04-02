@@ -107,7 +107,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanViewAdmin", policy =>
+        policy.RequireAssertion(context =>
+            context.User.IsInRole("Admin") ||
+            context.User.HasClaim("permission", "admin.users.view")));
+});
 
 // =============================
 // SIGNALR PARA CHAT EN TIEMPO REAL

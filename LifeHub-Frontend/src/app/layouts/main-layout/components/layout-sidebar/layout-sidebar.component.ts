@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { User } from '../../../../models/auth.model';
 
 @Component({
   selector: 'app-layout-sidebar',
@@ -11,6 +12,7 @@ import { RouterModule } from '@angular/router';
 })
 export class LayoutSidebarComponent {
   @Input() isOpen = false;
+  @Input() currentUser: User | null = null;
   @Output() closeSidebar = new EventEmitter<void>();
 
   readonly navigationItems = [
@@ -33,8 +35,30 @@ export class LayoutSidebarComponent {
       label: 'Perfil',
       route: '/profile',
       iconPath: 'M12 12a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5ZM5.25 19.5a6.75 6.75 0 0 1 13.5 0'
+    },
+    {
+      label: 'Admin',
+      route: '/admin',
+      iconPath: 'M4.5 6.75h15v10.5h-15zM9 10.5h6M9 13.5h3',
+      requiredPermission: 'admin.users.view'
     }
   ];
+
+  get visibleNavigationItems() {
+    return this.navigationItems.filter(item => {
+      if (!item.requiredPermission) {
+        return true;
+      }
+
+      const roles = this.currentUser?.roles ?? [];
+      if (roles.some(r => r.toLowerCase() === 'admin')) {
+        return true;
+      }
+
+      const claims = this.currentUser?.claims ?? [];
+      return claims.includes(`permission:${item.requiredPermission}`);
+    });
+  }
 
   close(): void {
     this.closeSidebar.emit();

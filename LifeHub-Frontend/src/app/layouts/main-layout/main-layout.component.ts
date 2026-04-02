@@ -26,6 +26,14 @@ export class MainLayoutComponent implements OnInit {
     this.authService.getCurrentUser().subscribe(user => {
       this.currentUser = user;
     });
+
+    if (this.authService.isAuthenticated()) {
+      this.authService.refreshCurrentUser().subscribe({
+        error: () => {
+          // Si falla el refresco, se conserva el usuario cargado desde storage.
+        }
+      });
+    }
   }
 
   toggleSidebar(): void {

@@ -4,6 +4,8 @@ export interface User {
   fullName?: string;
   profilePictureUrl?: string;
   bio?: string;
+  roles?: string[];
+  claims?: string[];
 }
 
 export interface AuthResponse {

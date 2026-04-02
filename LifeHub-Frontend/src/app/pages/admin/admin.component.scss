@@ -1,0 +1,51 @@
+@use '../../../styles/design-tokens' as *;
+
+.admin-page {
+  display: grid;
+  gap: $space-6;
+}
+
+.admin-header h1 {
+  margin: 0 0 $space-2;
+  color: $color-text-heading;
+}
+
+.admin-header p {
+  margin: 0;
+  color: $color-text-secondary;
+}
+
+.admin-card {
+  background: $color-white;
+  border: $border-width-base solid $color-border-light;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-base;
+  padding: $space-6;
+}
+
+.admin-error {
+  color: $color-danger;
+  border-color: $color-danger-light;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+  text-align: left;
+  padding: $space-3;
+  border-bottom: $border-width-base solid $color-divider;
+}
+
+.users-table th {
+  color: $color-text-secondary;
+  font-weight: $font-weight-semibold;
+}
+
+.empty-state {
+  margin: 0;
+  color: $color-text-secondary;
+}

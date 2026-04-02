@@ -15,5 +15,7 @@ namespace LifeHub.DTOs
         public string? FullName { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public string? Bio { get; set; }
+        public List<string> Roles { get; set; } = new();
+        public List<string> Claims { get; set; } = new();
     }
 }

@@ -71,6 +71,8 @@ namespace LifeHub.Controllers
             if (!passwordCorrect)
                 return Unauthorized(new AuthResponseDto { Success = false, Message = "Email o contraseña incorrectos" });
 
+            var roles = await _userManager.GetRolesAsync(user);
+            var userClaims = await _userManager.GetClaimsAsync(user);
             var token = GenerateJwtToken(user);
 
             var response = new AuthResponseDto
@@ -84,7 +86,9 @@ namespace LifeHub.Controllers
                     Email = user.Email!,
                     FullName = user.FullName,
                     ProfilePictureUrl = user.ProfilePictureUrl,
-                    Bio = user.Bio
+                    Bio = user.Bio,
+                    Roles = roles.ToList(),
+                    Claims = userClaims.Select(c => $"{c.Type}:{c.Value}").ToList()
                 }
             };
 
@@ -102,6 +106,15 @@ namespace LifeHub.Controllers
                 new Claim(JwtRegisteredClaimNames.Email, user.Email!),
                 new Claim("full_name", user.FullName ?? string.Empty)
             };
+
+            var roles = _userManager.GetRolesAsync(user).GetAwaiter().GetResult();
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var userClaims = _userManager.GetClaimsAsync(user).GetAwaiter().GetResult();
+            claims.AddRange(userClaims);
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],

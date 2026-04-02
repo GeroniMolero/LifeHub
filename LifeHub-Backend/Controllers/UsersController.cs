@@ -45,7 +45,22 @@ namespace LifeHub.Controllers
             if (user == null)
                 return UnauthorizedError("Sesión inválida. Inicia sesión de nuevo.");
 
-            return Ok(_mapper.Map<UserDto>(user));
+            return Ok(await MapUserDtoAsync(user));
+        }
+
+        [HttpGet]
+        [Authorize(Policy = "CanViewAdmin")]
+        public async Task<IActionResult> GetUsers()
+        {
+            var users = _userManager.Users.ToList();
+            var result = new List<UserDto>();
+
+            foreach (var user in users)
+            {
+                result.Add(await MapUserDtoAsync(user));
+            }
+
+            return Ok(result);
         }
 
         [HttpPut("me")]
@@ -93,6 +108,18 @@ namespace LifeHub.Controllers
                 return BadRequestError("No se pudo cambiar la contraseña. Revisa tus credenciales.");
 
             return Ok(new { message = "Contraseña cambiada exitosamente" });
+        }
+
+        private async Task<UserDto> MapUserDtoAsync(ApplicationUser user)
+        {
+            var dto = _mapper.Map<UserDto>(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var claims = await _userManager.GetClaimsAsync(user);
+
+            dto.Roles = roles.ToList();
+            dto.Claims = claims.Select(c => $"{c.Type}:{c.Value}").ToList();
+
+            return dto;
         }
     }
 

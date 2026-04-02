@@ -1,0 +1,32 @@
+<section class="admin-page">
+  <header class="admin-header">
+    <h1>Administracion</h1>
+    <p>Listado de usuarios de la plataforma.</p>
+  </header>
+
+  <div class="admin-card" *ngIf="loading">Cargando usuarios...</div>
+  <div class="admin-card admin-error" *ngIf="!loading && error">{{ error }}</div>
+
+  <div class="admin-card" *ngIf="!loading && !error">
+    <table class="users-table" *ngIf="users.length > 0; else emptyState">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Roles</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>{{ user.fullName || 'Sin nombre' }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ (user.roles?.length ? user.roles?.join(', ') : 'User') }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #emptyState>
+      <p class="empty-state">No hay usuarios para mostrar.</p>
+    </ng-template>
+  </div>
+</section>
