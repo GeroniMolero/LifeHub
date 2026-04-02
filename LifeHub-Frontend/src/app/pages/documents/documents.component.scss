@@ -1,43 +1,45 @@
+@use '../../../styles/design-tokens' as *;
+
 .documents-list {
   display: grid;
-  gap: 1.5rem;
-  margin-top: 2rem;
+  gap: $space-6;
+  margin-top: $space-8;
 }
 
 .document-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
+  background: $color-white;
+  padding: $space-6;
+  border-radius: $border-radius-lg;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .document-card h3 {
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
+  color: $color-text-heading;
+  margin-bottom: $space-2;
 }
 
 .document-type {
-  font-size: 0.875rem;
-  color: #7f8c8d;
-  margin-bottom: 0.5rem;
+  font-size: $font-size-sm;
+  color: $color-secondary-hover;
+  margin-bottom: $space-2;
 }
 
 .document-description {
-  margin: 0.5rem 0;
+  margin: $space-2 0;
 }
 
 .document-actions {
-  margin-top: 1rem;
+  margin-top: $space-4;
 }
 
 .document-actions button {
-  margin-right: 0.5rem;
+  margin-right: $space-2;
 }
 
 .create-form,
 .edit-form {
-  max-width: 800px;
-  margin: 1.5rem 0;
+  max-width: $form-max-width;
+  margin: $space-6 0;
 }
 
 .create-form input,
@@ -45,9 +47,9 @@
 .edit-form input,
 .edit-form textarea {
   width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: $space-3;
+  margin-bottom: $space-4;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
   font-family: inherit;
 }

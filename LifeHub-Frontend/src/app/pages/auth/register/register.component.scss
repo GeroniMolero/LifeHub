@@ -1,3 +1,5 @@
+@use '../../../../styles/design-tokens' as *;
+
 .register-container {
   display: flex;
   justify-content: center;
@@ -7,70 +9,70 @@
 
 .register-card {
   width: 100%;
-  max-width: 450px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: $card-width-md;
+  padding: $space-8;
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-md;
 }
 
 .register-card h1 {
   text-align: center;
-  margin-bottom: 2rem;
-  color: #2c3e50;
+  margin-bottom: $space-8;
+  color: $color-text-heading;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: $space-6;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
+  margin-bottom: $space-2;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: $space-3;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  font-size: $font-size-base;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: $color-primary;
   box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
 }
 
 .form-group input.is-invalid {
-  border-color: #e74c3c;
+  border-color: $color-danger;
 }
 
 .error-message {
-  color: #e74c3c;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+  color: $color-danger;
+  font-size: $font-size-sm;
+  margin-top: $space-1;
 }
 
 .btn-full {
   width: 100%;
-  padding: 0.75rem;
-  margin-top: 1rem;
+  padding: $space-3;
+  margin-top: $space-4;
 }
 
 .login-link {
   text-align: center;
-  margin-top: 1.5rem;
+  margin-top: $space-6;
   font-size: 0.95rem;
 }
 
 .login-link a {
-  color: #3498db;
+  color: $color-link;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
 }
 
 .login-link a:hover {

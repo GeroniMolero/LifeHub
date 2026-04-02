@@ -1,0 +1,290 @@
+// ============================================================
+// DESIGN TOKENS - GUÍA DE ESTILOS
+// ============================================================
+// Este archivo centraliza todos los valores de color, tipografía,
+// espaciado y otros valores que se reutilizan en la aplicación.
+// Importarlo en los componentes para mantener consistencia visual.
+// ============================================================
+
+// -----------------------------------------------------------
+// PALETA DE COLORES
+// -----------------------------------------------------------
+
+// Colores primarios
+$color-primary: #3498db;
+$color-primary-hover: #2980b9;
+$color-primary-dark: #1e5f9e;
+$color-primary-light: #5dade2;
+
+// Colores secundarios
+$color-secondary: #95a5a6;
+$color-secondary-hover: #7f8c8d;
+$color-secondary-dark: #5d6d7b;
+$color-secondary-light: #bdc3c7;
+
+// Colores de estado
+$color-success: #27ae60;
+$color-success-hover: #229954;
+$color-success-light: #d4edda;
+$color-success-text: #155724;
+
+$color-warning: #f39c12;
+$color-warning-hover: #d68910;
+$color-warning-light: #fff3cd;
+$color-warning-text: #856404;
+
+$color-danger: #e74c3c;
+$color-danger-hover: #c0392b;
+$color-danger-light: #f8d7da;
+$color-danger-text: #721c24;
+
+$color-info: #3498db;
+$color-info-light: #d1ecf1;
+$color-info-text: #0c5460;
+
+// Colores neutros
+$color-white: #ffffff;
+$color-black: #000000;
+$color-text-primary: #333333;
+$color-text-secondary: #666666;
+$color-text-disabled: #999999;
+$color-background: #f5f5f5;
+$color-background-alt: #fafafa;
+$color-border: #ddd;
+$color-border-light: #eeeeee;
+$color-divider: #e8e8e8;
+
+// Colores de marca (LifeHub)
+$color-brand-900: #12343b;
+$color-brand-700: #1f7a8c;
+$color-brand-300: #8ecae6;
+$color-brand-050: #f4f7f8;
+$color-brand-100: #edf2f4;
+
+// Colores UI adicionales
+$color-slate-900: #0f172a;
+$color-slate-700: #334155;
+$color-slate-600: #475569;
+$color-slate-500: #64748b;
+$color-slate-400: #94a3b8;
+$color-slate-100: #f1f5f9;
+$color-text-heading: #2c3e50;
+$color-link: $color-primary;
+$color-link-hover: $color-primary-hover;
+
+// Capas/transparencias usadas en layout
+$color-brand-border-soft: rgba(18, 52, 59, 0.08);
+$color-brand-border-medium: rgba(18, 52, 59, 0.12);
+$color-white-soft-border: rgba(255, 255, 255, 0.08);
+$color-brand-overlay-strong: rgba(15, 23, 42, 0.4);
+$color-brand-surface-glass: rgba(244, 247, 248, 0.82);
+$color-brand-shadow-soft: rgba(18, 52, 59, 0.08);
+$color-brand-shadow-strong: rgba(15, 23, 42, 0.12);
+$color-brand-accent-soft: rgba(142, 202, 230, 0.14);
+$color-brand-accent-medium: rgba(142, 202, 230, 0.18);
+$color-sidebar-text: #f8fafc;
+$color-sidebar-link: #dbe4ea;
+$color-sidebar-icon-bg: rgba(255, 255, 255, 0.06);
+
+// Espaciados/tamaños de layout específicos
+$space-layout-sidebar-y: 1.35rem;
+$space-layout-sidebar-gap: 1.6rem;
+$space-header-kicker: 0.8rem;
+$space-menu-item-y: 0.8rem;
+$space-menu-item-x: 0.85rem;
+
+// Colores de overlay
+$color-overlay-light: rgba(0, 0, 0, 0.5);
+$color-overlay-dark: rgba(0, 0, 0, 0.8);
+
+// -----------------------------------------------------------
+// TIPOGRAFÍA
+// -----------------------------------------------------------
+
+// Font family
+$font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+$font-family-mono: 'Courier New', Courier, monospace;
+
+// Font sizes
+$font-size-xs: 0.75rem;    // 12px
+$font-size-sm: 0.875rem;   // 14px
+$font-size-base: 1rem;     // 16px
+$font-size-lg: 1.125rem;   // 18px
+$font-size-xl: 1.25rem;    // 20px
+$font-size-2xl: 1.5rem;    // 24px
+$font-size-3xl: 2rem;      // 32px
+
+// Font weights
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Line heights
+$line-height-tight: 1.2;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// -----------------------------------------------------------
+// ESPACIADO (Escala 4px)
+// -----------------------------------------------------------
+
+$space-0: 0;
+$space-1: 0.25rem;   // 4px
+$space-2: 0.5rem;    // 8px
+$space-3: 0.75rem;   // 12px
+$space-4: 1rem;      // 16px
+$space-5: 1.25rem;   // 20px
+$space-6: 1.5rem;    // 24px
+$space-8: 2rem;      // 32px
+$space-10: 2.5rem;   // 40px
+$space-12: 3rem;     // 48px
+$space-16: 4rem;     // 64px
+
+// Aliases comunes
+$spacing-xs: $space-2;
+$spacing-sm: $space-3;
+$spacing-md: $space-4;
+$spacing-lg: $space-6;
+$spacing-xl: $space-8;
+$spacing-2xl: $space-12;
+
+// -----------------------------------------------------------
+// TAMAÑOS
+// -----------------------------------------------------------
+
+// Ancho máximo de contenedor
+$container-max-width: 1200px;
+$container-padding: $space-4;
+
+// Sidebar
+$sidebar-width-desktop: 240px;
+$sidebar-width-mobile: 280px;
+$sidebar-width-collapsed: 80px;
+
+// Header
+$header-height: 60px;
+$card-width-sm: 400px;
+$card-width-md: 450px;
+$card-width-lg: 600px;
+$form-max-width: 800px;
+
+// -----------------------------------------------------------
+// BORDES Y ESQUINAS
+// -----------------------------------------------------------
+
+// Border radius
+$border-radius-none: 0;
+$border-radius-sm: 2px;
+$border-radius-base: 4px;
+$border-radius-md: 6px;
+$border-radius-lg: 8px;
+$border-radius-xl: 12px;
+$border-radius-2xl: 16px;
+$border-radius-full: 9999px;
+
+// Border widths
+$border-width-thin: 1px;
+$border-width-base: 1px;
+$border-width-thick: 2px;
+
+// -----------------------------------------------------------
+// SOMBRAS
+// -----------------------------------------------------------
+
+$shadow-none: none;
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-base: 0 2px 8px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+$shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.25);
+$shadow-brand-soft: 0 12px 30px $color-brand-shadow-soft;
+$shadow-brand-menu: 0 18px 45px $color-brand-shadow-strong;
+
+// -----------------------------------------------------------
+// TRANSICIONES Y ANIMACIONES
+// -----------------------------------------------------------
+
+$transition-fast: 150ms ease-in-out;
+$transition-base: 300ms ease-in-out;
+$transition-slow: 500ms ease-in-out;
+
+$easing-ease-in: ease-in;
+$easing-ease-out: ease-out;
+$easing-ease-in-out: ease-in-out;
+$easing-linear: linear;
+
+// -----------------------------------------------------------
+// BREAKPOINTS (Puntos de quiebre responsivos)
+// -----------------------------------------------------------
+
+$breakpoint-xs: 0;
+$breakpoint-sm: 640px;
+$breakpoint-md: 960px;
+$breakpoint-lg: 1200px;
+$breakpoint-xl: 1440px;
+
+// -----------------------------------------------------------
+// Z-INDEX (Capas de apilamiento)
+// -----------------------------------------------------------
+
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+
+// -----------------------------------------------------------
+// MIXINS ÚTILES
+// -----------------------------------------------------------
+
+// Mixin para media queries responsive
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'sm' {
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
+  } @else if $breakpoint == 'md' {
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
+  } @else if $breakpoint == 'lg' {
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
+  } @else if $breakpoint == 'xl' {
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+}
+
+// Mixin para truncar texto
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Mixin para flexbox centrado
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Mixin para resetear lista
+@mixin list-reset {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+// Mixin para enfoque accesible
+@mixin focus-ring {
+  outline: 2px solid $color-primary;
+  outline-offset: 2px;
+}

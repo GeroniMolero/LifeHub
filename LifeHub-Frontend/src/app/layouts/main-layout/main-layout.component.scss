@@ -1,0 +1,45 @@
+@use '../../../styles/design-tokens' as *;
+
+.layout-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: $sidebar-width-desktop 1fr;
+  background:
+    radial-gradient(circle at top left, rgba(31, 122, 140, 0.12), transparent 28%),
+    linear-gradient(180deg, $color-brand-050 0%, $color-brand-100 100%);
+}
+
+.layout-main-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content {
+  padding: $space-6;
+}
+
+.layout-overlay {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .layout-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .layout-overlay {
+    display: block;
+  }
+
+  .layout-overlay {
+    position: fixed;
+    inset: 0;
+    background: $color-brand-overlay-strong;
+    z-index: 10;
+  }
+
+  .layout-content {
+    padding: $space-4;
+  }
+}

@@ -1,3 +1,11 @@
+// Importar design tokens (guía de estilos centralizada)
+@use 'sass:color';
+@use 'styles/design-tokens' as *;
+
+// ============================================================
+// ESTILOS GLOBALES
+// ============================================================
+
 * {
   margin: 0;
   padding: 0;
@@ -6,109 +14,163 @@
 
 html, body {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
-  color: #333;
-  background-color: #f5f5f5;
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  line-height: $line-height-normal;
+  color: $color-text-primary;
+  background-color: $color-background;
 }
 
 /* Estilos globales */
 button {
-  padding: 0.5rem 1rem;
+  padding: $space-2 $space-4;
   border: none;
-  border-radius: 4px;
+  border-radius: $border-radius-base;
   cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  font-size: $font-size-base;
+  transition: all $transition-base;
+  font-weight: $font-weight-medium;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
-button:hover {
+button:hover:not(:disabled) {
   opacity: 0.9;
 }
 
 input, textarea {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: $space-2;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  font-size: $font-size-base;
   font-family: inherit;
-}
+  transition: border-color $transition-fast, box-shadow $transition-fast;
 
-input:focus, textarea:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 5px rgba($color-primary, 0.3);
+  }
 }
 
 .container {
-  max-width: 1200px;
+  max-width: $container-max-width;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 $container-padding;
 }
+
+// ============================================================
+// BOTONES
+// ============================================================
 
 .btn-primary {
-  background-color: #3498db;
-  color: white;
-}
+  background-color: $color-primary;
+  color: $color-white;
 
-.btn-primary:hover {
-  background-color: #2980b9;
+  &:hover:not(:disabled) {
+    background-color: $color-primary-hover;
+  }
+
+  &:active {
+    background-color: $color-primary-dark;
+  }
 }
 
 .btn-secondary {
-  background-color: #95a5a6;
-  color: white;
-}
+  background-color: $color-secondary;
+  color: $color-white;
 
-.btn-secondary:hover {
-  background-color: #7f8c8d;
+  &:hover:not(:disabled) {
+    background-color: $color-secondary-hover;
+  }
+
+  &:active {
+    background-color: $color-secondary-dark;
+  }
 }
 
 .btn-success {
-  background-color: #27ae60;
-  color: white;
-}
+  background-color: $color-success;
+  color: $color-white;
 
-.btn-success:hover {
-  background-color: #229954;
+  &:hover:not(:disabled) {
+    background-color: $color-success-hover;
+  }
 }
 
 .btn-danger {
-  background-color: #e74c3c;
-  color: white;
+  background-color: $color-danger;
+  color: $color-white;
+
+  &:hover:not(:disabled) {
+    background-color: $color-danger-hover;
+  }
 }
 
-.btn-danger:hover {
-  background-color: #c0392b;
+.btn-warning {
+  background-color: $color-warning;
+  color: $color-white;
+
+  &:hover:not(:disabled) {
+    background-color: $color-warning-hover;
+  }
 }
+
+// ============================================================
+// TARJETAS Y CONTENEDORES
+// ============================================================
 
 .card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-base;
+  padding: $spacing-lg;
+  margin-bottom: $space-4;
+  transition: box-shadow $transition-base;
+
+  &:hover {
+    box-shadow: $shadow-md;
+  }
 }
 
+// ============================================================
+// ALERTAS
+// ============================================================
+
 .alert {
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  padding: $space-4;
+  border-radius: $border-radius-base;
+  margin-bottom: $space-4;
+  border: $border-width-base solid transparent;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
 }
 
 .alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background-color: $color-success-light;
+  color: $color-success-text;
+  border-color: color.adjust($color-success-light, $lightness: -10%);
 }
 
-.alert-error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+.alert-error,
+.alert-danger {
+  background-color: $color-danger-light;
+  color: $color-danger-text;
+  border-color: color.adjust($color-danger-light, $lightness: -10%);
+}
+
+.alert-warning {
+  background-color: $color-warning-light;
+  color: $color-warning-text;
+  border-color: color.adjust($color-warning-light, $lightness: -10%);
 }
 
 .alert-info {
-  background-color: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
+  background-color: $color-info-light;
+  color: $color-info-text;
+  border-color: color.adjust($color-info-light, $lightness: -10%);
 }

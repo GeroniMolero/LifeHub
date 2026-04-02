@@ -1,0 +1,28 @@
+<header class="layout-header">
+  <div class="header-left">
+    <button class="sidebar-toggle" type="button" (click)="onToggleSidebar()" aria-label="Abrir menu lateral">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div>
+      <p class="header-kicker">Panel principal</p>
+      <h1>LifeHub</h1>
+    </div>
+  </div>
+
+  <div class="header-right" *ngIf="currentUser">
+    <button class="profile-trigger" type="button" (click)="onToggleProfileMenu()">
+      <span class="profile-avatar">{{ (currentUser.fullName || currentUser.email || 'U').charAt(0) | uppercase }}</span>
+      <span class="profile-copy">
+        <strong>{{ currentUser.fullName || 'Usuario' }}</strong>
+        <small>{{ currentUser.email }}</small>
+      </span>
+    </button>
+
+    <div class="profile-menu" *ngIf="isProfileMenuOpen">
+      <a routerLink="/profile" (click)="onNavigateProfile()">Mi perfil</a>
+      <button type="button" (click)="onLogout()">Cerrar sesion</button>
+    </div>
+  </div>
+</header>

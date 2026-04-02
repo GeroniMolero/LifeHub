@@ -1,0 +1,32 @@
+<aside class="layout-sidebar" [class.layout-sidebar-open]="isOpen">
+  <div class="sidebar-brand">
+    <button class="brand-link" type="button" routerLink="/spaces" (click)="close()">
+      <span class="brand-mark">LH</span>
+      <span>
+        <strong>LifeHub</strong>
+        <small>Workspace creativo</small>
+      </span>
+    </button>
+    <button class="sidebar-close" type="button" (click)="close()" aria-label="Cerrar menu">
+      x
+    </button>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Navegacion principal">
+    <a
+      *ngFor="let item of navigationItems"
+      class="nav-link"
+      [routerLink]="item.route"
+      routerLinkActive="nav-link-active"
+      [routerLinkActiveOptions]="{ exact: item.route === '/home' }"
+      (click)="close()"
+    >
+      <span class="nav-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path [attr.d]="item.iconPath"></path>
+        </svg>
+      </span>
+      <span class="nav-label">{{ item.label }}</span>
+    </a>
+  </nav>
+</aside>

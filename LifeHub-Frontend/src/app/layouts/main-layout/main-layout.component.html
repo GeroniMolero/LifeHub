@@ -1,0 +1,13 @@
+<div class="layout-shell">
+  <app-layout-sidebar [isOpen]="isSidebarOpen" (closeSidebar)="closeSidebar()"></app-layout-sidebar>
+
+  <div class="layout-overlay" *ngIf="isSidebarOpen" (click)="closeSidebar()"></div>
+
+  <div class="layout-main-column">
+    <app-layout-header [currentUser]="currentUser" (toggleSidebar)="toggleSidebar()" (logout)="logout()"></app-layout-header>
+
+    <main class="layout-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

@@ -1,44 +1,46 @@
+@use '../../../styles/design-tokens' as *;
+
 .profile-container {
-  max-width: 600px;
+  max-width: $card-width-lg;
   margin: 0 auto;
 }
 
 .profile-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  background: $color-white;
+  padding: $space-8;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-base;
+  margin-bottom: $space-8;
 }
 
 .profile-card h2 {
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
+  color: $color-text-heading;
+  margin-bottom: $space-6;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: $space-6;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  margin-bottom: $space-2;
+  font-weight: $font-weight-medium;
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: $space-3;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  font-size: $font-size-base;
   font-family: inherit;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: $color-primary;
   box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
 }
