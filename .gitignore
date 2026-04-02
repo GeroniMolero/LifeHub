@@ -98,6 +98,36 @@ tokens/
 docker-compose.override.yml
 
 #######################
+# Local diagnostics artifacts
+#######################
+compose_ps.txt
+docker_ps.txt
+dev_up_out.txt
+dev_up_exit.txt
+restart_backend_out.txt
+diag_convert_ok.txt
+diag_permissions_exit.txt
+diag_permissions_out.txt
+diag_permissions_out_utf8.txt
+container_grep_docdto.txt
+container_grep_docdto_exit.txt
+container_grep_docdto_utf8.txt
+frontend_build_container_exit.txt
+frontend_build_container_out.txt
+frontend_compose_build_exit.txt
+frontend_compose_build_out.txt
+smoke_backend_exit.txt
+smoke_backend_result.txt
+smoke_permissions_exit.txt
+smoke_permissions_exit_latest.txt
+smoke_permissions_result.txt
+smoke_permissions_result_latest.txt
+smoke_permissions_result_readable.txt
+smoke_permissions_result_utf8.txt
+LifeHub-Frontend/npm_ci_out.txt
+LifeHub-Frontend/npm_ci_exit.txt
+
+#######################
 # Sistema operativo
 #######################
 .DS_Store
