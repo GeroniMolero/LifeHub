@@ -1,4 +1,4 @@
-@use '../../../styles/design-tokens' as *;
+@use '../../../../styles/design-tokens' as *;
 
 .documents-list {
   display: grid;
@@ -52,4 +52,35 @@
   border: $border-width-base solid $color-border;
   border-radius: $border-radius-base;
   font-family: inherit;
+}
+
+.publication-panel {
+  margin-top: $space-6;
+  border-top: $border-width-base solid $color-divider;
+  padding-top: $space-4;
+}
+
+.publish-toggle {
+  display: inline-flex;
+  gap: $space-2;
+  align-items: center;
+  margin-bottom: $space-4;
+}
+
+.publication-actions {
+  display: flex;
+  gap: $space-3;
+  margin-top: $space-2;
+}
+
+.publication-message {
+  margin-top: $space-3;
+  color: $color-text-secondary;
+}
+
+.public-link {
+  margin-top: $space-3;
+  display: flex;
+  gap: $space-3;
+  align-items: center;
 }

@@ -16,6 +16,10 @@ export class CreativeSpaceService {
     return this.http.get<CreativeSpace[]>(this.apiUrl);
   }
 
+  getSpace(id: number): Observable<CreativeSpace> {
+    return this.http.get<CreativeSpace>(`${this.apiUrl}/${id}`);
+  }
+
   createSpace(data: CreateCreativeSpaceRequest): Observable<CreativeSpace> {
     return this.http.post<CreativeSpace>(this.apiUrl, data);
   }

@@ -1,0 +1,78 @@
+<div class="spaces-container">
+  <div class="header-row">
+    <div>
+      <h1>Espacios creativos</h1>
+      <p>Organiza tus ideas en espacios privados o compartidos.</p>
+    </div>
+    <button class="btn-primary" (click)="toggleCreate()">{{ showCreate ? 'Cancelar' : 'Nuevo espacio' }}</button>
+  </div>
+
+  <div *ngIf="showCreate" class="card form-card">
+    <h2>Crear espacio</h2>
+    <form [formGroup]="createForm" (ngSubmit)="createSpace()">
+      <label>Nombre</label>
+      <input type="text" formControlName="name" />
+
+      <label>Descripción</label>
+      <textarea rows="3" formControlName="description"></textarea>
+
+      <label>Privacidad</label>
+      <select formControlName="privacy">
+        <option [value]="SpacePrivacy.Private">Privado</option>
+        <option [value]="SpacePrivacy.Shared">Compartido</option>
+      </select>
+
+      <label class="checkbox">
+        <input type="checkbox" formControlName="isPublicProfileVisible" />
+        Visible en perfil público
+      </label>
+
+      <button class="btn-primary" type="submit" [disabled]="createForm.invalid || loading">Crear</button>
+    </form>
+  </div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="loading" class="loading">Cargando...</div>
+
+  <div *ngIf="!loading && spaces.length === 0" class="empty">
+    Aún no tienes espacios creativos.
+  </div>
+
+  <div class="grid" *ngIf="!loading && spaces.length > 0">
+    <article class="card" *ngFor="let space of spaces">
+      <h3>{{ space.name }}</h3>
+      <p>{{ space.description || 'Sin descripción' }}</p>
+      <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>
+
+      <div class="actions">
+        <button class="btn-secondary" (click)="startEdit(space)">Editar</button>
+        <button class="btn-danger" (click)="deleteSpace(space.id)">Eliminar</button>
+        <a class="btn-primary" [routerLink]="['/spaces', space.id]">Abrir espacio</a>
+      </div>
+
+      <form *ngIf="editingId === space.id" [formGroup]="editForm" (ngSubmit)="saveEdit(space.id)" class="edit-form">
+        <label>Nombre</label>
+        <input type="text" formControlName="name" />
+
+        <label>Descripción</label>
+        <textarea rows="3" formControlName="description"></textarea>
+
+        <label>Privacidad</label>
+        <select formControlName="privacy">
+          <option [value]="SpacePrivacy.Private">Privado</option>
+          <option [value]="SpacePrivacy.Shared">Compartido</option>
+        </select>
+
+        <label class="checkbox">
+          <input type="checkbox" formControlName="isPublicProfileVisible" />
+          Visible en perfil público
+        </label>
+
+        <div class="actions">
+          <button class="btn-primary" type="submit" [disabled]="editForm.invalid || loading">Guardar</button>
+          <button class="btn-secondary" type="button" (click)="cancelEdit()">Cancelar</button>
+        </div>
+      </form>
+    </article>
+  </div>
+</div>

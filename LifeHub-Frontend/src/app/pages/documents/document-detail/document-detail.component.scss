@@ -1,0 +1,89 @@
+@use '../../../../styles/design-tokens' as *;
+
+.document-detail-container {
+  display: grid;
+  gap: $space-6;
+}
+
+.detail-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-3;
+  flex-wrap: wrap;
+}
+
+.detail-toolbar-actions {
+  display: flex;
+  gap: $space-3;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.detail-meta {
+  display: flex;
+  gap: $space-3;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: $space-4 $space-6;
+  color: $color-text-secondary;
+}
+
+.detail-meta span {
+  background: $color-brand-050;
+  border: $border-width-base solid $color-divider;
+  border-radius: $border-radius-full;
+  padding: $space-2 $space-3;
+}
+
+.detail-section {
+  padding: $space-6;
+}
+
+.detail-section input,
+.detail-section textarea {
+  width: 100%;
+  padding: $space-3;
+  margin-bottom: $space-4;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  font-family: inherit;
+}
+
+.detail-actions,
+.publication-actions,
+.public-link,
+.version-create {
+  display: flex;
+  gap: $space-3;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.publish-toggle {
+  display: inline-flex;
+  gap: $space-2;
+  align-items: center;
+  margin-bottom: $space-4;
+}
+
+.versions-list {
+  display: grid;
+  gap: $space-3;
+  margin-top: $space-4;
+}
+
+.version-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $space-3;
+  padding: $space-4;
+  border: $border-width-base solid $color-divider;
+  border-radius: $border-radius-base;
+}
+
+.publication-message,
+.error-message {
+  color: $color-text-secondary;
+}

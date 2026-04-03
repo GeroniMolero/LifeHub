@@ -4,6 +4,49 @@
     <p>Listado de usuarios de la plataforma.</p>
   </header>
 
+  <div class="admin-card">
+    <h2>Webs permitidas para embeds</h2>
+    <p class="section-description">Gestiona los dominios desde los que se permiten recursos embebidos.</p>
+
+    <form class="website-form" [formGroup]="websiteForm" (ngSubmit)="createWebsite()">
+      <input type="text" formControlName="domain" placeholder="ejemplo: youtube.com" />
+      <label class="check-row">
+        <input type="checkbox" formControlName="isActive" />
+        Activa
+      </label>
+      <button type="submit" [disabled]="websiteForm.invalid || websitesLoading">Agregar dominio</button>
+    </form>
+
+    <div class="admin-error" *ngIf="websitesError">{{ websitesError }}</div>
+    <div *ngIf="websitesLoading" class="loading-note">Cargando dominios...</div>
+
+    <table class="users-table" *ngIf="!websitesLoading && allowedWebsites.length > 0">
+      <thead>
+        <tr>
+          <th>Dominio</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let website of allowedWebsites">
+          <td>{{ website.domain }}</td>
+          <td>{{ website.isActive ? 'Activa' : 'Inactiva' }}</td>
+          <td class="actions">
+            <button type="button" (click)="toggleWebsite(website)">
+              {{ website.isActive ? 'Desactivar' : 'Activar' }}
+            </button>
+            <button type="button" class="danger" (click)="deleteWebsite(website.id)">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="empty-state" *ngIf="!websitesLoading && allowedWebsites.length === 0">
+      No hay dominios permitidos todavía.
+    </p>
+  </div>
+
   <div class="admin-card" *ngIf="loading">Cargando usuarios...</div>
   <div class="admin-card admin-error" *ngIf="!loading && error">{{ error }}</div>
 

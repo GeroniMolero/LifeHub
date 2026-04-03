@@ -1,0 +1,41 @@
+.home-container {
+  text-align: center;
+}
+
+h1 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.feature-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card h3 {
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.feature-card a {
+  display: inline-block;
+  margin-top: 1rem;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  background-color: #3498db;
+  color: white;
+  border-radius: 4px;
+}
+
+.feature-card a:hover {
+  background-color: #2980b9;
+}

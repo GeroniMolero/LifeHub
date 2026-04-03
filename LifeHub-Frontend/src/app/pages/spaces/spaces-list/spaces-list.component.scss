@@ -1,0 +1,15 @@
+.spaces-container { max-width: 980px; margin: 0 auto; }
+.header-row { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; }
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.card { border: 1px solid #e3e3e3; border-radius: 12px; padding: 1rem; background: #fff; }
+.form-card form, .edit-form { display: grid; gap: 0.5rem; }
+input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+.checkbox { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem; }
+.checkbox input { width: auto; }
+.actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+.btn-primary, .btn-secondary, .btn-danger { border: 0; border-radius: 6px; padding: 0.45rem 0.75rem; cursor: pointer; text-decoration: none; }
+.btn-primary { background: #1f7a8c; color: #fff; }
+.btn-secondary { background: #e5e7eb; color: #111827; }
+.btn-danger { background: #b91c1c; color: #fff; }
+.error { color: #b91c1c; margin: 0.5rem 0; }
+.loading, .empty { margin: 0.75rem 0; color: #374151; }

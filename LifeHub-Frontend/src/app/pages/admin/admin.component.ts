@@ -1,24 +1,89 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/auth.model';
+import { AllowedWebsiteService } from '../../services/allowed-website.service';
+import { AllowedWebsite } from '../../models/allowed-website.model';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent implements OnInit {
   users: User[] = [];
+  allowedWebsites: AllowedWebsite[] = [];
+
   loading = false;
   error = '';
+  websitesLoading = false;
+  websitesError = '';
 
-  constructor(private userService: UserService) {}
+  websiteForm = this.fb.group({
+    domain: ['', Validators.required],
+    isActive: [true, Validators.required]
+  });
+
+  constructor(
+    private fb: FormBuilder,
+    private userService: UserService,
+    private allowedWebsiteService: AllowedWebsiteService
+  ) {}
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadAllowedWebsites();
+  }
+
+  createWebsite(): void {
+    if (this.websiteForm.invalid) return;
+
+    this.websitesLoading = true;
+    this.websitesError = '';
+
+    this.allowedWebsiteService.createAllowedWebsite({
+      domain: this.websiteForm.value.domain || '',
+      isActive: Boolean(this.websiteForm.value.isActive)
+    }).subscribe({
+      next: website => {
+        this.allowedWebsites = [...this.allowedWebsites, website].sort((a, b) => a.domain.localeCompare(b.domain));
+        this.websiteForm.reset({ domain: '', isActive: true });
+        this.websitesLoading = false;
+      },
+      error: err => {
+        this.websitesError = err?.error?.message || 'No se pudo crear el dominio permitido.';
+        this.websitesLoading = false;
+      }
+    });
+  }
+
+  toggleWebsite(website: AllowedWebsite): void {
+    this.websitesError = '';
+    this.allowedWebsiteService.updateAllowedWebsite(website.id, !website.isActive).subscribe({
+      next: updated => {
+        this.allowedWebsites = this.allowedWebsites.map(item => item.id === updated.id ? updated : item);
+      },
+      error: err => {
+        this.websitesError = err?.error?.message || 'No se pudo actualizar el dominio.';
+      }
+    });
+  }
+
+  deleteWebsite(websiteId: number): void {
+    if (!confirm('¿Seguro que quieres eliminar este dominio permitido?')) return;
+
+    this.websitesError = '';
+    this.allowedWebsiteService.deleteAllowedWebsite(websiteId).subscribe({
+      next: () => {
+        this.allowedWebsites = this.allowedWebsites.filter(item => item.id !== websiteId);
+      },
+      error: err => {
+        this.websitesError = err?.error?.message || 'No se pudo eliminar el dominio.';
+      }
+    });
   }
 
   private loadUsers(): void {
@@ -33,6 +98,22 @@ export class AdminComponent implements OnInit {
       error: err => {
         this.error = err?.error?.message || 'No se pudo cargar el listado de usuarios.';
         this.loading = false;
+      }
+    });
+  }
+
+  private loadAllowedWebsites(): void {
+    this.websitesLoading = true;
+    this.websitesError = '';
+
+    this.allowedWebsiteService.getAllowedWebsites().subscribe({
+      next: websites => {
+        this.allowedWebsites = websites;
+        this.websitesLoading = false;
+      },
+      error: err => {
+        this.websitesError = err?.error?.message || 'No se pudo cargar la allowlist de dominios.';
+        this.websitesLoading = false;
       }
     });
   }

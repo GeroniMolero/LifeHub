@@ -6,6 +6,8 @@ export interface Document {
   description: string;
   content: string;
   type: DocumentType;
+  isPublic?: boolean;
+  publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

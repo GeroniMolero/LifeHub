@@ -15,6 +15,11 @@
   color: $color-text-secondary;
 }
 
+.section-description {
+  margin: 0 0 $space-4;
+  color: $color-text-secondary;
+}
+
 .admin-card {
   background: $color-white;
   border: $border-width-base solid $color-border-light;
@@ -26,6 +31,52 @@
 .admin-error {
   color: $color-danger;
   border-color: $color-danger-light;
+}
+
+.website-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+  align-items: center;
+  margin-bottom: $space-4;
+}
+
+.website-form input[type='text'] {
+  min-width: 280px;
+  padding: $space-2 $space-3;
+  border: $border-width-base solid $color-border-light;
+  border-radius: $border-radius-md;
+}
+
+.website-form button,
+.actions button {
+  border: 0;
+  border-radius: $border-radius-md;
+  padding: $space-2 $space-3;
+  cursor: pointer;
+  background: $color-info;
+  color: $color-white;
+}
+
+.actions {
+  display: flex;
+  gap: $space-2;
+}
+
+.actions button.danger {
+  background: $color-danger;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  color: $color-text-secondary;
+}
+
+.loading-note {
+  color: $color-text-secondary;
+  margin-bottom: $space-3;
 }
 
 .users-table {
