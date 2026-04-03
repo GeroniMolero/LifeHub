@@ -45,7 +45,13 @@
       <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>
 
       <div class="actions">
+        <button class="btn-secondary" type="button" (click)="toggleFavorite(space.id)">
+          {{ isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito' }}
+        </button>
         <button class="btn-secondary" (click)="startEdit(space)">Editar</button>
+        <button class="btn-secondary" *ngIf="isOwner(space)" (click)="togglePermissions(space)">
+          {{ openPermissionsSpaceId === space.id ? 'Cerrar permisos' : 'Permisos' }}
+        </button>
         <button class="btn-danger" (click)="deleteSpace(space.id)">Eliminar</button>
         <a class="btn-primary" [routerLink]="['/spaces', space.id]">Abrir espacio</a>
       </div>
@@ -73,6 +79,52 @@
           <button class="btn-secondary" type="button" (click)="cancelEdit()">Cancelar</button>
         </div>
       </form>
+
+      <section class="permissions-panel" *ngIf="isOwner(space) && openPermissionsSpaceId === space.id">
+        <h4>Compartir espacio</h4>
+
+        <form [formGroup]="permissionForms[space.id]" (ngSubmit)="shareSpace(space)" class="permission-form">
+          <label>Amigo</label>
+          <select formControlName="userId" [disabled]="friendOptions.length === 0 || friendsLoading">
+            <option value="">Selecciona un amigo</option>
+            <option *ngFor="let friend of friendOptions" [value]="friend.id">
+              {{ friendOptionLabel(friend) }}
+            </option>
+          </select>
+
+          <label>Nivel</label>
+          <select formControlName="permissionLevel">
+            <option [value]="SpacePermissionLevel.Viewer">Lector</option>
+            <option [value]="SpacePermissionLevel.Editor">Editor</option>
+          </select>
+
+          <button class="btn-primary" type="submit" [disabled]="permissionForms[space.id].invalid || permissionLoadingBySpace[space.id]">
+            Compartir
+          </button>
+        </form>
+
+        <div class="loading" *ngIf="permissionLoadingBySpace[space.id]">Cargando permisos...</div>
+        <div class="loading" *ngIf="friendsLoading">Cargando amigos...</div>
+        <div class="error" *ngIf="friendsError">{{ friendsError }}</div>
+        <div class="empty" *ngIf="!friendsLoading && !friendsError && friendOptions.length === 0">
+          No tienes amigos aceptados para compartir este espacio.
+        </div>
+        <div class="error" *ngIf="permissionErrorBySpace[space.id]">{{ permissionErrorBySpace[space.id] }}</div>
+
+        <div class="permissions-list" *ngIf="(permissionsBySpace[space.id] || []).length > 0">
+          <article class="permission-item" *ngFor="let permission of permissionsBySpace[space.id]">
+            <div>
+              <strong>{{ permission.userId }}</strong>
+              <small>{{ permissionText(permission.permissionLevel) }} · {{ permission.createdAt | date:'short' }}</small>
+            </div>
+            <button class="btn-danger" type="button" (click)="removePermission(space, permission.userId)">Revocar</button>
+          </article>
+        </div>
+
+        <div class="empty" *ngIf="!permissionLoadingBySpace[space.id] && (permissionsBySpace[space.id] || []).length === 0">
+          Este espacio no está compartido con otros usuarios.
+        </div>
+      </section>
     </article>
   </div>
 </div>

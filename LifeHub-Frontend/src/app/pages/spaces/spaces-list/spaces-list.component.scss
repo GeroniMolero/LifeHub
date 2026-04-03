@@ -13,3 +13,41 @@ input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; 
 .btn-danger { background: #b91c1c; color: #fff; }
 .error { color: #b91c1c; margin: 0.5rem 0; }
 .loading, .empty { margin: 0.75rem 0; color: #374151; }
+
+.permissions-panel {
+	margin-top: 1rem;
+	padding-top: 1rem;
+	border-top: 1px solid #e5e7eb;
+	display: grid;
+	gap: 0.75rem;
+}
+
+.permissions-panel h4 {
+	margin: 0;
+	color: #111827;
+}
+
+.permission-form {
+	display: grid;
+	gap: 0.5rem;
+}
+
+.permissions-list {
+	display: grid;
+	gap: 0.5rem;
+}
+
+.permission-item {
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 0.6rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.permission-item small {
+	display: block;
+	color: #6b7280;
+}
