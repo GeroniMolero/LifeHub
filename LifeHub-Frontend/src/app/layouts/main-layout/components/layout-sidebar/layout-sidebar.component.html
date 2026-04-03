@@ -29,4 +29,19 @@
       <span class="nav-label">{{ item.label }}</span>
     </a>
   </nav>
+
+  <div class="sidebar-footer" *ngIf="currentUser">
+    <a class="sidebar-profile-card" routerLink="/profile" (click)="close()">
+      <span class="sidebar-profile-avatar">{{ (currentUser.fullName || currentUser.email || 'U').charAt(0) | uppercase }}</span>
+      <span class="sidebar-profile-copy">
+        <strong>{{ currentUser.fullName || 'Usuario' }}</strong>
+        <small>{{ currentUser.email }}</small>
+      </span>
+    </a>
+
+    <div class="sidebar-footer-actions">
+      <a class="sidebar-footer-link" routerLink="/profile" (click)="close()">Mi perfil</a>
+      <button type="button" class="sidebar-footer-link danger" (click)="onLogout()">Cerrar sesion</button>
+    </div>
+  </div>
 </aside>

@@ -73,6 +73,81 @@
   gap: $space-1;
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: $space-4;
+  border-top: $border-width-base solid $color-white-soft-border;
+  display: grid;
+  gap: $space-3;
+}
+
+.sidebar-profile-card {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  text-decoration: none;
+  color: $color-sidebar-text;
+  padding: $space-3;
+  border-radius: $border-radius-xl;
+  background: rgba(255, 255, 255, 0.05);
+  border: $border-width-base solid $color-white-soft-border;
+}
+
+.sidebar-profile-avatar {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $color-brand-700 0%, $color-brand-300 100%);
+  color: $color-slate-900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: $font-weight-bold;
+  flex: 0 0 auto;
+}
+
+.sidebar-profile-copy {
+  min-width: 0;
+}
+
+.sidebar-profile-copy strong,
+.sidebar-profile-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-profile-copy small {
+  color: $color-slate-400;
+}
+
+.sidebar-footer-actions {
+  display: flex;
+  gap: $space-2;
+}
+
+.sidebar-footer-link {
+  flex: 1;
+  border: $border-width-base solid $color-white-soft-border;
+  background: transparent;
+  color: $color-sidebar-link;
+  text-decoration: none;
+  border-radius: $border-radius-lg;
+  padding: $space-2 $space-3;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sidebar-footer-link:hover {
+  background: $color-brand-accent-soft;
+  color: $color-white;
+}
+
+.sidebar-footer-link.danger {
+  color: #fecaca;
+}
+
 .nav-link {
   color: $color-sidebar-link;
   text-decoration: none;

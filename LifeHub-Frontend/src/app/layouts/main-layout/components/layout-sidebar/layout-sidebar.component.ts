@@ -14,6 +14,7 @@ export class LayoutSidebarComponent {
   @Input() isOpen = false;
   @Input() currentUser: User | null = null;
   @Output() closeSidebar = new EventEmitter<void>();
+  @Output() logout = new EventEmitter<void>();
 
   readonly navigationItems = [
     {
@@ -30,11 +31,6 @@ export class LayoutSidebarComponent {
       label: 'Documentos',
       route: '/documents',
       iconPath: 'M7.5 3.75h6l4.5 4.5V20.25H7.5zM13.5 3.75v4.5H18M9.75 12h6.75M9.75 15h6.75'
-    },
-    {
-      label: 'Perfil',
-      route: '/profile',
-      iconPath: 'M12 12a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5ZM5.25 19.5a6.75 6.75 0 0 1 13.5 0'
     },
     {
       label: 'Admin',
@@ -62,5 +58,10 @@ export class LayoutSidebarComponent {
 
   close(): void {
     this.closeSidebar.emit();
+  }
+
+  onLogout(): void {
+    this.logout.emit();
+    this.close();
   }
 }

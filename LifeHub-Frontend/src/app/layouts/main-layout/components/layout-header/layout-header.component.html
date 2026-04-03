@@ -5,24 +5,25 @@
       <span></span>
       <span></span>
     </button>
-    <div>
-      <p class="header-kicker">Panel principal</p>
-      <h1>LifeHub</h1>
+    <div class="header-info">
+      <p class="header-kicker">{{ headerDescription }}</p>
+      <div class="header-title-row">
+        <h1>{{ headerTitle }}</h1>
+        <div class="header-meta" *ngIf="headerMeta.length > 0">
+          <span *ngFor="let item of headerMeta">{{ item }}</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="header-right" *ngIf="currentUser">
-    <button class="profile-trigger" type="button" (click)="onToggleProfileMenu()">
-      <span class="profile-avatar">{{ (currentUser.fullName || currentUser.email || 'U').charAt(0) | uppercase }}</span>
-      <span class="profile-copy">
-        <strong>{{ currentUser.fullName || 'Usuario' }}</strong>
-        <small>{{ currentUser.email }}</small>
-      </span>
+  <div class="header-right" *ngIf="headerActions.length > 0">
+    <button
+      *ngFor="let action of headerActions"
+      type="button"
+      class="header-action"
+      [ngClass]="action.variant || 'secondary'"
+      (click)="onHeaderAction(action)">
+      {{ action.label }}
     </button>
-
-    <div class="profile-menu" *ngIf="isProfileMenuOpen">
-      <a routerLink="/profile" (click)="onNavigateProfile()">Mi perfil</a>
-      <button type="button" (click)="onLogout()">Cerrar sesion</button>
-    </div>
   </div>
 </header>

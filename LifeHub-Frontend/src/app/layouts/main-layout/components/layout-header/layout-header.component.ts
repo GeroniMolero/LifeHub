@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { User } from '../../../../models/auth.model';
+import { Router, RouterModule } from '@angular/router';
+import { LayoutHeaderAction } from '../../../../services/layout-header-state.service';
 
 @Component({
   selector: 'app-layout-header',
@@ -11,26 +11,29 @@ import { User } from '../../../../models/auth.model';
   styleUrls: ['./layout-header.component.scss']
 })
 export class LayoutHeaderComponent {
-  @Input() currentUser: User | null = null;
+  @Input() headerTitle = 'LifeHub';
+  @Input() headerDescription = 'Panel principal';
+  @Input() headerMeta: string[] = [];
+  @Input() headerActions: LayoutHeaderAction[] = [];
   @Output() toggleSidebar = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
 
-  isProfileMenuOpen = false;
+  constructor(private router: Router) {}
 
   onToggleSidebar(): void {
     this.toggleSidebar.emit();
   }
 
-  onToggleProfileMenu(): void {
-    this.isProfileMenuOpen = !this.isProfileMenuOpen;
-  }
-
-  onNavigateProfile(): void {
-    this.isProfileMenuOpen = false;
-  }
-
   onLogout(): void {
-    this.isProfileMenuOpen = false;
     this.logout.emit();
+  }
+
+  onHeaderAction(action: LayoutHeaderAction): void {
+    action.action?.();
+
+    if (action.route) {
+      const target = Array.isArray(action.route) ? action.route : [action.route];
+      this.router.navigate(target);
+    }
   }
 }
