@@ -65,6 +65,9 @@ namespace LifeHub.Utilidades
             CreateMap<MusicFile, MusicFileDto>().ReverseMap();
             CreateMap<CreateMusicFileDto, MusicFile>();
             CreateMap<UpdateMusicFileDto, MusicFile>();
+
+            // Allowed website mappings
+            CreateMap<AllowedWebsite, AllowedWebsiteDto>().ReverseMap();
         }
     }
 }

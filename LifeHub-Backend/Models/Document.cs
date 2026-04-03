@@ -13,6 +13,8 @@ namespace LifeHub.Models
         public string Description { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty; // Contenido del documento
         public DocumentType Type { get; set; } // Note, TextFile, etc.
+        public bool IsPublic { get; set; } = false;
+        public DateTime? PublishedAt { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
@@ -20,6 +22,7 @@ namespace LifeHub.Models
         public ApplicationUser User { get; set; } = null!;
         public CreativeSpace? CreativeSpace { get; set; }
         public ICollection<DocumentVersion> Versions { get; set; } = new List<DocumentVersion>();
+        public DocumentPublication? Publication { get; set; }
     }
 
     public enum DocumentType

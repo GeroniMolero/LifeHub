@@ -9,6 +9,8 @@ namespace LifeHub.DTOs
         public string Description { get; set; } = null!;
         public string Content { get; set; } = null!;
         public int Type { get; set; } // DocumentType as int
+        public bool IsPublic { get; set; }
+        public DateTime? PublishedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

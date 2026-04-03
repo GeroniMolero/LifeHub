@@ -37,5 +37,8 @@ namespace LifeHub.Utilidades
 
         protected IActionResult BadRequestError(string message)
             => StatusCode(StatusCodes.Status400BadRequest, new ApiErrorDto { Code = "bad_request", Message = message });
+
+        protected IActionResult ConflictError(string message)
+            => StatusCode(StatusCodes.Status409Conflict, new ApiErrorDto { Code = "conflict", Message = message });
     }
 }

@@ -19,8 +19,10 @@ namespace LifeHub.Data
         public DbSet<MusicFile> MusicFiles { get; set; }
         public DbSet<CreativeSpace> CreativeSpaces { get; set; }
         public DbSet<DocumentVersion> DocumentVersions { get; set; }
+        public DbSet<DocumentPublication> DocumentPublications { get; set; }
         public DbSet<SpacePermission> SpacePermissions { get; set; }
         public DbSet<ActivityLog> ActivityLogs { get; set; }
+        public DbSet<AllowedWebsite> AllowedWebsites { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -96,6 +98,12 @@ namespace LifeHub.Data
                 .HasForeignKey(d => d.CreativeSpaceId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<Document>()
+                .HasOne(d => d.Publication)
+                .WithOne(p => p.Document)
+                .HasForeignKey<DocumentPublication>(p => p.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // ============ CREATIVE SPACES ============
             modelBuilder.Entity<CreativeSpace>()
                 .HasOne(cs => cs.Owner)
@@ -121,6 +129,17 @@ namespace LifeHub.Data
 
             modelBuilder.Entity<DocumentVersion>()
                 .HasIndex(v => new { v.DocumentId, v.VersionNumber })
+                .IsUnique();
+
+            // ============ DOCUMENT PUBLICATIONS ============
+            modelBuilder.Entity<DocumentPublication>()
+                .HasOne(p => p.PublishedByUser)
+                .WithMany()
+                .HasForeignKey(p => p.PublishedByUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<DocumentPublication>()
+                .HasIndex(p => p.DocumentId)
                 .IsUnique();
 
             // ============ SPACE PERMISSIONS ============
@@ -162,6 +181,11 @@ namespace LifeHub.Data
                 .WithMany(u => u.MusicFiles)
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ============ ALLOWED WEBSITES ============
+            modelBuilder.Entity<AllowedWebsite>()
+                .HasIndex(w => w.Domain)
+                .IsUnique();
         }
     }
 }
