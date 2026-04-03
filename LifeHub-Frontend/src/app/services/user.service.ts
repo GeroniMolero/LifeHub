@@ -24,6 +24,12 @@ export class UserService {
     return this.http.get<User[]>(this.apiUrl);
   }
 
+  searchUsers(query: string): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/search`, {
+      params: { q: query }
+    });
+  }
+
   updateProfile(data: any): Observable<User> {
     return this.http.put<User>(`${this.apiUrl}/me`, data);
   }

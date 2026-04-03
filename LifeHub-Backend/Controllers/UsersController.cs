@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using LifeHub.DTOs;
 using LifeHub.Models;
@@ -60,6 +61,34 @@ namespace LifeHub.Controllers
                 result.Add(await MapUserDtoAsync(user));
             }
 
+            return Ok(result);
+        }
+
+        [HttpGet("search")]
+        [Authorize]
+        public async Task<IActionResult> SearchUsers([FromQuery] string? q)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var query = _userManager.Users.AsNoTracking().Where(u => u.Id != userId);
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var term = q.Trim().ToLower();
+                query = query.Where(u =>
+                    (u.FullName != null && u.FullName.ToLower().Contains(term)) ||
+                    (u.Email != null && u.Email.ToLower().Contains(term))
+                );
+            }
+
+            var users = await query
+                .OrderBy(u => u.FullName ?? u.Email)
+                .Take(30)
+                .ToListAsync();
+
+            var result = users.Select(u => _mapper.Map<UserDto>(u)).ToList();
             return Ok(result);
         }
 

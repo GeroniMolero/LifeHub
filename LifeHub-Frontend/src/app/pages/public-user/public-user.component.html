@@ -1,0 +1,19 @@
+<section class="public-user-container">
+  <a class="back-link" routerLink="/home">Volver al dashboard</a>
+
+  <p *ngIf="loading" class="muted">Cargando perfil...</p>
+  <p *ngIf="error" class="error">{{ error }}</p>
+
+  <article class="profile-card" *ngIf="!loading && user">
+    <div class="avatar">{{ (user.fullName || user.email || 'U').charAt(0) | uppercase }}</div>
+
+    <div class="profile-copy">
+      <h1>{{ user.fullName || 'Usuario LifeHub' }}</h1>
+      <p class="email">{{ user.email }}</p>
+      <p class="bio" *ngIf="user.bio; else noBio">{{ user.bio }}</p>
+      <ng-template #noBio>
+        <p class="bio muted">Este usuario no ha agregado una biografía.</p>
+      </ng-template>
+    </div>
+  </article>
+</section>

@@ -27,3 +27,22 @@ export interface UpdateCreativeSpaceRequest {
   privacy: SpacePrivacy;
   isPublicProfileVisible: boolean;
 }
+
+export enum SpacePermissionLevel {
+  Viewer = 0,
+  Editor = 1
+}
+
+export interface SpacePermission {
+  id: number;
+  creativeSpaceId: number;
+  userId: string;
+  permissionLevel: SpacePermissionLevel;
+  grantedByUserId: string;
+  createdAt: Date;
+}
+
+export interface ShareCreativeSpaceRequest {
+  userId: string;
+  permissionLevel: SpacePermissionLevel;
+}
