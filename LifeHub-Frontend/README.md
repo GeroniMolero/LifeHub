@@ -28,7 +28,9 @@ Abre `http://localhost:4200/` en tu navegador.
 
 ## Documentación
 
-- Guía de arrastre multimedia en Spaces: `src/app/pages/spaces/EXPLICACION_ARRASTRE_MULTIMEDIA.md`
+- Guía del editor Markdown en Spaces: `docs/MARKDOWN_EDITOR.md`
+- Guía de arrastre multimedia en Spaces: `docs/ARRASTRE_MULTIMEDIA.md`
+- Estructura de tests frontend: `test/README.md`
 - Guía de design tokens: `README-DESIGN-TOKENS.md`
 
 ## Estructura del Proyecto

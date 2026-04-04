@@ -5,7 +5,7 @@ Esta carpeta contiene las pantallas y componentes del modulo Spaces.
 ## Documentos utiles
 
 - Explicacion funcional y tecnica del arrastre multimedia:
-  - `EXPLICACION_ARRASTRE_MULTIMEDIA.md`
+  - `../../../docs/ARRASTRE_MULTIMEDIA.md`
 
 ## Estructura rapida
 
@@ -15,4 +15,4 @@ Esta carpeta contiene las pantallas y componentes del modulo Spaces.
 
 ## Nota
 
-Si modificas la logica de arrastre o el comportamiento de multimedia, actualiza tambien `EXPLICACION_ARRASTRE_MULTIMEDIA.md` para mantener la documentacion sincronizada.
+Si modificas la logica de arrastre o el comportamiento de multimedia, actualiza tambien `../../../docs/ARRASTRE_MULTIMEDIA.md` para mantener la documentacion sincronizada.
