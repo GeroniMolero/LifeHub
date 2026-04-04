@@ -60,7 +60,16 @@
           </div>
 
           <div class="editor-pane" *ngIf="activeTab === 'code'">
+            <div class="editor-toolbar">
+              <button type="button" class="toolbar-btn" (click)="applyBold(codeEditor)"><strong>B</strong></button>
+              <button type="button" class="toolbar-btn" (click)="applyItalic(codeEditor)"><em>I</em></button>
+              <button type="button" class="toolbar-btn" (click)="applyBulletList(codeEditor)">• Lista</button>
+              <button type="button" class="toolbar-btn" (click)="applyOrderedList(codeEditor)">1. Lista</button>
+              <button type="button" class="toolbar-btn" (click)="insertLink(codeEditor)">Enlace</button>
+              <button type="button" class="toolbar-btn" (click)="insertCodeBlock(codeEditor)">```</button>
+            </div>
             <textarea
+              #codeEditor
               formControlName="content"
               class="code-editor"
               spellcheck="false"

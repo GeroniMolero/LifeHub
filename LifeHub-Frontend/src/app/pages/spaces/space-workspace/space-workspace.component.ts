@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { marked } from 'marked';
 
 import { CreativeSpace, SpacePrivacy, UpdateCreativeSpaceRequest } from '../../../models/creative-space.model';
 import { CreateDocumentRequest, Document, DocumentType, UpdateDocumentRequest } from '../../../models/document.model';
@@ -73,6 +74,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   private zIndexCounter = 10;
 
   readonly allowedEmbedDomains: string[] = [...MEDIA_EMBED_ALLOWED_DOMAINS];
+  private readonly markdownRenderer = new marked.Renderer();
 
   constructor(
     private route: ActivatedRoute,
@@ -83,7 +85,10 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     private documentService: DocumentService,
     private layoutHeaderStateService: LayoutHeaderStateService,
     private mediaSessionService: SpaceMediaSessionService
-  ) {}
+  ) {
+    // Defense-in-depth: do not render raw HTML blocks/tags from markdown input.
+    this.markdownRenderer.html = ({ text }) => this.escapeHtml(text);
+  }
 
   ngOnInit(): void {
     this.editSpaceForm = this.fb.group({
@@ -532,9 +537,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const html = this.looksLikeHtml(content)
-      ? content
-      : this.renderMarkdownToHtml(content);
+    const html = this.renderMarkdownToHtml(content);
 
     this.renderedPreview = this.sanitizer.sanitize(SecurityContext.HTML, html) || '';
   }
@@ -544,44 +547,39 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   private renderMarkdownToHtml(markdown: string): string {
-    let html = this.escapeHtml(markdown);
-
-    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-    html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
-    html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    html = html.replace(/(?:^|\n)(- .+(?:\n- .+)*)/g, (_match, list) => {
-      const items = list
-        .split('\n')
-        .map((item: string) => item.replace(/^-\s+/, '').trim())
-        .filter(Boolean)
-        .map((item: string) => `<li>${item}</li>`)
-        .join('');
-      return `\n<ul>${items}</ul>`;
+    // Pass raw markdown to marked; task list symbols are handled in postprocessing
+    // to avoid raw HTML being intercepted by the security renderer.html callback.
+    const rendered = marked.parse(markdown, {
+      async: false,
+      breaks: true,
+      gfm: true,
+      renderer: this.markdownRenderer
     });
 
-    const blocks = html
-      .split(/\n{2,}/)
-      .map(block => block.trim())
-      .filter(Boolean)
-      .map(block => {
-        if (/^<(h1|h2|h3|ul|pre|blockquote)/.test(block)) {
-          return block;
-        }
+    if (typeof rendered !== 'string') {
+      return '';
+    }
 
-        return `<p>${block.replace(/\n/g, '<br />')}</p>`;
-      });
+    // Neutralize javascript: links (defense-in-depth before Angular sanitizer).
+    const withoutJavascriptLinks = rendered.replace(
+      /(<a\b[^>]*\bhref\s*=\s*["'])\s*javascript:[^"']*(["'][^>]*>)/gi,
+      '$1#$2'
+    );
 
-    return blocks.join('');
+    // Replace GFM checkbox inputs (stripped by Angular sanitizer) with visual symbols.
+    return withoutJavascriptLinks
+      .replace(
+        /<li>\s*<input\s[^>]*\bchecked\b[^>]*>\s*/gi,
+        '<li class="task-item"><span class="task-box" aria-label="completada">☑</span> '
+      )
+      .replace(
+        /<li>\s*<input\s[^>]*type="checkbox"[^>]*>\s*/gi,
+        '<li class="task-item"><span class="task-box" aria-label="pendiente">☐</span> '
+      );
   }
 
   private escapeHtml(value: string): string {
-    return value
+    return String(value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')

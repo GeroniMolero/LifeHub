@@ -86,4 +86,111 @@ export class SpaceEditorMainComponent {
     };
     return type !== undefined ? (typeMap[Number(type)] || 'Nota') : 'Nota';
   }
+
+  applyBold(editor: HTMLTextAreaElement): void {
+    this.wrapSelection(editor, '**', '**', 'texto en negrita');
+  }
+
+  applyItalic(editor: HTMLTextAreaElement): void {
+    this.wrapSelection(editor, '*', '*', 'texto en cursiva');
+  }
+
+  applyBulletList(editor: HTMLTextAreaElement): void {
+    this.prefixSelectedLines(editor, () => '- ');
+  }
+
+  applyOrderedList(editor: HTMLTextAreaElement): void {
+    this.prefixSelectedLines(editor, (index) => `${index + 1}. `);
+  }
+
+  insertLink(editor: HTMLTextAreaElement): void {
+    const value = this.getContentValue();
+    const start = editor.selectionStart ?? value.length;
+    const end = editor.selectionEnd ?? value.length;
+    const selected = value.slice(start, end) || 'texto del enlace';
+    const urlPlaceholder = 'https://ejemplo.com';
+    const replacement = `[${selected}](${urlPlaceholder})`;
+    const nextValue = value.slice(0, start) + replacement + value.slice(end);
+
+    this.setContentValue(nextValue);
+
+    const urlStart = start + selected.length + 3;
+    const urlEnd = urlStart + urlPlaceholder.length;
+    this.restoreSelection(editor, urlStart, urlEnd);
+  }
+
+  insertCodeBlock(editor: HTMLTextAreaElement): void {
+    const value = this.getContentValue();
+    const start = editor.selectionStart ?? value.length;
+    const end = editor.selectionEnd ?? value.length;
+    const selected = value.slice(start, end) || 'codigo';
+    const replacement = `\n\`\`\`\n${selected}\n\`\`\`\n`;
+    const nextValue = value.slice(0, start) + replacement + value.slice(end);
+
+    this.setContentValue(nextValue);
+
+    const selectionStart = start + 5;
+    const selectionEnd = selectionStart + selected.length;
+    this.restoreSelection(editor, selectionStart, selectionEnd);
+  }
+
+  private wrapSelection(
+    editor: HTMLTextAreaElement,
+    before: string,
+    after: string,
+    placeholder: string
+  ): void {
+    const value = this.getContentValue();
+    const start = editor.selectionStart ?? value.length;
+    const end = editor.selectionEnd ?? value.length;
+    const selected = value.slice(start, end) || placeholder;
+    const replacement = `${before}${selected}${after}`;
+    const nextValue = value.slice(0, start) + replacement + value.slice(end);
+
+    this.setContentValue(nextValue);
+
+    const selectionStart = start + before.length;
+    const selectionEnd = selectionStart + selected.length;
+    this.restoreSelection(editor, selectionStart, selectionEnd);
+  }
+
+  private prefixSelectedLines(editor: HTMLTextAreaElement, getPrefix: (lineIndex: number) => string): void {
+    const value = this.getContentValue();
+    const start = editor.selectionStart ?? value.length;
+    const end = editor.selectionEnd ?? value.length;
+
+    const blockStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+    const nextBreak = value.indexOf('\n', end);
+    const blockEnd = nextBreak === -1 ? value.length : nextBreak;
+
+    const block = value.slice(blockStart, blockEnd);
+    const prefixedBlock = block
+      .split('\n')
+      .map((line, index) => line.trim() ? `${getPrefix(index)}${line}` : line)
+      .join('\n');
+
+    const nextValue = value.slice(0, blockStart) + prefixedBlock + value.slice(blockEnd);
+
+    this.setContentValue(nextValue);
+    this.restoreSelection(editor, blockStart, blockStart + prefixedBlock.length);
+  }
+
+  private getContentValue(): string {
+    return String(this.editDocumentForm.get('content')?.value || '');
+  }
+
+  private setContentValue(value: string): void {
+    const control = this.editDocumentForm.get('content');
+    if (!control) return;
+    control.setValue(value);
+    control.markAsDirty();
+    control.markAsTouched();
+  }
+
+  private restoreSelection(editor: HTMLTextAreaElement, start: number, end: number): void {
+    requestAnimationFrame(() => {
+      editor.focus();
+      editor.setSelectionRange(start, end);
+    });
+  }
 }
