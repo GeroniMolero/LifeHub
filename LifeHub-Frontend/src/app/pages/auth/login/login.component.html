@@ -1,46 +1,66 @@
-<div class="login-container">
-  <div class="login-card">
-    <h1>LifeHub Login</h1>
-    
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+<div class="auth-page login-page">
+  <div class="auth-overlay"></div>
 
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input
-          type="email"
-          id="email"
-          formControlName="email"
-          placeholder="Enter your email"
-          [class.is-invalid]="submitted && f['email'].errors"
-        />
-        <div *ngIf="submitted && f['email'].errors" class="error-message">
-          <span *ngIf="f['email'].errors['required']">Email es requerido</span>
-          <span *ngIf="f['email'].errors['email']">Email inválido</span>
-        </div>
+  <div class="auth-shell">
+    <section class="auth-side-panel" aria-hidden="true">
+      <p class="kicker">LIFEHUB</p>
+      <h1>Bienvenido de nuevo</h1>
+      <p class="subtitle">
+        Recupera tus espacios creativos, recomendaciones y conversaciones en segundos.
+      </p>
+      <div class="feature-list">
+        <span>Espacios colaborativos</span>
+        <span>Mensajeria en tiempo real</span>
+        <span>Documentos y multimedia</span>
+      </div>
+    </section>
+
+    <section class="auth-card" aria-label="Formulario de inicio de sesion">
+      <div class="auth-card-header">
+        <h2>Iniciar sesion</h2>
+        <p>Accede a tu cuenta para continuar.</p>
       </div>
 
-      <div class="form-group">
-        <label for="password">Contraseña:</label>
-        <input
-          type="password"
-          id="password"
-          formControlName="password"
-          placeholder="Enter your password"
-          [class.is-invalid]="submitted && f['password'].errors"
-        />
-        <div *ngIf="submitted && f['password'].errors" class="error-message">
-          <span *ngIf="f['password'].errors['required']">Contraseña es requerida</span>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="tu@email.com"
+            [class.is-invalid]="submitted && f['email'].errors"
+          />
+          <div *ngIf="submitted && f['email'].errors" class="error-message">
+            <span *ngIf="f['email'].errors['required']">Email es requerido</span>
+            <span *ngIf="f['email'].errors['email']">Email invalido</span>
+          </div>
         </div>
-      </div>
 
-      <button type="submit" class="btn-primary btn-full" [disabled]="loading">
-        {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
-      </button>
-    </form>
+        <div class="form-group">
+          <label for="password">Contrasena</label>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            placeholder="Introduce tu contrasena"
+            [class.is-invalid]="submitted && f['password'].errors"
+          />
+          <div *ngIf="submitted && f['password'].errors" class="error-message">
+            <span *ngIf="f['password'].errors['required']">Contrasena es requerida</span>
+          </div>
+        </div>
 
-    <p class="signup-link">
-      ¿No tienes cuenta? <a routerLink="/register">Regístrate aquí</a>
-    </p>
+        <button type="submit" class="btn-primary btn-full" [disabled]="loading">
+          {{ loading ? 'Iniciando sesion...' : 'Entrar en LifeHub' }}
+        </button>
+      </form>
+
+      <p class="switch-link">
+        ¿Aun no tienes cuenta? <a routerLink="/register">Crear cuenta</a>
+      </p>
+    </section>
   </div>
 </div>
