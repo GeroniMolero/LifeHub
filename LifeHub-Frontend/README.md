@@ -26,6 +26,11 @@ Abre `http://localhost:4200/` en tu navegador.
 - **Documentos**: Crea y edita documentos en línea
 - **Música**: Registro de archivos de música locales
 
+## Documentación
+
+- Guía de arrastre multimedia en Spaces: `src/app/pages/spaces/EXPLICACION_ARRASTRE_MULTIMEDIA.md`
+- Guía de design tokens: `README-DESIGN-TOKENS.md`
+
 ## Estructura del Proyecto
 
 ```

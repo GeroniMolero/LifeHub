@@ -54,6 +54,12 @@
 - Services para comunicación HTTP
 - SignalR para chat
 
+## 📚 Documentación técnica
+
+- Frontend (general): `LifeHub-Frontend/README.md`
+- Spaces (módulo): `LifeHub-Frontend/src/app/pages/spaces/README.md`
+- Explicación de arrastre multimedia (funcional + técnica): `LifeHub-Frontend/src/app/pages/spaces/EXPLICACION_ARRASTRE_MULTIMEDIA.md`
+
 ## 📋 Requisitos
 
 - **.NET 8 SDK** o superior
