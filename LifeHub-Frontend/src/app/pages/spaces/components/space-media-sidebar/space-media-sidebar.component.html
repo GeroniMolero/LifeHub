@@ -1,0 +1,55 @@
+<div class="sidebar-section">
+  <div class="sidebar-section-header">
+    <span class="sidebar-section-title">Multimedia</span>
+    <button type="button" class="btn-icon" (click)="toggleCreateMedia.emit()" title="Agregar recurso">+</button>
+  </div>
+
+  <div *ngIf="showCreateMedia" class="sidebar-form media-form">
+    <div class="media-form-tabs">
+      <button type="button" class="tab-btn" [class.active]="mediaTab === 'embed'" (click)="setMediaTab.emit('embed')">Enlace</button>
+      <button type="button" class="tab-btn" [class.active]="mediaTab === 'local'" (click)="setMediaTab.emit('local')">Archivo local</button>
+    </div>
+
+    <form *ngIf="mediaTab === 'embed'" [formGroup]="createEmbedForm" (ngSubmit)="addEmbedReference.emit()">
+      <div class="allowed-sites">
+        <small *ngFor="let domain of allowedEmbedDomains">{{ domain }}</small>
+      </div>
+      <input type="text" formControlName="label" placeholder="Título" />
+      <input type="url" formControlName="url" placeholder="https://..." />
+      <button type="submit" class="btn-primary btn-sm" [disabled]="createEmbedForm.invalid || loadingMedia">Guardar enlace</button>
+    </form>
+
+    <div *ngIf="mediaTab === 'local'" class="sidebar-form-sub">
+      <input type="file" accept="audio/*,video/*,image/*" (change)="onLocalFileSelected.emit($event)" />
+      <input type="text" [formControl]="localFileLabelControl" placeholder="Etiqueta (opcional)" />
+      <button type="button" class="btn-primary btn-sm" [disabled]="!selectedLocalFile || loadingMedia" (click)="addLocalFileReference.emit()">Guardar referencia</button>
+    </div>
+  </div>
+
+  <div *ngIf="mediaError" class="sidebar-muted sidebar-error">{{ mediaError }}</div>
+  <div *ngIf="loadingMedia" class="sidebar-muted">Cargando...</div>
+  <div *ngIf="!loadingMedia && mediaReferences.length === 0 && !showCreateMedia" class="sidebar-empty">
+    Sin recursos. Usa <strong>+</strong> para agregar.
+  </div>
+
+  <ul class="sidebar-media-list" *ngIf="mediaReferences.length > 0">
+    <li *ngFor="let item of mediaReferences">
+      <div class="sidebar-media-row" [class.active]="isMediaActiveInMain(item.id)" (click)="onMediaReferenceClick.emit(item)">
+        <div class="sidebar-doc-info">
+          <span class="sidebar-doc-name">{{ item.label }}</span>
+          <span class="sidebar-doc-meta">{{ item.type === 'external-embed' ? (item.provider || 'Embed') : 'Local' }}</span>
+        </div>
+        <button type="button" class="btn-icon btn-icon-danger" (click)="$event.stopPropagation(); removeMediaReference.emit(item.id)" title="Quitar">×</button>
+      </div>
+    </li>
+  </ul>
+
+  <div class="music-player" *ngIf="audioMediaReferences.length > 0">
+    <p class="sidebar-form-label">Reproductor de musica</p>
+    <div class="music-track" *ngFor="let item of audioMediaReferences">
+      <span class="music-track-title">{{ item.label }}</span>
+      <audio *ngIf="getLocalMediaUrl(item.id)" controls [src]="getLocalMediaUrl(item.id)!"></audio>
+      <span *ngIf="!getLocalMediaUrl(item.id)" class="sidebar-muted">Audio local no disponible en esta sesión.</span>
+    </div>
+  </div>
+</div>

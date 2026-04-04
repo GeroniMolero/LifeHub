@@ -1,0 +1,90 @@
+<main class="editor-main">
+  <div class="main-content-canvas">
+    <div class="main-media-layer" *ngIf="activeVisualMediaReferences.length > 0">
+      <article
+        *ngFor="let item of activeVisualMediaReferences"
+        class="visual-item"
+        [ngStyle]="getVisualStyle(item.id)">
+        <header class="visual-item-handle" (pointerdown)="startDraggingMedia.emit({ event: $event, id: item.id })">
+          <strong>{{ item.label }}</strong>
+          <span>{{ isEmbedReference(item) ? (item.provider || 'Embed') : (isVideoReference(item) ? 'Video' : 'Imagen') }}</span>
+        </header>
+
+        <iframe
+          *ngIf="isEmbedReference(item)"
+          class="visual-media visual-embed"
+          [src]="toTrustedResource(item.embedUrl!)"
+          frameborder="0"
+          allowfullscreen
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
+        </iframe>
+
+        <video
+          *ngIf="isVideoReference(item) && getLocalMediaUrl(item.id)"
+          class="visual-media"
+          controls
+          [src]="getLocalMediaUrl(item.id)!">
+        </video>
+
+        <img
+          *ngIf="isImageReference(item) && getLocalMediaUrl(item.id)"
+          class="visual-media"
+          [src]="getLocalMediaUrl(item.id)!"
+          draggable="false"
+          alt="Multimedia del espacio" />
+      </article>
+    </div>
+
+    <div class="editor-empty-state" *ngIf="!selectedDocument">
+      <div class="empty-icon">📄</div>
+      <p>Selecciona un documento del panel lateral</p>
+      <p class="empty-hint">o crea uno nuevo con el botón <strong>+</strong></p>
+    </div>
+
+    <div class="editor-active" *ngIf="selectedDocument">
+      <form [formGroup]="editDocumentForm" (ngSubmit)="saveDocument.emit()">
+        <div class="editor-fields">
+          <input type="text" formControlName="title" class="editor-title-input" placeholder="Título del documento" />
+          <input type="text" formControlName="description" class="editor-desc-input" placeholder="Descripción (opcional)" />
+        </div>
+
+        <div class="editor-frame">
+          <div class="editor-tab-bar">
+            <div class="editor-tabs">
+              <button type="button" class="tab-btn" [class.active]="activeTab === 'code'" (click)="setActiveTab.emit('code')">Code</button>
+              <button type="button" class="tab-btn" [class.active]="activeTab === 'preview'" (click)="setActiveTab.emit('preview')">Preview</button>
+            </div>
+            <div class="editor-tab-actions">
+              <a [routerLink]="['/documents', selectedDocument.id]" class="btn-detail-link">Ver detalle ↗</a>
+            </div>
+          </div>
+
+          <div class="editor-pane" *ngIf="activeTab === 'code'">
+            <textarea
+              formControlName="content"
+              class="code-editor"
+              spellcheck="false"
+              placeholder="Escribe el contenido aquí..."></textarea>
+          </div>
+
+          <div class="editor-pane preview-pane" *ngIf="activeTab === 'preview'">
+            <div class="content-preview rendered-markdown" [innerHTML]="renderedPreview"></div>
+          </div>
+        </div>
+
+        <div class="editor-actions">
+          <div class="editor-meta-info">
+            <span>{{ getTypeText(selectedDocument.type) }}</span>
+            <span>Guardado {{ selectedDocument.updatedAt | date:'short' }}</span>
+          </div>
+          <div class="editor-action-btns">
+            <button type="button" class="btn-danger-outline" (click)="deleteDocument.emit(selectedDocument.id)">Eliminar</button>
+            <button type="submit" class="btn-primary" [disabled]="editDocumentForm.invalid || loadingDocuments">
+              {{ loadingDocuments ? 'Guardando...' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>

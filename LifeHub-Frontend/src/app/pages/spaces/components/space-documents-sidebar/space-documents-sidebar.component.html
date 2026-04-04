@@ -1,0 +1,36 @@
+<div class="sidebar-section">
+  <div class="sidebar-section-header">
+    <span class="sidebar-section-title">Documentos</span>
+    <button type="button" class="btn-icon" (click)="toggleCreateDocument.emit()" title="Nuevo documento">+</button>
+  </div>
+
+  <form *ngIf="showCreateDocument" [formGroup]="createDocumentForm" (ngSubmit)="createDocument.emit()" class="sidebar-form">
+    <input type="text" formControlName="title" placeholder="Título *" />
+    <input type="text" formControlName="description" placeholder="Descripción" />
+    <textarea rows="3" formControlName="content" placeholder="Contenido inicial"></textarea>
+    <select formControlName="type">
+      <option [value]="DocumentType.Note">Nota</option>
+      <option [value]="DocumentType.TextFile">Archivo de texto</option>
+      <option [value]="DocumentType.List">Lista</option>
+    </select>
+    <div class="sidebar-form-actions">
+      <button type="submit" class="btn-primary btn-sm" [disabled]="createDocumentForm.invalid || loadingDocuments">Crear</button>
+      <button type="button" class="btn-secondary btn-sm" (click)="toggleCreateDocument.emit()">Cancelar</button>
+    </div>
+  </form>
+
+  <div *ngIf="loadingDocuments" class="sidebar-muted">Cargando...</div>
+  <div *ngIf="!loadingDocuments && documents.length === 0 && !showCreateDocument" class="sidebar-empty">
+    Sin documentos. Usa <strong>+</strong> para crear.
+  </div>
+
+  <ul class="sidebar-doc-list" *ngIf="documents.length > 0">
+    <li *ngFor="let doc of documents" [class.active]="selectedDocument?.id === doc.id" (click)="selectDocument.emit(doc)">
+      <div class="sidebar-doc-info">
+        <span class="sidebar-doc-name">{{ doc.title }}</span>
+        <span class="sidebar-doc-meta">{{ getTypeText(doc.type) }}</span>
+      </div>
+      <a [routerLink]="['/documents', doc.id]" class="doc-detail-link" (click)="$event.stopPropagation()" title="Ver detalle completo">↗</a>
+    </li>
+  </ul>
+</div>

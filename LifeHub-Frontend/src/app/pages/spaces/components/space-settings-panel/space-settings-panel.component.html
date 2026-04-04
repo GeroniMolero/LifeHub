@@ -1,0 +1,31 @@
+<div *ngIf="showEditSpace" class="settings-panel">
+  <form [formGroup]="editSpaceForm" (ngSubmit)="save.emit()">
+    <div class="settings-grid">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" formControlName="name" />
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea rows="2" formControlName="description"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Privacidad</label>
+        <select formControlName="privacy">
+          <option [value]="SpacePrivacy.Private">Privado</option>
+          <option [value]="SpacePrivacy.Shared">Compartido</option>
+        </select>
+      </div>
+      <div class="form-group form-group-center">
+        <label class="checkbox-row">
+          <input type="checkbox" formControlName="isPublicProfileVisible" />
+          Visible en perfil público
+        </label>
+      </div>
+    </div>
+    <div class="row-actions">
+      <button type="submit" class="btn-primary" [disabled]="editSpaceForm.invalid || loading">Guardar ajustes</button>
+      <button type="button" class="btn-secondary" (click)="cancel.emit()">Cancelar</button>
+    </div>
+  </form>
+</div>

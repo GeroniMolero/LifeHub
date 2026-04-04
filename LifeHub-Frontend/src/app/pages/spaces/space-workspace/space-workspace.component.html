@@ -1,246 +1,68 @@
 ﻿<section class="workspace" *ngIf="!loading; else loadingTpl">
 
-  <!-- ── Space settings panel ───────────────────────────── -->
-  <div *ngIf="showEditSpace" class="settings-panel">
-    <form [formGroup]="editSpaceForm" (ngSubmit)="saveSpace()">
-      <div class="settings-grid">
-        <div class="form-group">
-          <label>Nombre</label>
-          <input type="text" formControlName="name" />
-        </div>
-        <div class="form-group">
-          <label>Descripción</label>
-          <textarea rows="2" formControlName="description"></textarea>
-        </div>
-        <div class="form-group">
-          <label>Privacidad</label>
-          <select formControlName="privacy">
-            <option [value]="SpacePrivacy.Private">Privado</option>
-            <option [value]="SpacePrivacy.Shared">Compartido</option>
-          </select>
-        </div>
-        <div class="form-group form-group-center">
-          <label class="checkbox-row">
-            <input type="checkbox" formControlName="isPublicProfileVisible" />
-            Visible en perfil público
-          </label>
-        </div>
-      </div>
-      <div class="row-actions">
-        <button type="submit" class="btn-primary" [disabled]="editSpaceForm.invalid || loading">Guardar ajustes</button>
-        <button type="button" class="btn-secondary" (click)="toggleEditSpace()">Cancelar</button>
-      </div>
-    </form>
-  </div>
+  <app-space-settings-panel
+    [showEditSpace]="showEditSpace"
+    [editSpaceForm]="editSpaceForm"
+    [loading]="loading"
+    (save)="saveSpace()"
+    (cancel)="toggleEditSpace()">
+  </app-space-settings-panel>
 
   <div *ngIf="error" class="error-bar">{{ error }}</div>
 
   <!-- ── Main workspace body ────────────────────────────── -->
   <div class="workspace-body" *ngIf="space">
 
-    <!-- ===== Center: Editor ===== -->
-    <main class="editor-main">
-
-      <div class="main-content-canvas">
-        <div class="main-media-layer" *ngIf="activeVisualMediaReferences.length > 0">
-          <article
-            *ngFor="let item of activeVisualMediaReferences"
-            class="visual-item"
-            [ngStyle]="getVisualStyle(item.id)">
-            <header class="visual-item-handle" (pointerdown)="startDraggingMedia($event, item.id)">
-              <strong>{{ item.label }}</strong>
-              <span>{{ isEmbedReference(item) ? (item.provider || 'Embed') : (isVideoReference(item) ? 'Video' : 'Imagen') }}</span>
-            </header>
-
-            <iframe
-              *ngIf="isEmbedReference(item)"
-              class="visual-media visual-embed"
-              [src]="toTrustedResource(item.embedUrl!)"
-              frameborder="0"
-              allowfullscreen
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
-            </iframe>
-
-            <video
-              *ngIf="isVideoReference(item) && getLocalMediaUrl(item.id)"
-              class="visual-media"
-              controls
-              [src]="getLocalMediaUrl(item.id)!">
-            </video>
-
-            <img
-              *ngIf="isImageReference(item) && getLocalMediaUrl(item.id)"
-              class="visual-media"
-              [src]="getLocalMediaUrl(item.id)!"
-              draggable="false"
-              alt="Multimedia del espacio" />
-          </article>
-        </div>
-
-        <!-- Empty state: no doc selected -->
-        <div class="editor-empty-state" *ngIf="!selectedDocument">
-          <div class="empty-icon">📄</div>
-          <p>Selecciona un documento del panel lateral</p>
-          <p class="empty-hint">o crea uno nuevo con el botón <strong>+</strong></p>
-        </div>
-
-        <!-- Active editor: doc selected -->
-        <div class="editor-active" *ngIf="selectedDocument">
-          <form [formGroup]="editDocumentForm" (ngSubmit)="saveDocument()">
-
-          <!-- Document title & description inputs -->
-          <div class="editor-fields">
-            <input type="text" formControlName="title" class="editor-title-input" placeholder="Título del documento" />
-            <input type="text" formControlName="description" class="editor-desc-input" placeholder="Descripción (opcional)" />
-          </div>
-
-          <!-- GitHub-style editor frame with tabs -->
-          <div class="editor-frame">
-            <div class="editor-tab-bar">
-              <div class="editor-tabs">
-                <button type="button" class="tab-btn" [class.active]="activeTab === 'code'" (click)="setActiveTab('code')">Code</button>
-                <button type="button" class="tab-btn" [class.active]="activeTab === 'preview'" (click)="setActiveTab('preview')">Preview</button>
-              </div>
-              <div class="editor-tab-actions">
-                <a [routerLink]="['/documents', selectedDocument.id]" class="btn-detail-link">Ver detalle ↗</a>
-              </div>
-            </div>
-
-            <div class="editor-pane" *ngIf="activeTab === 'code'">
-              <textarea
-                formControlName="content"
-                class="code-editor"
-                spellcheck="false"
-                placeholder="Escribe el contenido aquí..."></textarea>
-            </div>
-
-            <div class="editor-pane preview-pane" *ngIf="activeTab === 'preview'">
-              <div class="content-preview rendered-markdown" [innerHTML]="renderedPreview"></div>
-            </div>
-          </div>
-
-            <!-- Save / delete bar -->
-            <div class="editor-actions">
-              <div class="editor-meta-info">
-                <span>{{ getTypeText(selectedDocument.type) }}</span>
-                <span>Guardado {{ selectedDocument.updatedAt | date:'short' }}</span>
-              </div>
-              <div class="editor-action-btns">
-                <button type="button" class="btn-danger-outline" (click)="deleteDocument(selectedDocument.id)">Eliminar</button>
-                <button type="submit" class="btn-primary" [disabled]="editDocumentForm.invalid || loadingDocuments">
-                  {{ loadingDocuments ? 'Guardando...' : 'Guardar cambios' }}
-                </button>
-              </div>
-            </div>
-
-          </form>
-        </div>
-      </div>
-
-    </main>
+    <app-space-editor-main
+      [selectedDocument]="selectedDocument"
+      [editDocumentForm]="editDocumentForm"
+      [activeTab]="activeTab"
+      [renderedPreview]="renderedPreview"
+      [loadingDocuments]="loadingDocuments"
+      [activeVisualMediaReferences]="activeVisualMediaReferences"
+      [localFileBlobUrls]="localFileBlobUrls"
+      [visualLayouts]="visualLayouts"
+      (setActiveTab)="setActiveTab($event)"
+      (saveDocument)="saveDocument()"
+      (deleteDocument)="deleteDocument($event)"
+      (startDraggingMedia)="startDraggingMedia($event.event, $event.id)">
+    </app-space-editor-main>
 
     <!-- ===== Right: Sidebar ===== -->
     <aside class="workspace-sidebar">
 
-      <!-- Documents section -->
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Documentos</span>
-          <button type="button" class="btn-icon" (click)="toggleCreateDocument()" title="Nuevo documento">+</button>
-        </div>
+      <app-space-documents-sidebar
+        [showCreateDocument]="showCreateDocument"
+        [createDocumentForm]="createDocumentForm"
+        [loadingDocuments]="loadingDocuments"
+        [documents]="documents"
+        [selectedDocument]="selectedDocument"
+        (toggleCreateDocument)="toggleCreateDocument()"
+        (createDocument)="createDocument()"
+        (selectDocument)="selectDocument($event)">
+      </app-space-documents-sidebar>
 
-        <form *ngIf="showCreateDocument" [formGroup]="createDocumentForm" (ngSubmit)="createDocument()" class="sidebar-form">
-          <input type="text" formControlName="title" placeholder="Título *" />
-          <input type="text" formControlName="description" placeholder="Descripción" />
-          <textarea rows="3" formControlName="content" placeholder="Contenido inicial"></textarea>
-          <select formControlName="type">
-            <option [value]="DocumentType.Note">Nota</option>
-            <option [value]="DocumentType.TextFile">Archivo de texto</option>
-            <option [value]="DocumentType.List">Lista</option>
-          </select>
-          <div class="sidebar-form-actions">
-            <button type="submit" class="btn-primary btn-sm" [disabled]="createDocumentForm.invalid || loadingDocuments">Crear</button>
-            <button type="button" class="btn-secondary btn-sm" (click)="toggleCreateDocument()">Cancelar</button>
-          </div>
-        </form>
-
-        <div *ngIf="loadingDocuments" class="sidebar-muted">Cargando...</div>
-        <div *ngIf="!loadingDocuments && documents.length === 0 && !showCreateDocument" class="sidebar-empty">
-          Sin documentos. Usa <strong>+</strong> para crear.
-        </div>
-
-        <ul class="sidebar-doc-list" *ngIf="documents.length > 0">
-          <li *ngFor="let doc of documents" [class.active]="selectedDocument?.id === doc.id" (click)="selectDocument(doc)">
-            <div class="sidebar-doc-info">
-              <span class="sidebar-doc-name">{{ doc.title }}</span>
-              <span class="sidebar-doc-meta">{{ getTypeText(doc.type) }}</span>
-            </div>
-            <a [routerLink]="['/documents', doc.id]" class="doc-detail-link" (click)="$event.stopPropagation()" title="Ver detalle completo">↗</a>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Media section -->
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">
-          <span class="sidebar-section-title">Multimedia</span>
-          <button type="button" class="btn-icon" (click)="toggleCreateMedia()" title="Agregar recurso">+</button>
-        </div>
-
-        <div *ngIf="showCreateMedia" class="sidebar-form media-form">
-
-          <!-- Tab bar -->
-          <div class="media-form-tabs">
-            <button type="button" class="tab-btn" [class.active]="mediaTab === 'embed'" (click)="mediaTab = 'embed'">Enlace</button>
-            <button type="button" class="tab-btn" [class.active]="mediaTab === 'local'" (click)="mediaTab = 'local'">Archivo local</button>
-          </div>
-
-          <!-- Embed tab -->
-          <form *ngIf="mediaTab === 'embed'" [formGroup]="createEmbedForm" (ngSubmit)="addEmbedReference()">
-            <div class="allowed-sites">
-              <small *ngFor="let domain of allowedEmbedDomains">{{ domain }}</small>
-            </div>
-            <input type="text" formControlName="label" placeholder="Título" />
-            <input type="url" formControlName="url" placeholder="https://..." />
-            <button type="submit" class="btn-primary btn-sm" [disabled]="createEmbedForm.invalid || loadingMedia">Guardar enlace</button>
-          </form>
-
-          <!-- Local file tab -->
-          <div *ngIf="mediaTab === 'local'" class="sidebar-form-sub">
-            <input type="file" accept="audio/*,video/*,image/*" (change)="onLocalFileSelected($event)" />
-            <input type="text" [formControl]="localFileLabelControl" placeholder="Etiqueta (opcional)" />
-            <button type="button" class="btn-primary btn-sm" [disabled]="!selectedLocalFile || loadingMedia" (click)="addLocalFileReference()">Guardar referencia</button>
-          </div>
-
-        </div>
-
-        <div *ngIf="mediaError" class="sidebar-muted sidebar-error">{{ mediaError }}</div>
-        <div *ngIf="loadingMedia" class="sidebar-muted">Cargando...</div>
-        <div *ngIf="!loadingMedia && mediaReferences.length === 0 && !showCreateMedia" class="sidebar-empty">
-          Sin recursos. Usa <strong>+</strong> para agregar.
-        </div>
-
-        <ul class="sidebar-media-list" *ngIf="mediaReferences.length > 0">
-          <li *ngFor="let item of mediaReferences">
-            <div class="sidebar-media-row" [class.active]="isMediaActiveInMain(item.id)" (click)="onMediaReferenceClick(item)">
-              <div class="sidebar-doc-info">
-                <span class="sidebar-doc-name">{{ item.label }}</span>
-                <span class="sidebar-doc-meta">{{ item.type === 'external-embed' ? (item.provider || 'Embed') : 'Local' }}</span>
-              </div>
-              <button type="button" class="btn-icon btn-icon-danger" (click)="$event.stopPropagation(); removeMediaReference(item.id)" title="Quitar">×</button>
-            </div>
-          </li>
-        </ul>
-
-        <div class="music-player" *ngIf="audioMediaReferences.length > 0">
-          <p class="sidebar-form-label">Reproductor de musica</p>
-          <div class="music-track" *ngFor="let item of audioMediaReferences">
-            <span class="music-track-title">{{ item.label }}</span>
-            <audio *ngIf="getLocalMediaUrl(item.id)" controls [src]="getLocalMediaUrl(item.id)!"></audio>
-            <span *ngIf="!getLocalMediaUrl(item.id)" class="sidebar-muted">Audio local no disponible en esta sesión.</span>
-          </div>
-        </div>
-      </div>
+      <app-space-media-sidebar
+        [showCreateMedia]="showCreateMedia"
+        [mediaTab]="mediaTab"
+        [createEmbedForm]="createEmbedForm"
+        [localFileLabelControl]="localFileLabelControl"
+        [selectedLocalFile]="selectedLocalFile"
+        [allowedEmbedDomains]="allowedEmbedDomains"
+        [mediaError]="mediaError"
+        [loadingMedia]="loadingMedia"
+        [mediaReferences]="mediaReferences"
+        [audioMediaReferences]="audioMediaReferences"
+        [activeVisualMediaIds]="activeVisualMediaIds"
+        [localFileBlobUrls]="localFileBlobUrls"
+        (toggleCreateMedia)="toggleCreateMedia()"
+        (setMediaTab)="mediaTab = $event"
+        (addEmbedReference)="addEmbedReference()"
+        (onLocalFileSelected)="onLocalFileSelected($event)"
+        (addLocalFileReference)="addLocalFileReference()"
+        (onMediaReferenceClick)="onMediaReferenceClick($event)"
+        (removeMediaReference)="removeMediaReference($event)">
+      </app-space-media-sidebar>
 
     </aside>
 

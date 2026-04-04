@@ -1,7 +1,7 @@
 import { Component, HostListener, OnDestroy, OnInit, SecurityContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
+import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { CreativeSpace, SpacePrivacy, UpdateCreativeSpaceRequest } from '../../../models/creative-space.model';
@@ -13,6 +13,10 @@ import { CreativeSpaceService } from '../../../services/creative-space.service';
 import { DocumentService } from '../../../services/document.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
 import { SpaceMediaSessionService } from '../../../services/space-media-session.service';
+import { SpaceSettingsPanelComponent } from '../components/space-settings-panel/space-settings-panel.component';
+import { SpaceDocumentsSidebarComponent } from '../components/space-documents-sidebar/space-documents-sidebar.component';
+import { SpaceEditorMainComponent } from '../components/space-editor-main/space-editor-main.component';
+import { SpaceMediaSidebarComponent } from '../components/space-media-sidebar/space-media-sidebar.component';
 
 interface VisualMediaLayout {
   x: number;
@@ -24,7 +28,14 @@ interface VisualMediaLayout {
 @Component({
   selector: 'app-space-workspace',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    SpaceSettingsPanelComponent,
+    SpaceDocumentsSidebarComponent,
+    SpaceEditorMainComponent,
+    SpaceMediaSidebarComponent
+  ],
   templateUrl: './space-workspace.component.html',
   styleUrls: ['./space-workspace.component.scss']
 })
@@ -55,17 +66,13 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
   selectedLocalFile: File | null = null;
   selectedMediaId: string | null = null;
-  private trustedEmbedCache = new Map<string, SafeResourceUrl>();
-  private localFileBlobUrls = new Map<string, string>();
-  private visualLayouts = new Map<string, VisualMediaLayout>();
-  private activeVisualMediaIds = new Set<string>();
+  localFileBlobUrls = new Map<string, string>();
+  visualLayouts = new Map<string, VisualMediaLayout>();
+  activeVisualMediaIds = new Set<string>();
   private draggingMedia: { id: string; offsetX: number; offsetY: number } | null = null;
   private zIndexCounter = 10;
 
   readonly allowedEmbedDomains: string[] = [...MEDIA_EMBED_ALLOWED_DOMAINS];
-
-  DocumentType = DocumentType;
-  SpacePrivacy = SpacePrivacy;
 
   constructor(
     private route: ActivatedRoute,
@@ -393,42 +400,12 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.bringVisualToFront(item.id);
   }
 
-  isMediaActiveInMain(id: string): boolean {
-    return this.activeVisualMediaIds.has(id);
-  }
-
-  getLocalMediaUrl(id: string): string | null {
-    return this.localFileBlobUrls.get(id) || null;
-  }
-
-  isVideoReference(item: SpaceMediaReference): boolean {
-    return item.type === 'local-session-file' && !!item.mimeType?.startsWith('video/');
-  }
-
-  isEmbedReference(item: SpaceMediaReference): boolean {
+  private isEmbedReference(item: SpaceMediaReference): boolean {
     return item.type === 'external-embed' && !!item.embedUrl;
   }
 
-  isImageReference(item: SpaceMediaReference): boolean {
-    return item.type === 'local-session-file' && !!item.mimeType?.startsWith('image/');
-  }
-
-  isAudioReference(item: SpaceMediaReference): boolean {
+  private isAudioReference(item: SpaceMediaReference): boolean {
     return item.type === 'local-session-file' && !!item.mimeType?.startsWith('audio/');
-  }
-
-  getVisualStyle(id: string): { [key: string]: string } {
-    const layout = this.visualLayouts.get(id);
-    if (!layout) {
-      return { left: '0px', top: '0px', width: '300px', zIndex: '1' };
-    }
-
-    return {
-      left: `${layout.x}px`,
-      top: `${layout.y}px`,
-      width: `${layout.width}px`,
-      zIndex: `${layout.zIndex}`
-    };
   }
 
   startDraggingMedia(event: PointerEvent, id: string): void {
@@ -460,26 +437,6 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.activeVisualMediaIds.delete(id);
     this.visualLayouts.delete(id);
     this.mediaReferences = this.mediaSessionService.removeReference(this.space.id, id);
-  }
-
-  toTrustedResource(url: string): SafeResourceUrl {
-    if (this.trustedEmbedCache.has(url)) {
-      return this.trustedEmbedCache.get(url)!;
-    }
-
-    const value = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    this.trustedEmbedCache.set(url, value);
-    return value;
-  }
-
-  getTypeText(type?: DocumentType | string | number): string {
-    const typeMap: { [key: number]: string } = {
-      [DocumentType.Note]: 'Nota',
-      [DocumentType.TextFile]: 'Archivo de texto',
-      [DocumentType.List]: 'Lista'
-    };
-
-    return type !== undefined ? (typeMap[Number(type)] || 'Nota') : 'Nota';
   }
 
   getPrivacyText(privacy: SpacePrivacy): string {
