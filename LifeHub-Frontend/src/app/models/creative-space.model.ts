@@ -46,3 +46,10 @@ export interface ShareCreativeSpaceRequest {
   userId: string;
   permissionLevel: SpacePermissionLevel;
 }
+
+export interface CreateSpaceMediaReferenceRequest {
+  label: string;
+  source: string;
+  provider?: string;
+  embedUrl: string;
+}

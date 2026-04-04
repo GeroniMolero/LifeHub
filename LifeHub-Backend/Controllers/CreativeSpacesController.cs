@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LifeHub.Utilidades;
+using System.Text.Json;
 
 namespace LifeHub.Controllers
 {
@@ -255,6 +256,128 @@ namespace LifeHub.Controllers
                 HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
 
             return NoContent();
+        }
+
+        [HttpGet("{id:int}/media-references")]
+        public async Task<IActionResult> GetMediaReferences(int id)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var space = await _context.CreativeSpaces
+                .Include(cs => cs.Permissions)
+                .FirstOrDefaultAsync(cs => cs.Id == id);
+
+            if (space == null)
+                return NotFoundError("Espacio creativo no encontrado.");
+
+            var canAccess = space.OwnerId == userId || space.Permissions.Any(p => p.UserId == userId);
+            if (!canAccess)
+                return ForbiddenError("No tienes permisos para acceder a este espacio creativo.");
+
+            return Ok(DeserializeMediaReferences(space.MediaReferencesJson));
+        }
+
+        [HttpPost("{id:int}/media-references")]
+        public async Task<IActionResult> AddMediaReference(int id, [FromBody] CreateSpaceMediaReferenceDto dto)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var space = await _context.CreativeSpaces
+                .Include(cs => cs.Permissions)
+                .FirstOrDefaultAsync(cs => cs.Id == id);
+
+            if (space == null)
+                return NotFoundError("Espacio creativo no encontrado.");
+
+            var canEdit = space.OwnerId == userId || space.Permissions.Any(p => p.UserId == userId && p.PermissionLevel == SpacePermissionLevel.Editor);
+            if (!canEdit)
+                return ForbiddenError("No tienes permisos de edición para este espacio creativo.");
+
+            if (string.IsNullOrWhiteSpace(dto.EmbedUrl) || !IsHttpUrl(dto.EmbedUrl))
+                return BadRequestError("El enlace embed debe ser una URL http(s) válida.");
+
+            var references = DeserializeMediaReferences(space.MediaReferencesJson);
+
+            var newReference = new SpaceMediaReferenceDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Type = "external-embed",
+                Label = string.IsNullOrWhiteSpace(dto.Label) ? "Enlace" : dto.Label.Trim(),
+                Source = string.IsNullOrWhiteSpace(dto.Source) ? dto.EmbedUrl.Trim() : dto.Source.Trim(),
+                Provider = string.IsNullOrWhiteSpace(dto.Provider) ? null : dto.Provider.Trim(),
+                EmbedUrl = dto.EmbedUrl.Trim(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            references.Insert(0, newReference);
+            space.MediaReferencesJson = SerializeMediaReferences(references);
+            space.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(newReference);
+        }
+
+        [HttpDelete("{id:int}/media-references/{referenceId}")]
+        public async Task<IActionResult> RemoveMediaReference(int id, string referenceId)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var space = await _context.CreativeSpaces
+                .Include(cs => cs.Permissions)
+                .FirstOrDefaultAsync(cs => cs.Id == id);
+
+            if (space == null)
+                return NotFoundError("Espacio creativo no encontrado.");
+
+            var canEdit = space.OwnerId == userId || space.Permissions.Any(p => p.UserId == userId && p.PermissionLevel == SpacePermissionLevel.Editor);
+            if (!canEdit)
+                return ForbiddenError("No tienes permisos de edición para este espacio creativo.");
+
+            var references = DeserializeMediaReferences(space.MediaReferencesJson);
+            var updated = references.Where(r => !string.Equals(r.Id, referenceId, StringComparison.Ordinal)).ToList();
+
+            if (updated.Count == references.Count)
+                return NotFoundError("Referencia multimedia no encontrada.");
+
+            space.MediaReferencesJson = SerializeMediaReferences(updated);
+            space.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        private static bool IsHttpUrl(string value)
+        {
+            return Uri.TryCreate(value, UriKind.Absolute, out var uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+        }
+
+        private static List<SpaceMediaReferenceDto> DeserializeMediaReferences(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return new List<SpaceMediaReferenceDto>();
+
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<List<SpaceMediaReferenceDto>>(json);
+                return parsed ?? new List<SpaceMediaReferenceDto>();
+            }
+            catch
+            {
+                return new List<SpaceMediaReferenceDto>();
+            }
+        }
+
+        private static string SerializeMediaReferences(List<SpaceMediaReferenceDto> references)
+        {
+            return JsonSerializer.Serialize(references ?? new List<SpaceMediaReferenceDto>());
         }
     }
 }

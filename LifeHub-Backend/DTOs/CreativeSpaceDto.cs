@@ -1,5 +1,25 @@
 namespace LifeHub.DTOs
 {
+    public class SpaceMediaReferenceDto
+    {
+        public string Id { get; set; } = null!;
+        public string Type { get; set; } = "external-embed";
+        public string Label { get; set; } = null!;
+        public string Source { get; set; } = null!;
+        public string? Provider { get; set; }
+        public string? EmbedUrl { get; set; }
+        public string? MimeType { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class CreateSpaceMediaReferenceDto
+    {
+        public string Label { get; set; } = null!;
+        public string Source { get; set; } = null!;
+        public string? Provider { get; set; }
+        public string EmbedUrl { get; set; } = null!;
+    }
+
     public class CreativeSpaceDto
     {
         public int Id { get; set; }

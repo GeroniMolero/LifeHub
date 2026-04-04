@@ -316,19 +316,27 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const reference: SpaceMediaReference = {
-      id: this.newReferenceId(),
-      type: 'external-embed',
+    this.loadingMedia = true;
+    this.creativeSpaceService.addMediaReference(this.space.id, {
       label,
       source: sourceUrl,
       provider: parsed.provider,
-      embedUrl: parsed.embedUrl,
-      createdAt: new Date().toISOString()
-    };
-
-    this.ensureVisualLayout(reference);
-    this.mediaReferences = this.mediaSessionService.addReference(this.space.id, reference);
-    this.createEmbedForm.reset({ label: '', url: '' });
+      embedUrl: parsed.embedUrl
+    }).subscribe({
+      next: (reference) => {
+        this.ensureVisualLayout(reference);
+        this.mediaReferences = [
+          reference,
+          ...this.mediaReferences.filter(item => item.id !== reference.id)
+        ];
+        this.createEmbedForm.reset({ label: '', url: '' });
+        this.loadingMedia = false;
+      },
+      error: () => {
+        this.mediaError = 'No se pudo guardar el enlace multimedia en la base de datos.';
+        this.loadingMedia = false;
+      }
+    });
   }
 
   onLocalFileSelected(event: Event): void {
@@ -368,7 +376,8 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.localFileBlobUrls.set(reference.id, blobUrl);
     this.ensureVisualLayout(reference);
 
-    this.mediaReferences = this.mediaSessionService.addReference(this.space.id, reference);
+    this.mediaSessionService.addReference(this.space.id, reference);
+    this.mediaReferences = [reference, ...this.mediaReferences.filter(item => item.id !== reference.id)];
     this.selectedLocalFile = null;
     this.localFileLabelControl.setValue('');
   }
@@ -431,17 +440,39 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
   removeMediaReference(id: string): void {
     if (!this.space) return;
+
+    const reference = this.mediaReferences.find(item => item.id === id);
+    if (!reference) return;
+
     const blobUrl = this.localFileBlobUrls.get(id);
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl);
       this.localFileBlobUrls.delete(id);
     }
+
     if (this.selectedMediaId === id) {
       this.selectedMediaId = null;
     }
     this.activeVisualMediaIds.delete(id);
     this.visualLayouts.delete(id);
-    this.mediaReferences = this.mediaSessionService.removeReference(this.space.id, id);
+
+    if (reference.type === 'external-embed') {
+      this.loadingMedia = true;
+      this.creativeSpaceService.removeMediaReference(this.space.id, id).subscribe({
+        next: () => {
+          this.mediaReferences = this.mediaReferences.filter(item => item.id !== id);
+          this.loadingMedia = false;
+        },
+        error: () => {
+          this.mediaError = 'No se pudo eliminar el enlace multimedia en la base de datos.';
+          this.loadingMedia = false;
+        }
+      });
+      return;
+    }
+
+    this.mediaSessionService.removeReference(this.space.id, id);
+    this.mediaReferences = this.mediaReferences.filter(item => item.id !== id);
   }
 
   getPrivacyText(privacy: SpacePrivacy): string {
@@ -466,8 +497,25 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
   private loadMediaReferences(): void {
     if (!this.space) return;
-    this.mediaReferences = this.mediaSessionService.getReferences(this.space.id);
-    this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
+    this.loadingMedia = true;
+
+    const localSessionReferences = this.mediaSessionService
+      .getReferences(this.space.id)
+      .filter(reference => reference.type === 'local-session-file');
+
+    this.creativeSpaceService.getMediaReferences(this.space.id).subscribe({
+      next: (persistedReferences) => {
+        this.mediaReferences = [...persistedReferences, ...localSessionReferences];
+        this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
+        this.loadingMedia = false;
+      },
+      error: () => {
+        this.mediaReferences = [...localSessionReferences];
+        this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
+        this.mediaError = 'No se pudieron cargar los enlaces multimedia guardados.';
+        this.loadingMedia = false;
+      }
+    });
   }
 
   private isVisualReference(item: SpaceMediaReference): boolean {

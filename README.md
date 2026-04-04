@@ -58,7 +58,7 @@
 
 - Frontend (general): `LifeHub-Frontend/README.md`
 - Spaces (módulo): `LifeHub-Frontend/src/app/pages/spaces/README.md`
-- Explicación de arrastre multimedia (funcional + técnica): `LifeHub-Frontend/src/app/pages/spaces/EXPLICACION_ARRASTRE_MULTIMEDIA.md`
+- Explicación de arrastre multimedia (funcional + técnica): `LifeHub-Frontend/docs/ARRASTRE_MULTIMEDIA.md`
 
 ## 📋 Requisitos
 
@@ -78,6 +78,9 @@ En Windows, desde la raíz del proyecto:
 ```powershell
 .\start.ps1 local
 ```
+
+Este modo arranca SQL + backend en Docker y frontend en local. En un equipo nuevo
+solo necesitas Docker Desktop activo y este comando.
 
 Si ya tienes dependencias instaladas y quieres arrancar más rápido:
 
@@ -121,6 +124,30 @@ npm start
 - Backend: http://localhost:5000
 - Swagger: http://localhost:5000/swagger
 - SQL Server: localhost:1433
+
+## 🧪 Entorno Nuevo (Otro Ordenador)
+
+Flujo recomendado para un clon nuevo del repositorio:
+
+```powershell
+git clone <repo>
+cd LifeHub
+.\start.ps1 local
+```
+
+No hace falta instalar .NET/SQL Server localmente para ejecutar backend+BD en Docker.
+
+### Si existe un volumen Docker antiguo con esquema desalineado
+
+Solo si detectas errores de esquema al arrancar (por ejemplo columnas faltantes),
+resetea la base de datos local Docker y vuelve a iniciar:
+
+```powershell
+docker compose -f docker-compose.dev.yml down -v
+.\start.ps1 local
+```
+
+Esto borra solo datos locales de desarrollo en Docker (`sql_data`).
 
 ## 📁 Estructura del Proyecto
 

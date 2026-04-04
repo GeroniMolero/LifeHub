@@ -6,9 +6,11 @@ import {
   CreateCreativeSpaceRequest,
   UpdateCreativeSpaceRequest,
   ShareCreativeSpaceRequest,
-  SpacePermission
+  SpacePermission,
+  CreateSpaceMediaReferenceRequest
 } from '../models/creative-space.model';
 import { API_BASE_URL } from '../config/api.config';
+import { SpaceMediaReference } from '../models/space-media-reference.model';
 
 @Injectable({
   providedIn: 'root'
@@ -49,6 +51,18 @@ export class CreativeSpaceService {
 
   removePermission(spaceId: number, targetUserId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${spaceId}/permissions/${targetUserId}`);
+  }
+
+  getMediaReferences(spaceId: number): Observable<SpaceMediaReference[]> {
+    return this.http.get<SpaceMediaReference[]>(`${this.apiUrl}/${spaceId}/media-references`);
+  }
+
+  addMediaReference(spaceId: number, data: CreateSpaceMediaReferenceRequest): Observable<SpaceMediaReference> {
+    return this.http.post<SpaceMediaReference>(`${this.apiUrl}/${spaceId}/media-references`, data);
+  }
+
+  removeMediaReference(spaceId: number, referenceId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${spaceId}/media-references/${referenceId}`);
   }
 
   getFavoriteSpaceIds(userId: string): number[] {

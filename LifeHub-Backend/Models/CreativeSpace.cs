@@ -8,6 +8,7 @@ namespace LifeHub.Models
         public string Description { get; set; } = string.Empty;
         public SpacePrivacy Privacy { get; set; } = SpacePrivacy.Private;
         public bool IsPublicProfileVisible { get; set; } = false;
+        public string MediaReferencesJson { get; set; } = "[]";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

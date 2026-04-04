@@ -160,6 +160,10 @@ namespace LifeHub.Migrations
                     b.Property<bool>("IsPublicProfileVisible")
                         .HasColumnType("bit");
 
+                    b.Property<string>("MediaReferencesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");

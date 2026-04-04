@@ -162,7 +162,8 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Error during migration/seeding: {ex.Message}");
+    Console.WriteLine($"Error during migration/seeding: {ex}");
+    throw;
 }
 
 app.Run();
