@@ -300,6 +300,19 @@ namespace LifeHub.Controllers
             if (string.IsNullOrWhiteSpace(dto.EmbedUrl) || !IsHttpUrl(dto.EmbedUrl))
                 return BadRequestError("El enlace embed debe ser una URL http(s) válida.");
 
+            if (!Uri.TryCreate(dto.EmbedUrl.Trim(), UriKind.Absolute, out var embedUri))
+                return BadRequestError("El enlace embed debe ser una URL válida.");
+
+            var allowedDomains = await _context.AllowedWebsites
+                .Where(w => w.IsActive)
+                .Select(w => w.Domain)
+                .ToListAsync();
+
+            var host = NormalizeDomain(embedUri.Host);
+            var isAllowed = allowedDomains.Any(domain => host == domain || host.EndsWith($".{domain}"));
+            if (!isAllowed)
+                return BadRequestError("El dominio del enlace embed no está permitido.");
+
             var references = DeserializeMediaReferences(space.MediaReferencesJson);
 
             var newReference = new SpaceMediaReferenceDto
@@ -378,6 +391,14 @@ namespace LifeHub.Controllers
         private static string SerializeMediaReferences(List<SpaceMediaReferenceDto> references)
         {
             return JsonSerializer.Serialize(references ?? new List<SpaceMediaReferenceDto>());
+        }
+
+        private static string NormalizeDomain(string value)
+        {
+            var trimmed = (value ?? string.Empty).Trim().ToLowerInvariant();
+            if (trimmed.StartsWith("www."))
+                trimmed = trimmed[4..];
+            return trimmed;
         }
     }
 }

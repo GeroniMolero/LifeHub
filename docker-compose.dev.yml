@@ -2,6 +2,7 @@ services:
   mssql:
     image: mcr.microsoft.com/azure-sql-edge:latest
     container_name: lifehub-sql-dev
+    user: root
     ports:
       - "1433:1433"
     environment:
