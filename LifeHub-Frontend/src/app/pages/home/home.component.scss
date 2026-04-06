@@ -4,31 +4,103 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.1rem;
 }
 
-.home-header {
-  background: linear-gradient(145deg, #eff6ff, #f8fafc);
-  border: 1px solid #dbeafe;
-  border-radius: 14px;
-  padding: 1rem 1.2rem;
-
-  h1 {
-    margin: 0 0 0.3rem;
-    color: #0f172a;
-    font-size: 1.7rem;
-  }
-
-  p {
-    margin: 0;
-    color: #334155;
-  }
-}
-
-.dashboard-grid {
+.stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+
+  small {
+    color: #475569;
+    font-weight: 600;
+    display: block;
+  }
+
+  strong {
+    display: block;
+    margin: 0.12rem 0 0.15rem;
+    color: #0f172a;
+    font-size: clamp(1.2rem, 2.1vw, 1.6rem);
+    line-height: 1;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 0.8rem;
+  }
+}
+
+.home-columns {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
   gap: 1rem;
+  align-items: stretch;
+}
+
+.home-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.spaces-card,
+.social-card {
+  flex: 1;
+  min-height: 0;
+}
+
+.spaces-card {
+  .space-list {
+    max-height: 520px;
+    overflow: auto;
+    padding-right: 0.15rem;
+  }
+}
+
+.pending-compact {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.pending-compact-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+
+  h4 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 0.9rem;
+  }
+
+  span {
+    display: inline-flex;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1e40af;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0 0.3rem;
+  }
 }
 
 .dashboard-card {
@@ -97,27 +169,9 @@
   justify-content: flex-end;
 }
 
-.favorites-summary {
-  margin-top: 0.8rem;
+.social-card {
+  min-height: 0;
 
-  h4 {
-    margin: 0 0 0.4rem;
-    color: #1e293b;
-    font-size: 0.95rem;
-  }
-
-  ul {
-    margin: 0;
-    padding-left: 1rem;
-  }
-
-  a {
-    color: #1d4ed8;
-    text-decoration: none;
-  }
-}
-
-.search-card {
   .search-input {
     width: 100%;
     padding: 0.65rem 0.75rem;
@@ -125,6 +179,57 @@
     border-radius: 10px;
     margin-bottom: 0.75rem;
     font-size: 0.95rem;
+  }
+
+  .user-results {
+    max-height: 290px;
+    overflow: auto;
+    padding-right: 0.15rem;
+  }
+
+  .social-section .friend-list {
+    max-height: 250px;
+    overflow: auto;
+    padding-right: 0.15rem;
+  }
+}
+
+.social-card .card-head {
+  margin-bottom: 0.5rem;
+}
+
+.social-section + .social-section {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+}
+
+.search-section {
+  .social-subhead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    padding-bottom: 0.35rem;
+  }
+}
+
+.social-subhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+
+  h4 {
+    margin: 0;
+    color: #1e293b;
+    font-size: 0.95rem;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 0.8rem;
   }
 }
 
@@ -134,7 +239,6 @@
   font-weight: 600;
 }
 
-.btn-ghost,
 .btn-primary,
 .btn-secondary,
 .btn-success,
@@ -144,11 +248,6 @@
   padding: 0.45rem 0.65rem;
   font-size: 0.82rem;
   cursor: pointer;
-}
-
-.btn-ghost {
-  background: #eff6ff;
-  color: #1e40af;
 }
 
 .btn-primary {
@@ -180,6 +279,14 @@
 }
 
 @media (max-width: 740px) {
+  .home-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .space-item,
   .friend-item,
   .user-item {
@@ -192,5 +299,15 @@
   .user-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .home-container {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,144 +1,194 @@
-<div class="home-container">
-  <header class="home-header">
-    <h1>Dashboard LifeHub</h1>
-    <p>Gestiona espacios favoritos, amistades y nuevas conexiones desde un solo panel.</p>
-  </header>
-
-  <section class="dashboard-grid">
-    <article class="dashboard-card">
-      <div class="card-head">
-        <h3>Espacios favoritos</h3>
-        <a routerLink="/spaces" class="btn-link">Ir a espacios</a>
-      </div>
-
-      <p *ngIf="loadingSpaces" class="muted">Cargando espacios...</p>
-      <p *ngIf="spacesError" class="error">{{ spacesError }}</p>
-
-      <div class="space-list" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length > 0">
-        <article class="space-item" *ngFor="let space of favoriteSpaces">
-          <div>
-            <strong>{{ space.name }}</strong>
-            <small>{{ space.description || 'Sin descripción' }}</small>
-          </div>
-          <div class="space-actions">
-            <a [routerLink]="['/spaces', space.id]" class="btn-link">Abrir</a>
-          </div>
-        </article>
-      </div>
-
-      <p class="muted" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length === 0">
-        No tienes espacios marcados como favoritos. Márcalos desde Espacios.
-      </p>
+﻿<div class="home-container">
+  <section class="stats-grid">
+    <article class="stat-card">
+      <small>Espacios</small>
+      <strong>{{ totalSpacesCount }}</strong>
+      <span>Total de espacios disponibles</span>
     </article>
 
-    <article class="dashboard-card">
-      <div class="card-head">
-        <h3>Amigos</h3>
-      </div>
+    <article class="stat-card">
+      <small>Favoritos</small>
+      <strong>{{ favoriteSpacesCount }}</strong>
+      <span>Marcados para acceso rápido</span>
+    </article>
 
-      <p *ngIf="loadingFriends" class="muted">Cargando amistades...</p>
-      <p *ngIf="friendsError" class="error">{{ friendsError }}</p>
+    <article class="stat-card">
+      <small>Amigos</small>
+      <strong>{{ acceptedFriendsCount }}</strong>
+      <span>Conexiones aceptadas</span>
+    </article>
 
-      <div class="friend-list" *ngIf="!loadingFriends && acceptedFriends.length > 0">
-        <article class="friend-item" *ngFor="let friendship of acceptedFriends">
-          <div>
-            <strong>{{ friendDisplayName(friendship) }}</strong>
-            <small>{{ friendEmail(friendship) }}</small>
-          </div>
-          <div class="friend-actions">
-            <a class="btn-link" [routerLink]="friendProfileLink(friendship)">Visitar perfil</a>
-            <button
-              type="button"
-              class="btn-danger"
-              (click)="removeFriend(friendship.id)">
-              Eliminar amigo
-            </button>
-          </div>
-        </article>
-      </div>
-
-      <div class="friend-list" *ngIf="!loadingFriends && pendingIncomingRequests.length > 0">
-        <h4>Solicitudes pendientes</h4>
-        <article class="friend-item" *ngFor="let friendship of pendingIncomingRequests">
-          <div>
-            <strong>{{ friendDisplayName(friendship) }}</strong>
-            <small>{{ friendEmail(friendship) }}</small>
-          </div>
-          <div class="friend-actions">
-            <a class="btn-link" [routerLink]="friendProfileLink(friendship)">Visitar perfil</a>
-            <button
-              type="button"
-              class="btn-primary"
-              (click)="acceptFriendRequest(friendship.id)">
-              Aceptar solicitud
-            </button>
-          </div>
-        </article>
-      </div>
-
-      <p class="muted" *ngIf="!loadingFriends && acceptedFriends.length === 0 && pendingIncomingRequests.length === 0">
-        No tienes amigos aceptados ni solicitudes pendientes.
-      </p>
+    <article class="stat-card">
+      <small>Solicitudes</small>
+      <strong>{{ pendingRequestsCount }}</strong>
+      <span>Pendientes por revisar</span>
     </article>
   </section>
 
-  <section class="dashboard-card search-card">
-    <div class="card-head">
-      <h3>Buscar usuarios</h3>
-      <small>Envía solicitud y visita perfiles</small>
-    </div>
-
-    <input
-      type="text"
-      class="search-input"
-      placeholder="Buscar por nombre o email"
-      [value]="searchQuery"
-      (input)="onSearchInput($any($event.target).value)" />
-
-    <p *ngIf="searchingUsers" class="muted">Buscando...</p>
-    <p *ngIf="searchError" class="error">{{ searchError }}</p>
-
-    <div class="user-results" *ngIf="searchResults.length > 0">
-      <article class="user-item" *ngFor="let user of searchResults">
-        <div>
-          <strong>{{ user.fullName || user.email }}</strong>
-          <small>{{ user.email }}</small>
+  <section class="home-columns">
+    <div class="home-column">
+      <article class="dashboard-card spaces-card">
+        <div class="card-head">
+          <h3>Espacios</h3>
+          <a routerLink="/spaces" class="btn-link">Ir a espacios</a>
         </div>
 
-        <div class="user-actions">
-          <a class="btn-link" [routerLink]="userProfileLink(user)">Visitar perfil</a>
+        <p *ngIf="loadingSpaces" class="muted">Cargando espacios...</p>
+        <p *ngIf="spacesError" class="error">{{ spacesError }}</p>
 
-          <button
-            type="button"
-            class="btn-primary"
-            *ngIf="friendshipState(user.id) === 'none'"
-            (click)="sendFriendRequest(user)">
-            Enviar solicitud
-          </button>
+        <section>
+          <div class="social-subhead">
+            <h4>Favoritos</h4>
+            <small>{{ favoriteSpacesCount }} guardados</small>
+          </div>
 
-          <button
-            type="button"
-            class="btn-primary"
-            *ngIf="friendshipState(user.id) === 'pending' && canAcceptRequestFrom(user.id)"
-            (click)="acceptRequestFromUser(user)">
-            Aceptar solicitud
-          </button>
+          <div class="space-list" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length > 0">
+            <article class="space-item" *ngFor="let space of favoriteSpaces">
+              <div>
+                <strong>{{ space.name }}</strong>
+                <small>{{ space.description || 'Sin descripción' }}</small>
+              </div>
+              <div class="space-actions">
+                <a [routerLink]="['/spaces', space.id]" class="btn-link">Abrir</a>
+              </div>
+            </article>
+          </div>
 
-          <button
-            type="button"
-            class="btn-secondary"
-            *ngIf="friendshipState(user.id) === 'pending' && !canAcceptRequestFrom(user.id)"
-            disabled>
-            Solicitud pendiente
-          </button>
+          <p class="muted" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length === 0">
+            No tienes espacios marcados como favoritos. Márcalos desde Espacios.
+          </p>
+        </section>
 
-          <button type="button" class="btn-success" *ngIf="friendshipState(user.id) === 'accepted'" disabled>
-            Ya es amigo
-          </button>
-        </div>
       </article>
     </div>
 
-    <p class="muted" *ngIf="!searchingUsers && searchQuery.trim().length >= 2 && searchResults.length === 0">Sin resultados.</p>
+    <div class="home-column">
+      <article class="dashboard-card social-card">
+        <div class="card-head">
+          <h3>Social</h3>
+          <small>Amigos y nuevas conexiones</small>
+        </div>
+
+        <section class="social-section" *ngIf="pendingIncomingRequests.length > 0">
+          <div class="pending-compact">
+            <div class="pending-compact-head">
+              <h4>Solicitudes pendientes</h4>
+              <span>{{ pendingIncomingRequests.length }}</span>
+            </div>
+
+            <article class="friend-item" *ngFor="let friendship of pendingIncomingRequests | slice:0:2">
+              <div>
+                <strong>{{ friendDisplayName(friendship) }}</strong>
+                <small>{{ friendEmail(friendship) }}</small>
+              </div>
+              <div class="friend-actions">
+                <button
+                  type="button"
+                  class="btn-primary"
+                  (click)="acceptFriendRequest(friendship.id)">
+                  Aceptar
+                </button>
+              </div>
+            </article>
+
+            <p class="muted" *ngIf="pendingIncomingRequests.length > 2">
+              +{{ pendingIncomingRequests.length - 2 }} solicitudes más
+            </p>
+          </div>
+        </section>
+
+        <section class="social-section">
+          <div class="social-subhead">
+            <h4>Amigos</h4>
+            <small>{{ acceptedFriendsCount }} conexiones</small>
+          </div>
+
+          <p *ngIf="loadingFriends" class="muted">Cargando amistades...</p>
+          <p *ngIf="friendsError" class="error">{{ friendsError }}</p>
+
+          <div class="friend-list" *ngIf="!loadingFriends && acceptedFriends.length > 0">
+            <article class="friend-item" *ngFor="let friendship of acceptedFriends">
+              <div>
+                <strong>{{ friendDisplayName(friendship) }}</strong>
+                <small>{{ friendEmail(friendship) }}</small>
+              </div>
+              <div class="friend-actions">
+                <a class="btn-link" [routerLink]="friendProfileLink(friendship)">Visitar perfil</a>
+                <button
+                  type="button"
+                  class="btn-danger"
+                  (click)="removeFriend(friendship.id)">
+                  Eliminar amigo
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <p class="muted" *ngIf="!loadingFriends && acceptedFriends.length === 0">
+            No tienes amigos aceptados todavía.
+          </p>
+        </section>
+
+        <section class="social-section search-section">
+          <div class="social-subhead">
+            <h4>Buscar usuarios</h4>
+            <small>Envía solicitud y visita perfiles</small>
+          </div>
+
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Buscar por nombre o email"
+            [value]="searchQuery"
+            (input)="onSearchInput($any($event.target).value)" />
+
+          <p *ngIf="searchingUsers" class="muted">Buscando...</p>
+          <p *ngIf="searchError" class="error">{{ searchError }}</p>
+
+          <div class="user-results" *ngIf="searchResults.length > 0">
+            <article class="user-item" *ngFor="let user of searchResults">
+              <div>
+                <strong>{{ user.fullName || user.email }}</strong>
+                <small>{{ user.email }}</small>
+              </div>
+
+              <div class="user-actions">
+                <a class="btn-link" [routerLink]="userProfileLink(user)">Visitar perfil</a>
+
+                <button
+                  type="button"
+                  class="btn-primary"
+                  *ngIf="friendshipState(user.id) === 'none'"
+                  (click)="sendFriendRequest(user)">
+                  Enviar solicitud
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-primary"
+                  *ngIf="friendshipState(user.id) === 'pending' && canAcceptRequestFrom(user.id)"
+                  (click)="acceptRequestFromUser(user)">
+                  Aceptar solicitud
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  *ngIf="friendshipState(user.id) === 'pending' && !canAcceptRequestFrom(user.id)"
+                  disabled>
+                  Solicitud pendiente
+                </button>
+
+                <button type="button" class="btn-success" *ngIf="friendshipState(user.id) === 'accepted'" disabled>
+                  Ya es amigo
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <p class="muted" *ngIf="!searchingUsers && searchQuery.trim().length >= 2 && searchResults.length === 0">Sin resultados.</p>
+        </section>
+      </article>
+    </div>
   </section>
 </div>

@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { User } from '../../models/auth.model';
 import { CreativeSpace } from '../../models/creative-space.model';
 import { Friendship, FriendshipStatus } from '../../models/friendship.model';
@@ -8,6 +9,7 @@ import { CreativeSpaceService } from '../../services/creative-space.service';
 import { FriendshipService } from '../../services/friendship.service';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
+import { LayoutHeaderStateService } from '../../services/layout-header-state.service';
 
 @Component({
   selector: 'app-home',
@@ -16,7 +18,9 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
+
   currentUserId = '';
   spaces: CreativeSpace[] = [];
   favoriteIds = new Set<number>();
@@ -36,17 +40,27 @@ export class HomeComponent implements OnInit {
     private creativeSpaceService: CreativeSpaceService,
     private friendshipService: FriendshipService,
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private layoutHeaderStateService: LayoutHeaderStateService
   ) {}
 
   ngOnInit(): void {
-    this.authService.getCurrentUser().subscribe(user => {
-      this.currentUserId = user?.id || '';
-      this.favoriteIds = new Set(this.creativeSpaceService.getFavoriteSpaceIds(this.currentUserId));
-    });
+    this.setHeaderState();
+
+    this.authService.getCurrentUser()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(user => {
+        this.currentUserId = user?.id || '';
+        this.favoriteIds = new Set(this.creativeSpaceService.getFavoriteSpaceIds(this.currentUserId));
+        this.setHeaderState();
+      });
 
     this.loadSpaces();
     this.loadFriendships();
+  }
+
+  ngOnDestroy(): void {
+    this.layoutHeaderStateService.clearOverride();
   }
 
   get favoriteSpaces(): CreativeSpace[] {
@@ -62,6 +76,22 @@ export class HomeComponent implements OnInit {
     return this.friendships.filter(
       item => item.status === FriendshipStatus.Pending && item.receiverId === this.currentUserId
     );
+  }
+
+  get totalSpacesCount(): number {
+    return this.spaces.length;
+  }
+
+  get favoriteSpacesCount(): number {
+    return this.favoriteSpaces.length;
+  }
+
+  get acceptedFriendsCount(): number {
+    return this.acceptedFriends.length;
+  }
+
+  get pendingRequestsCount(): number {
+    return this.pendingIncomingRequests.length;
   }
 
   onSearchInput(value: string): void {
@@ -147,7 +177,7 @@ export class HomeComponent implements OnInit {
 
   friendProfileLink(friendship: Friendship): string[] {
     const user = this.friendFromFriendship(friendship);
-    return ['/users', user?.id || ''];
+    return user?.id ? ['/users', user.id] : ['/users'];
   }
 
   userProfileLink(user: User): string[] {
@@ -178,10 +208,12 @@ export class HomeComponent implements OnInit {
       next: spaces => {
         this.spaces = spaces;
         this.loadingSpaces = false;
+        this.setHeaderState();
       },
       error: () => {
         this.spacesError = 'No se pudieron cargar los espacios.';
         this.loadingSpaces = false;
+        this.setHeaderState();
       }
     });
   }
@@ -194,11 +226,26 @@ export class HomeComponent implements OnInit {
       next: friendships => {
         this.friendships = friendships;
         this.loadingFriends = false;
+        this.setHeaderState();
       },
       error: err => {
         this.friendsError = err?.error?.message || 'No se pudieron cargar las amistades.';
         this.loadingFriends = false;
+        this.setHeaderState();
       }
+    });
+  }
+
+  private setHeaderState(): void {
+    const pendingRequestsMeta = this.pendingRequestsCount > 0
+      ? [`${this.pendingRequestsCount} solicitudes pendientes`]
+      : [];
+
+    this.layoutHeaderStateService.setOverride({
+      title: 'Inicio',
+      description: 'Resumen rápido de tu actividad en LifeHub',
+      meta: pendingRequestsMeta,
+      actions: []
     });
   }
 
