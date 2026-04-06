@@ -16,7 +16,7 @@ export class LoginComponent implements OnInit {
   loading = false;
   submitted = false;
   error = '';
-  returnUrl = '/spaces';
+  returnUrl = '/home';
 
   constructor(
     private formBuilder: FormBuilder,
@@ -31,7 +31,7 @@ export class LoginComponent implements OnInit {
       password: ['', Validators.required]
     });
 
-    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/spaces';
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/home';
   }
 
   get f() {
