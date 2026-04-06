@@ -1,8 +1,9 @@
-import { Component, HostListener, OnDestroy, OnInit, SecurityContext } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, SecurityContext, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { marked } from 'marked';
 
 import { CreativeSpace, SpacePrivacy, UpdateCreativeSpaceRequest } from '../../../models/creative-space.model';
@@ -41,6 +42,8 @@ interface VisualMediaLayout {
   styleUrls: ['./space-workspace.component.scss']
 })
 export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
+
   space: CreativeSpace | null = null;
   documents: Document[] = [];
   mediaReferences: SpaceMediaReference[] = [];
@@ -129,18 +132,20 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.route.data.subscribe({
-      next: (space) => {
-        this.applySpaceState(space['space'] as CreativeSpace);
-        this.loading = false;
-        this.loadDocuments();
-        this.loadMediaReferences();
-      },
-      error: () => {
-        this.error = 'No se pudo cargar el espacio creativo.';
-        this.loading = false;
-      }
-    });
+    this.route.data
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (space) => {
+          this.applySpaceState(space['space'] as CreativeSpace);
+          this.loading = false;
+          this.loadDocuments();
+          this.loadMediaReferences();
+        },
+        error: () => {
+          this.error = 'No se pudo cargar el espacio creativo.';
+          this.loading = false;
+        }
+      });
   }
 
   ngOnDestroy(): void {

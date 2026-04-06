@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { Document, DocumentType } from '../../../models/document.model';
 import { DocumentVersion } from '../../../models/document-version.model';
@@ -21,6 +22,8 @@ import { SpaceMediaSessionService } from '../../../services/space-media-session.
   styleUrls: ['./document-detail.component.scss']
 })
 export class DocumentDetailComponent implements OnInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
+
   document: Document | null = null;
   editForm!: FormGroup;
   publicationForm!: FormGroup;
@@ -58,16 +61,18 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
       mediaReferences: [[]]
     });
 
-    this.route.data.subscribe({
-      next: (data) => {
-        const document = data['document'] as Document;
-        this.setDocumentState(document);
-      },
-      error: () => {
-        this.error = 'No se pudo cargar el documento.';
-        this.loading = false;
-      }
-    });
+    this.route.data
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          const document = data['document'] as Document;
+          this.setDocumentState(document);
+        },
+        error: () => {
+          this.error = 'No se pudo cargar el documento.';
+          this.loading = false;
+        }
+      });
   }
 
   ngOnDestroy(): void {

@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/auth.model';
@@ -18,6 +19,8 @@ import { LayoutSidebarComponent } from './components/layout-sidebar/layout-sideb
   styleUrls: ['./main-layout.component.scss']
 })
 export class MainLayoutComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   currentUser: User | null = null;
   isSidebarOpen = false;
   headerTitle = 'LifeHub';
@@ -36,9 +39,11 @@ export class MainLayoutComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.getCurrentUser().subscribe(user => {
-      this.currentUser = user;
-    });
+    this.authService.getCurrentUser()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(user => {
+        this.currentUser = user;
+      });
 
     if (this.authService.isAuthenticated()) {
       this.authService.refreshCurrentUser().subscribe({
@@ -48,13 +53,18 @@ export class MainLayoutComponent implements OnInit {
       });
     }
 
-    this.layoutHeaderStateService.headerOverride$.subscribe(override => {
-      this.headerOverride = override;
-      this.applyHeaderState();
-    });
+    this.layoutHeaderStateService.headerOverride$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(override => {
+        this.headerOverride = override;
+        this.applyHeaderState();
+      });
 
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(() => this.updateHeaderFromRoute());
 
     this.updateHeaderFromRoute();
