@@ -1,13 +1,38 @@
 <div class="profile-container">
-  <h1>Mi Perfil</h1>
-
   <div *ngIf="success" class="alert alert-success">{{ success }}</div>
   <div *ngIf="error" class="alert alert-error">{{ error }}</div>
 
-  <div class="profile-card">
-    <h2>Información del Perfil</h2>
-    
-    <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()">
+  <div *ngIf="activeTab === 'view' && currentUser" class="profile-card profile-view-card">
+    <div class="profile-view-banner">
+      <ng-container *ngIf="currentUser.profilePictureUrl; else viewInitialsAvatar">
+        <img
+          class="profile-view-avatar"
+          [src]="currentUser.profilePictureUrl"
+          [alt]="currentUser.fullName ? currentUser.fullName + ' avatar' : 'Avatar de usuario'"
+        />
+      </ng-container>
+      <ng-template #viewInitialsAvatar>
+        <div class="profile-view-avatar initials">
+          {{ (currentUser.fullName || currentUser.email || 'U').charAt(0) | uppercase }}
+        </div>
+      </ng-template>
+
+      <div class="profile-view-copy">
+        <h2>{{ currentUser.fullName || 'Usuario LifeHub' }}</h2>
+        <p class="email">{{ currentUser.email }}</p>
+        <p class="bio" *ngIf="currentUser.bio; else noBioView">{{ currentUser.bio }}</p>
+        <ng-template #noBioView>
+          <p class="bio muted">Este usuario no ha agregado una biografía.</p>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'edit'">
+    <div class="profile-card">
+      <h2>Información del Perfil</h2>
+      
+      <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()">
       <div class="form-group">
         <label for="fullName">Nombre Completo:</label>
         <input
@@ -36,6 +61,11 @@
           formControlName="profilePictureUrl"
           placeholder="https://..."
         />
+      </div>
+
+      <div class="profile-picture-preview" *ngIf="profileForm.get('profilePictureUrl')?.value as profilePictureUrl">
+        <p>Previsualización:</p>
+        <img [src]="profilePictureUrl" alt="Vista previa de foto de perfil" />
       </div>
 
       <button type="submit" class="btn-primary" [disabled]="loading">
@@ -83,4 +113,5 @@
       </button>
     </form>
   </div>
+</div>
 </div>

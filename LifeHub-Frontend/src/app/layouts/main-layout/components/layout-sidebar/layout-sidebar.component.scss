@@ -104,6 +104,11 @@
   justify-content: center;
   font-weight: $font-weight-bold;
   flex: 0 0 auto;
+  object-fit: cover;
+}
+
+.sidebar-profile-avatar[alt] {
+  background: transparent;
 }
 
 .sidebar-profile-copy {

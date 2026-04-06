@@ -5,7 +5,16 @@
   <p *ngIf="error" class="error">{{ error }}</p>
 
   <article class="profile-card" *ngIf="!loading && user">
-    <div class="avatar">{{ (user.fullName || user.email || 'U').charAt(0) | uppercase }}</div>
+    <ng-container *ngIf="user.profilePictureUrl; else publicFallbackAvatar">
+      <img
+        class="avatar"
+        [src]="user.profilePictureUrl"
+        [alt]="user.fullName ? user.fullName + ' avatar' : 'Avatar de usuario'"
+      />
+    </ng-container>
+    <ng-template #publicFallbackAvatar>
+      <div class="avatar">{{ (user.fullName || user.email || 'U').charAt(0) | uppercase }}</div>
+    </ng-template>
 
     <div class="profile-copy">
       <h1>{{ user.fullName || 'Usuario LifeHub' }}</h1>

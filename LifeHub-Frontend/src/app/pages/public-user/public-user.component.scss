@@ -33,6 +33,11 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
+  object-fit: cover;
+}
+
+.avatar[alt] {
+  background: transparent;
 }
 
 .profile-copy {
