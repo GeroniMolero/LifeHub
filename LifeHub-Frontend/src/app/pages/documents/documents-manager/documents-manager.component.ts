@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Document, DocumentType } from '../../../models/document.model';
 import { DocumentService } from '../../../services/document.service';
+import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
 
 @Component({
   selector: 'app-documents',
@@ -12,7 +13,7 @@ import { DocumentService } from '../../../services/document.service';
   templateUrl: './documents-manager.component.html',
   styleUrls: ['./documents-manager.component.scss']
 })
-export class DocumentsComponent implements OnInit {
+export class DocumentsComponent implements OnInit, OnDestroy {
   documents: Document[] = [];
   createForm!: FormGroup;
   loading = false;
@@ -21,7 +22,8 @@ export class DocumentsComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private documentService: DocumentService
+    private documentService: DocumentService,
+    private layoutHeaderStateService: LayoutHeaderStateService
   ) {}
 
   ngOnInit(): void {
@@ -32,7 +34,12 @@ export class DocumentsComponent implements OnInit {
       type: [DocumentType.Note]
     });
 
+    this.setHeaderState();
     this.loadDocuments();
+  }
+
+  ngOnDestroy(): void {
+    this.layoutHeaderStateService.clearOverride();
   }
 
   onCreate(): void {
@@ -50,6 +57,7 @@ export class DocumentsComponent implements OnInit {
           type: DocumentType.Note
         });
         this.showForm = false;
+        this.setHeaderState();
         this.loading = false;
       },
       error: () => {
@@ -76,10 +84,12 @@ export class DocumentsComponent implements OnInit {
 
   toggleForm(): void {
     this.showForm = !this.showForm;
+    this.setHeaderState();
   }
 
   closeForm(): void {
     this.showForm = false;
+    this.setHeaderState();
   }
 
   getTypeText(type?: DocumentType | string | number): string {
@@ -104,6 +114,18 @@ export class DocumentsComponent implements OnInit {
         this.error = 'No se pudieron cargar los documentos.';
         this.loading = false;
       }
+    });
+  }
+
+  private setHeaderState(): void {
+    this.layoutHeaderStateService.setOverride({
+      actions: [
+        {
+          label: this.showForm ? 'Cancelar' : 'Nuevo documento',
+          variant: this.showForm ? 'secondary' : 'primary',
+          action: () => this.toggleForm()
+        }
+      ]
     });
   }
 }

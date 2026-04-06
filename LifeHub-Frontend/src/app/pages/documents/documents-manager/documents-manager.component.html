@@ -1,8 +1,4 @@
 <div class="documents-container">
-  <button (click)="toggleForm()" class="btn-primary">
-    {{ showForm ? 'Cancelar' : 'Nuevo Documento' }}
-  </button>
-
   <div *ngIf="showForm" class="create-form card">
     <h2>Crear Documento</h2>
     <form [formGroup]="createForm" (ngSubmit)="onCreate()">
