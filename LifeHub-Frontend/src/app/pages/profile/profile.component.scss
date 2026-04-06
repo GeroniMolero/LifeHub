@@ -44,3 +44,89 @@
   border-color: $color-primary;
   box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
 }
+
+.profile-tabs {
+  display: flex;
+  gap: $space-3;
+  margin-bottom: $space-6;
+}
+
+.tab-button {
+  border: $border-width-base solid $color-border;
+  background: $color-white;
+  color: $color-text-primary;
+  padding: $space-3 $space-4;
+  border-radius: $border-radius-lg;
+  cursor: pointer;
+  font-weight: $font-weight-semibold;
+}
+
+.tab-button.active {
+  border-color: $color-primary;
+  background: $color-primary;
+  color: $color-white;
+}
+
+.profile-view-card {
+  padding: $space-6;
+}
+
+.profile-view-banner {
+  display: flex;
+  gap: $space-5;
+  align-items: center;
+}
+
+.profile-view-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: $color-border;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.profile-view-avatar.initials {
+  display: grid;
+  place-items: center;
+  background: #e0e7ff;
+  color: #1e3a8a;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.profile-view-copy h2 {
+  margin: 0 0 $space-3 0;
+}
+
+.profile-view-copy .email,
+.profile-view-copy .bio {
+  margin: 0 0 $space-2 0;
+  color: $color-text-secondary;
+}
+
+.profile-view-copy .bio {
+  color: $color-text-primary;
+}
+
+.profile-picture-preview {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  margin-bottom: $space-6;
+}
+
+.profile-picture-preview p {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  flex-shrink: 0;
+}
+
+.profile-picture-preview img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: $border-width-base solid $color-border;
+}

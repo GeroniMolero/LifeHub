@@ -32,7 +32,16 @@
 
   <div class="sidebar-footer" *ngIf="currentUser">
     <a class="sidebar-profile-card" routerLink="/profile" (click)="close()">
-      <span class="sidebar-profile-avatar">{{ (currentUser.fullName || currentUser.email || 'U').charAt(0) | uppercase }}</span>
+      <ng-container *ngIf="currentUser.profilePictureUrl; else initialsAvatar">
+        <img
+          class="sidebar-profile-avatar"
+          [src]="currentUser.profilePictureUrl"
+          [alt]="currentUser.fullName ? currentUser.fullName + ' avatar' : 'Avatar de usuario'"
+        />
+      </ng-container>
+      <ng-template #initialsAvatar>
+        <span class="sidebar-profile-avatar">{{ (currentUser.fullName || currentUser.email || 'U').charAt(0) | uppercase }}</span>
+      </ng-template>
       <span class="sidebar-profile-copy">
         <strong>{{ currentUser.fullName || 'Usuario' }}</strong>
         <small>{{ currentUser.email }}</small>

@@ -649,10 +649,6 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     }
 
     const host = url.hostname.toLowerCase().replace(/^www\./, '');
-    const isAllowed = this.allowedEmbedDomains.some(domain => host === domain || host.endsWith(`.${domain}`));
-    if (!isAllowed) {
-      return null;
-    }
 
     if (host === 'youtube.com' || host === 'youtu.be') {
       const videoId = host === 'youtu.be'
@@ -685,7 +681,19 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       return { provider: 'Dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${id}` };
     }
 
-    return null;
+    if (host === 'twitch.tv' || host.endsWith('.twitch.tv')) {
+      const channel = url.pathname.split('/').filter(Boolean)[0];
+      if (!channel) return null;
+      const parentHost = window.location.hostname;
+      return {
+        provider: 'Twitch',
+        embedUrl: `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${encodeURIComponent(parentHost)}`
+      };
+    }
+
+    // Support any additional allowed domain without requiring a code change.
+    // If no provider-specific embed conversion exists, keep the original URL.
+    return { provider: 'Embed', embedUrl: inputUrl };
   }
 
   private newReferenceId(): string {

@@ -1,7 +1,10 @@
-﻿import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
+import { LayoutHeaderStateService } from '../../services/layout-header-state.service';
 import { UserService } from '../../services/user.service';
+import { User } from '../../models/auth.model';
 
 @Component({
   selector: 'app-profile',
@@ -10,16 +13,20 @@ import { UserService } from '../../services/user.service';
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
+  currentUser: User | null = null;
+  activeTab: 'view' | 'edit' = 'view';
   loading = false;
   success = '';
   error = '';
 
   constructor(
     private fb: FormBuilder,
-    private userService: UserService
+    private userService: UserService,
+    private authService: AuthService,
+    private layoutHeaderStateService: LayoutHeaderStateService
   ) {}
 
   ngOnInit(): void {
@@ -50,10 +57,17 @@ export class ProfileComponent implements OnInit {
 
     this.userService.updateProfile(this.profileForm.value).subscribe({
       next: (user) => {
+        this.currentUser = user;
         this.profileForm.patchValue({
           fullName: user.fullName || '',
           bio: user.bio || '',
           profilePictureUrl: user.profilePictureUrl || ''
+        });
+        this.setHeaderState();
+        this.authService.refreshCurrentUser().subscribe({
+          error: () => {
+            // No bloquear la actualización local si falla la recarga global.
+          }
         });
         this.success = 'Perfil actualizado correctamente.';
         this.loading = false;
@@ -96,15 +110,22 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  setActiveTab(tab: 'view' | 'edit'): void {
+    this.activeTab = tab;
+    this.setHeaderState();
+  }
+
   private loadCurrentUser(): void {
     this.loading = true;
     this.userService.getCurrentUser().subscribe({
       next: (user) => {
+        this.currentUser = user;
         this.profileForm.patchValue({
           fullName: user.fullName || '',
           bio: user.bio || '',
           profilePictureUrl: user.profilePictureUrl || ''
         });
+        this.setHeaderState();
         this.loading = false;
       },
       error: () => {
@@ -112,5 +133,28 @@ export class ProfileComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private setHeaderState(): void {
+    this.layoutHeaderStateService.setOverride({
+      title: this.currentUser?.fullName?.trim() || 'Mi perfil',
+      description: 'Gestiona tu información personal y preferencias',
+      actions: [
+        {
+          label: 'Ver perfil',
+          variant: this.activeTab === 'view' ? 'primary' : 'secondary',
+          action: () => this.setActiveTab('view')
+        },
+        {
+          label: 'Editar perfil',
+          variant: this.activeTab === 'edit' ? 'primary' : 'secondary',
+          action: () => this.setActiveTab('edit')
+        }
+      ]
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.layoutHeaderStateService.clearOverride();
   }
 }
