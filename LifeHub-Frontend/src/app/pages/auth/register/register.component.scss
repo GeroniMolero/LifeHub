@@ -38,14 +38,6 @@
   animation: authPanelIn 520ms $easing-ease-out both;
 }
 
-.kicker {
-  margin: 0 0 $space-3;
-  font-size: $font-size-sm;
-  letter-spacing: 0.14em;
-  font-weight: $font-weight-semibold;
-  opacity: 0.9;
-}
-
 .auth-side-panel h1 {
   margin: 0;
   font-size: clamp(2rem, 3.4vw, 3rem);
@@ -89,19 +81,48 @@
 }
 
 .auth-card {
+  position: relative;
   width: 100%;
   max-width: 460px;
-  padding: $space-8;
+  margin-top: 2.5rem;
+  padding: calc($space-8 + 1.75rem) $space-8 $space-8;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: $border-radius-2xl;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
   animation: authCardIn 420ms $easing-ease-out both;
+  overflow: visible;
+}
+
+.auth-logo-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(88px, 9vw, 108px);
+  height: clamp(88px, 9vw, 108px);
+  border-radius: 50%;
+  background: linear-gradient(160deg, rgba(8, 53, 95, 0.98), rgba(17, 89, 150, 0.96));
+  border: 2px solid rgba(255, 255, 255, 0.68);
+  box-shadow: 0 14px 30px rgba(6, 23, 39, 0.34);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.auth-logo-badge img {
+  width: 58%;
+  height: 58%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .auth-card-header {
-  margin-bottom: $space-6;
+  position: relative;
+  z-index: 1;
+  margin-bottom: $space-5;
 }
 
 .auth-card-header h2 {
@@ -117,6 +138,8 @@
 }
 
 .form-group {
+  position: relative;
+  z-index: 1;
   margin-bottom: $space-5;
 }
 
@@ -156,6 +179,8 @@
 }
 
 .btn-full {
+  position: relative;
+  z-index: 1;
   width: 100%;
   padding: 0.85rem $space-3;
   margin-top: $space-4;
@@ -164,6 +189,8 @@
 }
 
 .switch-link {
+  position: relative;
+  z-index: 1;
   text-align: center;
   margin-top: $space-6;
   font-size: $font-size-sm;
@@ -222,8 +249,14 @@ button:disabled {
   }
 
   .auth-card {
-    padding: $space-6;
+    margin-top: 2.15rem;
+    padding: calc($space-6 + 1.65rem) $space-6 $space-6;
     border-radius: $border-radius-xl;
+  }
+
+  .auth-logo-badge {
+    width: 84px;
+    height: 84px;
   }
 }
 

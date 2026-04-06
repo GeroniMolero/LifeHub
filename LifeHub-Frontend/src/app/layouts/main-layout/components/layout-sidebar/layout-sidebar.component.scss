@@ -37,16 +37,15 @@
   cursor: pointer;
 }
 
-.brand-mark {
+.brand-logo {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, $color-brand-700 0%, $color-brand-300 100%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: $font-weight-bold;
-  color: $color-slate-900;
+  object-fit: cover;
+  display: block;
+  //border: $border-width-base solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+  //background-color: #fcfcfc;
 }
 
 .brand-link strong {
