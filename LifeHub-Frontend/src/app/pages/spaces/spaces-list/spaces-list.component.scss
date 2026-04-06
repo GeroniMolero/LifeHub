@@ -1,5 +1,4 @@
 .spaces-container { max-width: 980px; margin: 0 auto; }
-.header-row { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; }
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .card { border: 1px solid #e3e3e3; border-radius: 12px; padding: 1rem; background: #fff; }
 .form-card form, .edit-form { display: grid; gap: 0.5rem; }

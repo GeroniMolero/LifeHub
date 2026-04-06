@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CreativeSpace,
   SpacePrivacy,
@@ -13,6 +14,7 @@ import { AuthService } from '../../../services/auth.service';
 import { Friendship } from '../../../models/friendship.model';
 import { FriendshipService } from '../../../services/friendship.service';
 import { User } from '../../../models/auth.model';
+import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
 
 @Component({
   selector: 'app-spaces-list',
@@ -21,7 +23,9 @@ import { User } from '../../../models/auth.model';
   templateUrl: './spaces-list.component.html',
   styleUrls: ['./spaces-list.component.scss']
 })
-export class SpacesListComponent implements OnInit {
+export class SpacesListComponent implements OnInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
+
   spaces: CreativeSpace[] = [];
   favoriteIds = new Set<number>();
   createForm!: FormGroup;
@@ -46,7 +50,8 @@ export class SpacesListComponent implements OnInit {
     private fb: FormBuilder,
     private creativeSpaceService: CreativeSpaceService,
     private authService: AuthService,
-    private friendshipService: FriendshipService
+    private friendshipService: FriendshipService,
+    private layoutHeaderStateService: LayoutHeaderStateService
   ) {}
 
   ngOnInit(): void {
@@ -64,13 +69,20 @@ export class SpacesListComponent implements OnInit {
       isPublicProfileVisible: [false]
     });
 
-    this.authService.getCurrentUser().subscribe(user => {
-      this.currentUserId = user?.id || '';
-      this.favoriteIds = new Set(this.creativeSpaceService.getFavoriteSpaceIds(this.currentUserId));
-    });
+    this.authService.getCurrentUser()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(user => {
+        this.currentUserId = user?.id || '';
+        this.favoriteIds = new Set(this.creativeSpaceService.getFavoriteSpaceIds(this.currentUserId));
+      });
 
+    this.setHeaderState();
     this.loadAcceptedFriends();
     this.loadSpaces();
+  }
+
+  ngOnDestroy(): void {
+    this.layoutHeaderStateService.clearOverride();
   }
 
   get friendOptions(): User[] {
@@ -96,6 +108,7 @@ export class SpacesListComponent implements OnInit {
 
   toggleCreate(): void {
     this.showCreate = !this.showCreate;
+    this.setHeaderState();
   }
 
   createSpace(): void {
@@ -113,6 +126,7 @@ export class SpacesListComponent implements OnInit {
           privacy: SpacePrivacy.Private,
           isPublicProfileVisible: false
         });
+        this.setHeaderState();
         this.loading = false;
       },
       error: () => {
@@ -313,6 +327,18 @@ export class SpacesListComponent implements OnInit {
         this.friendsError = err?.error?.message || 'No se pudo cargar la lista de amigos.';
         this.friendsLoading = false;
       }
+    });
+  }
+
+  private setHeaderState(): void {
+    this.layoutHeaderStateService.setOverride({
+      actions: [
+        {
+          label: this.showCreate ? 'Cancelar' : 'Nuevo espacio',
+          variant: this.showCreate ? 'secondary' : 'primary',
+          action: () => this.toggleCreate()
+        }
+      ]
     });
   }
 }

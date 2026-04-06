@@ -1,12 +1,4 @@
 <div class="spaces-container">
-  <div class="header-row">
-    <div>
-      <h1>Espacios creativos</h1>
-      <p>Organiza tus ideas en espacios privados o compartidos.</p>
-    </div>
-    <button class="btn-primary" (click)="toggleCreate()">{{ showCreate ? 'Cancelar' : 'Nuevo espacio' }}</button>
-  </div>
-
   <div *ngIf="showCreate" class="card form-card">
     <h2>Crear espacio</h2>
     <form [formGroup]="createForm" (ngSubmit)="createSpace()">
