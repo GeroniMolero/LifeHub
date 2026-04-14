@@ -125,7 +125,7 @@ npm start
 - Swagger: http://localhost:5000/swagger
 - SQL Server: localhost:1433
 
-## 🧪 Entorno Nuevo (Otro Ordenador)
+## Entorno Nuevo (Otro Ordenador)
 
 Flujo recomendado para un clon nuevo del repositorio:
 
@@ -149,7 +149,7 @@ docker compose -f docker-compose.dev.yml down -v
 
 Esto borra solo datos locales de desarrollo en Docker (`sql_data`).
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 LifeHub/
@@ -175,7 +175,7 @@ LifeHub/
 
 ```
 
-## 🔐 Seguridad
+## Seguridad
 
 - ✅ Autenticación basada en JWT
 - ✅ Hash de contraseñas con Identity
@@ -184,7 +184,15 @@ LifeHub/
 - ✅ Protección de rutas con Guards
 - ✅ No almacenamiento de contenido protegido por derechos de autor
 
-## 📝 Notas Importantes
+### Sesión y expiración de token JWT
+
+- El frontend persiste el token en `localStorage` para mantener sesión entre cierres del navegador.
+- Cuando el token expira o es inválido, el backend responde `401 Unauthorized`.
+- El interceptor JWT del frontend captura `401`, ejecuta logout y redirige automáticamente a `/login`.
+- Este cierre de sesión ocurre en la siguiente petición HTTP al backend tras la expiración del token.
+- La duración del token se configura en `LifeHub-Backend/appsettings.json`, en `Jwt:ExpiresInMinutes` (valor actual: `600`).
+
+## Notas Importantes
 
 - **No almacenamos archivos multimedia** - Los archivos de música y documentos se almacenan en el dispositivo del usuario
 - **Enlaces externos** - Integramos contenido mediante enlaces oficiales de servicios como YouTube, Spotify, etc.
@@ -198,13 +206,13 @@ LifeHub/
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para detalles.
 
-## 📧 Contacto
+## Contacto
 
-Para soporte y preguntas: support@lifehub.local
+Para soporte y preguntas: gemordz@gmail.com
 
 ---
 
