@@ -27,16 +27,6 @@
 - Lista de amigos
 
 
-### Chat en Tiempo Real (pendiente)
-- Mensajería instantánea con SignalR
-- Notificaciones de mensajes leídos
-- Conversaciones uno a uno
-
-### Recomendaciones (pendiente)
-- Recomendar películas, series y libros
-- Sistema de calificaciones
-- Comentarios en recomendaciones
-
 ### Espacios creativos
 
 # <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/7541261b-a7f4-4250-a84e-351aea4a8320" />
@@ -53,11 +43,6 @@
 - Editor de texto en línea
 - Diferentes tipos de documentos (notas, archivos, listas)
 
-### Reproductor de Música (en desarrollo)
-- Registro de archivos locales
-- Metadatos de canciones (artista, álbum, duración)
-- Gestión de biblioteca local
-
 ### Perfil
 
 # <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/58f61a7b-7781-4a9f-a7e9-ee028b58d755" />
@@ -71,6 +56,21 @@
 
 - Añadir, eliminar y desactivar dominios permitidos para embebidos.
 - Visualizar usuarios (en un futuro acciones)
+
+### Reproductor de Música (en desarrollo)
+- Registro de archivos locales
+- Metadatos de canciones (artista, álbum, duración)
+- Gestión de biblioteca local
+
+### Chat en Tiempo Real (pendiente)
+- Mensajería instantánea con SignalR
+- Notificaciones de mensajes leídos
+- Conversaciones uno a uno
+
+### Recomendaciones (pendiente)
+- Recomendar películas, series y libros
+- Sistema de calificaciones
+- Comentarios en recomendaciones
 
 ## Arquitectura
 
