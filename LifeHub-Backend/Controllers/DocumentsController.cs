@@ -30,8 +30,21 @@ namespace LifeHub.Controllers
             if (authError != null)
                 return authError;
 
-            var documents = await _context.Documents
-                .Where(d => d.UserId == userId)
+            var canViewAllDocuments = HasPermission("documents.view.all");
+
+            var query = _context.Documents.AsQueryable();
+
+            if (!canViewAllDocuments)
+            {
+                query = query.Where(d =>
+                    d.UserId == userId ||
+                    (d.CreativeSpaceId.HasValue &&
+                     _context.SpacePermissions.Any(p => p.CreativeSpaceId == d.CreativeSpaceId.Value && p.UserId == userId))
+                );
+            }
+
+            var documents = await query
+                .Include(d => d.User)
                 .OrderByDescending(d => d.UpdatedAt)
                 .ToListAsync();
 
@@ -45,7 +58,22 @@ namespace LifeHub.Controllers
             if (authError != null)
                 return authError;
 
-            var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId);
+            var canViewAllDocuments = HasPermission("documents.view.all");
+
+            var query = _context.Documents
+                .Include(d => d.User)
+                .Where(d => d.Id == id);
+
+            if (!canViewAllDocuments)
+            {
+                query = query.Where(d =>
+                    d.UserId == userId ||
+                    (d.CreativeSpaceId.HasValue &&
+                     _context.SpacePermissions.Any(p => p.CreativeSpaceId == d.CreativeSpaceId.Value && p.UserId == userId))
+                );
+            }
+
+            var document = await query.FirstOrDefaultAsync();
 
             if (document == null)
                 return NotFoundError("Documento no encontrado.");
@@ -70,7 +98,14 @@ namespace LifeHub.Controllers
             _context.Documents.Add(document);
             await _context.SaveChangesAsync();
 
-            return Created($"api/documents/{document.Id}", _mapper.Map<DocumentDto>(document));
+            var createdDocument = await _context.Documents
+                .Include(d => d.User)
+                .FirstOrDefaultAsync(d => d.Id == document.Id);
+
+            if (createdDocument == null)
+                return Created($"api/documents/{document.Id}", _mapper.Map<DocumentDto>(document));
+
+            return Created($"api/documents/{document.Id}", _mapper.Map<DocumentDto>(createdDocument));
         }
 
         [HttpPut("{id}")]
@@ -90,7 +125,14 @@ namespace LifeHub.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(_mapper.Map<DocumentDto>(document));
+            var updatedDocument = await _context.Documents
+                .Include(d => d.User)
+                .FirstOrDefaultAsync(d => d.Id == document.Id);
+
+            if (updatedDocument == null)
+                return Ok(_mapper.Map<DocumentDto>(document));
+
+            return Ok(_mapper.Map<DocumentDto>(updatedDocument));
         }
 
         [HttpDelete("{id}")]
@@ -109,6 +151,11 @@ namespace LifeHub.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private bool HasPermission(string value)
+        {
+            return User.HasClaim("permission", value);
         }
     }
 }

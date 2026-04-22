@@ -6,6 +6,7 @@ import { User } from '../../models/auth.model';
 import { CreativeSpace } from '../../models/creative-space.model';
 import { Friendship, FriendshipStatus } from '../../models/friendship.model';
 import { CreativeSpaceService } from '../../services/creative-space.service';
+import { ConfirmationService } from '../../services/confirmation.service';
 import { FriendshipService } from '../../services/friendship.service';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
@@ -38,6 +39,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   constructor(
     private creativeSpaceService: CreativeSpaceService,
+    private confirmationService: ConfirmationService,
     private friendshipService: FriendshipService,
     private userService: UserService,
     private authService: AuthService,
@@ -130,7 +132,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   removeFriend(friendshipId: number): void {
-    if (!confirm('¿Seguro que quieres eliminar esta amistad?')) return;
+    if (!this.confirmationService.confirmDelete('esta amistad')) return;
 
     this.friendshipService.deleteFriendship(friendshipId).subscribe({
       next: () => {

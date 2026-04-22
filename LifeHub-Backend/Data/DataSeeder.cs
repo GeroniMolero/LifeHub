@@ -99,11 +99,19 @@ END
                 foreach (var admin in adminUsers)
                 {
                     var claims = await userManager.GetClaimsAsync(admin);
-                    var hasAdminViewClaim = claims.Any(c => c.Type == "permission" && c.Value == "admin.users.view");
-
-                    if (!hasAdminViewClaim)
+                    var requiredPermissions = new[]
                     {
-                        await userManager.AddClaimAsync(admin, new Claim("permission", "admin.users.view"));
+                        "admin.users.view",
+                        "documents.view.all"
+                    };
+
+                    foreach (var permission in requiredPermissions)
+                    {
+                        var hasPermission = claims.Any(c => c.Type == "permission" && c.Value == permission);
+                        if (!hasPermission)
+                        {
+                            await userManager.AddClaimAsync(admin, new Claim("permission", permission));
+                        }
                     }
                 }
 

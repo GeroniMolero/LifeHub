@@ -1,6 +1,7 @@
 export interface Document {
   id: number;
   userId: string;
+  creatorName?: string;
   creativeSpaceId?: number;
   title: string;
   description: string;

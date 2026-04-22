@@ -36,6 +36,11 @@ namespace LifeHub.Utilidades
             // Document mappings
             CreateMap<Document, DocumentDto>()
                 .ForMember(d => d.Type, o => o.MapFrom(s => (int)s.Type))
+                .ForMember(d => d.CreatorName, o => o.MapFrom(s =>
+                    !string.IsNullOrWhiteSpace(s.User != null ? s.User.FullName : null)
+                        ? s.User!.FullName
+                        : (!string.IsNullOrWhiteSpace(s.User != null ? s.User.Email : null) ? s.User!.Email : s.UserId)
+                ))
                 .ReverseMap()
                 .ForMember(d => d.Type, o => o.MapFrom(s => (DocumentType)s.Type));
 

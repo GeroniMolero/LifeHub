@@ -9,6 +9,7 @@ import {
   SpacePermission,
   SpacePermissionLevel
 } from '../../../models/creative-space.model';
+import { ConfirmationService } from '../../../services/confirmation.service';
 import { CreativeSpaceService } from '../../../services/creative-space.service';
 import { AuthService } from '../../../services/auth.service';
 import { Friendship } from '../../../models/friendship.model';
@@ -49,6 +50,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private creativeSpaceService: CreativeSpaceService,
+    private confirmationService: ConfirmationService,
     private authService: AuthService,
     private friendshipService: FriendshipService,
     private layoutHeaderStateService: LayoutHeaderStateService
@@ -164,7 +166,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   }
 
   deleteSpace(spaceId: number): void {
-    if (!confirm('¿Seguro que quieres eliminar este espacio creativo?')) return;
+    if (!this.confirmationService.confirmDelete('este espacio creativo')) return;
 
     this.loading = true;
     this.error = '';
@@ -237,7 +239,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   }
 
   removePermission(space: CreativeSpace, userId: string): void {
-    if (!confirm('¿Seguro que quieres revocar el acceso de este usuario?')) return;
+    if (!this.confirmationService.confirmAction('¿Seguro que quieres revocar el acceso de este usuario?')) return;
 
     this.permissionLoadingBySpace[space.id] = true;
     this.permissionErrorBySpace[space.id] = '';

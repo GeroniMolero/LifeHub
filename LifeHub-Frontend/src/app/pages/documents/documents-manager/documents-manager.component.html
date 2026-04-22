@@ -20,20 +20,175 @@
 
   <div *ngIf="loading" class="loading">Cargando...</div>
 
+  <div *ngIf="error" class="error-banner">{{ error }}</div>
+
+  <section *ngIf="!loading && documents.length > 0" class="documents-toolbar card">
+    <div class="toolbar-heading">
+      <div>
+        <p>
+          Mostrando {{ startItemIndex }}-{{ endItemIndex }} de {{ filteredDocuments.length }} documentos
+        </p>
+      </div>
+    </div>
+
+    <form [formGroup]="filterForm" class="filters-form">
+      <div class="search-line">
+        <div class="filter-field filter-field-search">
+          <label for="documents-search">Buscar</label>
+          <input id="documents-search" type="search" formControlName="search" placeholder="Titulo, descripcion o contenido" />
+        </div>
+
+        <div class="search-line-actions">
+          <button
+            type="button"
+            class="btn-secondary clear-filters-btn"
+            [class.clear-filters-btn-invisible]="!hasActiveFilters"
+            [disabled]="!hasActiveFilters"
+            [attr.aria-hidden]="!hasActiveFilters"
+            [attr.tabindex]="hasActiveFilters ? 0 : -1"
+            (click)="clearFilters()"
+          >
+            Limpiar
+          </button>
+
+          <div class="filters-expand-toggle">
+          <button
+            type="button"
+            class="btn-secondary filters-toggle"
+            (click)="toggleFiltersDropdown()"
+            [attr.aria-expanded]="showFiltersDropdown"
+            aria-controls="documents-filters-expand"
+          >
+            Filtros {{ showFiltersDropdown ? '▴' : '▾' }}
+          </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="documents-filters-expand" class="filters-expand-panel" *ngIf="showFiltersDropdown">
+        <div class="filter-field" *ngIf="canFilterByCreator">
+          <label for="documents-creator">Creador</label>
+          <input
+            id="documents-creator"
+            type="search"
+            formControlName="creatorName"
+            placeholder="Filtrar por nombre de creador"
+          />
+        </div>
+
+        <div class="filter-field">
+          <label for="documents-type">Tipo</label>
+          <select id="documents-type" formControlName="type">
+            <option value="all">Todos</option>
+            <option [value]="DocumentType.Note">Nota</option>
+            <option [value]="DocumentType.TextFile">Archivo de texto</option>
+            <option [value]="DocumentType.List">Lista</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="documents-publication">Estado</label>
+          <select id="documents-publication" formControlName="publication">
+            <option value="all">Todos</option>
+            <option value="public">Publicados</option>
+            <option value="private">Privados</option>
+          </select>
+        </div>
+      </div>
+    </form>
+  </section>
+
   <div *ngIf="!loading && documents.length === 0" class="empty-state">
     <p>No tienes documentos aún</p>
   </div>
 
-  <div *ngIf="!loading" class="documents-list">
-    <div *ngFor="let doc of documents" class="document-card">
-      <h3>{{ doc.title }}</h3>
-      <p class="document-type">Tipo: {{ getTypeText(doc.type) }}</p>
-      <p class="document-type" *ngIf="doc.isPublic">Publicado</p>
-      <p class="document-description">{{ doc.description }}</p>
-      <small>{{ doc.updatedAt | date }}</small>
-      <div class="document-actions">
-        <a [routerLink]="['/documents', doc.id]" class="btn-primary">Abrir</a>
-        <button (click)="deleteDocument(doc.id)" class="btn-danger">Eliminar</button>
+  <div *ngIf="!loading && documents.length > 0 && filteredDocuments.length === 0" class="empty-state empty-state-filtered">
+    <p>No hay documentos que coincidan con los filtros actuales.</p>
+  </div>
+
+  <div *ngIf="!loading && filteredDocuments.length > 0" class="documents-table-shell card">
+    <div class="documents-table-scroll">
+      <table class="documents-table">
+        <thead>
+          <tr>
+            <th>Titulo</th>
+            <th>Creador</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Actualizado</th>
+            <th class="actions-column">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let doc of paginatedDocuments">
+            <td>
+              <strong class="document-title-text">{{ doc.title }}</strong>
+            </td>
+            <td>{{ getCreatorName(doc) }}</td>
+            <td>{{ getTypeText(doc.type) }}</td>
+            <td>
+              <span class="status-pill" [class.status-pill-public]="doc.isPublic">
+                {{ getPublicationText(doc.isPublic) }}
+              </span>
+            </td>
+            <td>{{ doc.updatedAt | date:'short' }}</td>
+            <td class="actions-column">
+              <div class="document-actions">
+                <a
+                  [routerLink]="['/documents', doc.id]"
+                  class="icon-action icon-action-view"
+                  title="Abrir documento"
+                  aria-label="Abrir documento"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 5C6.5 5 2 12 2 12s4.5 7 10 7 10-7 10-7-4.5-7-10-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
+                  </svg>
+                </a>
+                <button
+                  type="button"
+                  (click)="deleteDocument(doc.id)"
+                  class="icon-action icon-action-delete"
+                  title="Eliminar documento"
+                  aria-label="Eliminar documento"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Zm2-10h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-pagination" *ngIf="filteredDocuments.length > 0">
+      <div class="pagination-summary">
+        Página {{ normalizedCurrentPage }} de {{ totalPages }}
+      </div>
+
+      <div class="pagination-controls">
+        <label for="documents-page-size">Filas:</label>
+        <select id="documents-page-size" [formControl]="pageSizeControl">
+          <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+        </select>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="goToPreviousPage()"
+          [disabled]="normalizedCurrentPage === 1"
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="goToNextPage()"
+          [disabled]="normalizedCurrentPage === totalPages"
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   </div>

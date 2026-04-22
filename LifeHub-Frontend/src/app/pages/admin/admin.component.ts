@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/auth.model';
+import { ConfirmationService } from '../../services/confirmation.service';
 import { AllowedWebsiteService } from '../../services/allowed-website.service';
 import { AllowedWebsite } from '../../models/allowed-website.model';
 
@@ -30,6 +31,7 @@ export class AdminComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
+    private confirmationService: ConfirmationService,
     private allowedWebsiteService: AllowedWebsiteService
   ) {}
 
@@ -73,7 +75,7 @@ export class AdminComponent implements OnInit {
   }
 
   deleteWebsite(websiteId: number): void {
-    if (!confirm('¿Seguro que quieres eliminar este dominio permitido?')) return;
+    if (!this.confirmationService.confirmDelete('este dominio permitido')) return;
 
     this.websitesError = '';
     this.allowedWebsiteService.deleteAllowedWebsite(websiteId).subscribe({

@@ -11,6 +11,7 @@ import { CreateDocumentRequest, Document, DocumentType, UpdateDocumentRequest } 
 import { SpaceMediaReference } from '../../../models/space-media-reference.model';
 import { MEDIA_EMBED_ALLOWED_DOMAINS } from '../../../config/media-allowlist.config';
 import { AllowedWebsiteService } from '../../../services/allowed-website.service';
+import { ConfirmationService } from '../../../services/confirmation.service';
 import { CreativeSpaceService } from '../../../services/creative-space.service';
 import { DocumentService } from '../../../services/document.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
@@ -84,6 +85,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private sanitizer: DomSanitizer,
     private allowedWebsiteService: AllowedWebsiteService,
+    private confirmationService: ConfirmationService,
     private creativeSpaceService: CreativeSpaceService,
     private documentService: DocumentService,
     private layoutHeaderStateService: LayoutHeaderStateService,
@@ -290,7 +292,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   deleteDocument(documentId: number): void {
-    if (!confirm('¿Seguro que quieres eliminar este documento?')) return;
+    if (!this.confirmationService.confirmDelete('este documento')) return;
 
     this.loadingDocuments = true;
     this.documentService.deleteDocument(documentId).subscribe({
@@ -445,6 +447,10 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
   removeMediaReference(id: string): void {
     if (!this.space) return;
+
+    if (!this.confirmationService.confirmAction('¿Seguro que quieres eliminar esta referencia multimedia?')) {
+      return;
+    }
 
     const reference = this.mediaReferences.find(item => item.id === id);
     if (!reference) return;

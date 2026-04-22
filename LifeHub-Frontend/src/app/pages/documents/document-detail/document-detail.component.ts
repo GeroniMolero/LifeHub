@@ -9,6 +9,7 @@ import { DocumentVersion } from '../../../models/document-version.model';
 import { DocumentPublication, MediaReference } from '../../../models/document-publication.model';
 import { SpaceMediaReference } from '../../../models/space-media-reference.model';
 import { DocumentService } from '../../../services/document.service';
+import { ConfirmationService } from '../../../services/confirmation.service';
 import { DocumentVersionService } from '../../../services/document-version.service';
 import { DocumentPublicationService } from '../../../services/document-publication.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
@@ -41,6 +42,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     private router: Router,
     private fb: FormBuilder,
     private documentService: DocumentService,
+    private confirmationService: ConfirmationService,
     private documentVersionService: DocumentVersionService,
     private publicationService: DocumentPublicationService,
     private layoutHeaderStateService: LayoutHeaderStateService,
@@ -108,7 +110,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
 
   deleteDocument(): void {
     if (!this.document) return;
-    if (!confirm('¿Seguro que quieres eliminar este documento?')) return;
+    if (!this.confirmationService.confirmDelete('este documento')) return;
 
     this.loading = true;
     this.error = '';
