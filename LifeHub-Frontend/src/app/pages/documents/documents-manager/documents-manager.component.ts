@@ -137,6 +137,20 @@ export class DocumentsComponent implements OnInit, OnDestroy {
     });
   }
 
+  downloadDocument(doc: Document): void {
+    const content = doc.content ?? '';
+    const fileName = this.buildMarkdownFileName(doc.title);
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = objectUrl;
+    link.download = fileName;
+    link.click();
+
+    URL.revokeObjectURL(objectUrl);
+  }
+
   toggleForm(): void {
     this.showForm = !this.showForm;
     this.setHeaderState();
@@ -300,6 +314,17 @@ export class DocumentsComponent implements OnInit, OnDestroy {
     }
 
     return user.email || user.id;
+  }
+
+  private buildMarkdownFileName(title?: string): string {
+    const normalizedTitle = (title || 'documento')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9-_\s]/g, '')
+      .replace(/\s+/g, '-');
+
+    return `${normalizedTitle || 'documento'}.md`;
   }
 
   private hasViewAllDocumentsPermission(user: User | null): boolean {

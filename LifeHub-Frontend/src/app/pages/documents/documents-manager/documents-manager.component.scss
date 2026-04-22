@@ -284,6 +284,18 @@
   color: #1d4ed8;
 }
 
+.icon-action-download:hover {
+  background: rgba(8, 145, 178, 0.12);
+  color: #0f766e;
+}
+
+.icon-action-download svg {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  display: block;
+}
+
 .icon-action-delete {
   color: $color-danger;
 }
