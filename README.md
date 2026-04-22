@@ -213,12 +213,12 @@ LifeHub/
 
 ## Seguridad
 
-- ✅ Autenticación basada en JWT
-- ✅ Hash de contraseñas con Identity
-- ✅ HTTPS en desarrollo y producción
-- ✅ Validación en servidor y cliente
-- ✅ Protección de rutas con Guards
-- ✅ No almacenamiento de contenido protegido por derechos de autor
+- Autenticación basada en JWT
+- Hash de contraseñas con Identity
+- HTTPS en desarrollo y producción
+- Validación en servidor y cliente
+- Protección de rutas con Guards
+- No almacenamiento de contenido protegido por derechos de autor
 
 ### Sesión y expiración de token JWT
 
