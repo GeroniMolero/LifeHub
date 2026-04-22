@@ -28,8 +28,8 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   showForm = false;
   readonly DocumentType = DocumentType;
   readonly pageSizeOptions = [5, 10, 20, 50];
-  pageSize = 5;
-  pageSizeControl = new FormControl<number>(5, { nonNullable: true });
+  pageSize = 10;
+  pageSizeControl = new FormControl<number>(10, { nonNullable: true });
   currentPage = 1;
   private filterChangesSub?: Subscription;
   private userChangesSub?: Subscription;

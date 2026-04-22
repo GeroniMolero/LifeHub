@@ -23,18 +23,9 @@
   <div *ngIf="error" class="error-banner">{{ error }}</div>
 
   <section *ngIf="!loading && documents.length > 0" class="documents-toolbar card">
-    <div class="toolbar-heading">
-      <div>
-        <p>
-          Mostrando {{ startItemIndex }}-{{ endItemIndex }} de {{ filteredDocuments.length }} documentos
-        </p>
-      </div>
-    </div>
-
     <form [formGroup]="filterForm" class="filters-form">
       <div class="search-line">
         <div class="filter-field filter-field-search">
-          <label for="documents-search">Buscar</label>
           <input id="documents-search" type="search" formControlName="search" placeholder="Titulo, descripcion o contenido" />
         </div>
 
@@ -174,8 +165,17 @@
     </div>
 
     <div class="table-pagination" *ngIf="filteredDocuments.length > 0">
-      <div class="pagination-summary">
-        Página {{ normalizedCurrentPage }} de {{ totalPages }}
+      <div class="pagination-meta">
+        <div class="pagination-summary">
+          Página {{ normalizedCurrentPage }} de {{ totalPages }}
+        </div>
+        <div class="results-summary">
+          <div>
+            <p>
+              Mostrando {{ startItemIndex }}-{{ endItemIndex }} de {{ filteredDocuments.length }} documentos
+            </p>
+          </div>
+        </div>
       </div>
 
       <div class="pagination-controls">
