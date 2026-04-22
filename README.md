@@ -1,5 +1,7 @@
 ﻿# LifeHub
 
+# <img width="1528" height="865" alt="image" src="https://github.com/user-attachments/assets/c34b8479-c8c8-44ad-bf5e-58f39ca258f7" />
+
 **LifeHub** es un portal web completo desarrollado con **Angular** (frontend) y **.NET 8** (backend), diseñado como un entorno centralizado para herramientas útiles del día a día.
 
 ## Características Principales
@@ -10,31 +12,65 @@
 - Gestión de permisos y roles
 - Persistencia de sesión (localStorage)
 - Cierre de sesión con un clic
+  
+```Ejemplo de respuesta exitosa del servidor tras el login, proporcionando el Bearer Token.```
+
+# <img width="718" height="171" alt="image" src="https://github.com/user-attachments/assets/edf777e1-fb8d-414b-8d3b-5f3651761ca0" />
+
 
 ### Gestión de Amigos
+
+# <img width="1586" height="934" alt="image" src="https://github.com/user-attachments/assets/6b808a5b-939d-4181-83ea-f8f1197f6d32" />
+
 - Solicitudes de amistad
 - Aceptar/rechazar solicitudes
 - Lista de amigos
 
-### Chat en Tiempo Real
+
+### Chat en Tiempo Real (pendiente)
 - Mensajería instantánea con SignalR
 - Notificaciones de mensajes leídos
 - Conversaciones uno a uno
 
-### Recomendaciones
+### Recomendaciones (pendiente)
 - Recomendar películas, series y libros
 - Sistema de calificaciones
 - Comentarios en recomendaciones
 
+### Espacios creativos
+
+# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/7541261b-a7f4-4250-a84e-351aea4a8320" />
+
+- Crear, editar y eliminar espacios.
+- Con acceso a editor markdown y recursos multimedia embebidos.
+- Posibilidad de espacio colaborativo con tu lista de amigos.
+
 ### Gestión de Documentos
-- Crear, editar y eliminar documentos
+
+# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/3ccfbaa8-8545-483b-ae9f-b07afe98eda3" />
+
+- Crear, editar, eliminar y descargar documentos
 - Editor de texto en línea
 - Diferentes tipos de documentos (notas, archivos, listas)
 
-### Reproductor de Música
+### Reproductor de Música (en desarrollo)
 - Registro de archivos locales
 - Metadatos de canciones (artista, álbum, duración)
 - Gestión de biblioteca local
+
+### Perfil
+
+# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/58f61a7b-7781-4a9f-a7e9-ee028b58d755" />
+
+- Mostrar nombre, descripcion, imagen.
+- Añadir previsualización de hasta 2 espacios favoritos para mostrar en tu perfil.
+
+### Panel de administrador
+
+# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/01ca65ca-d424-4e95-9c67-2e9b073ac5f3" />
+
+- Añadir, eliminar y desactivar dominios permitidos para embebidos.
+- Visualizar usuarios (en un futuro acciones)
 
 ## Arquitectura
 
