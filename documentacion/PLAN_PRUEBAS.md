@@ -140,4 +140,4 @@
 | ID | Fecha | Descripción | Estado |
 |----|-------|-------------|--------|
 | INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Abierta — pendiente de valorar refactorización |
-| INC-02 | 23-04-2026 | `POST /api/creativespaces` y `POST /api/documents` aceptaban nombre/título vacío (`""`) sin devolver error. Detectado al ejecutar `scripts/windows/run-tests.ps1` (T-SPACE-02 y T-DOC-02 fallaron con HTTP 201 en lugar de 400). Corregido añadiendo `[Required][MinLength(1)]` a `CreateCreativeSpaceDto.Name` y `CreateDocumentDto.Title`. | Resuelta |
+| INC-02 | 23-04-2026 | Validación de entrada ausente en dos endpoints de creación de recursos: aceptaban campos obligatorios vacíos sin devolver error. Detectado durante la ejecución de la suite de pruebas automatizada. Corregido añadiendo validación a nivel de DTO. | Resuelta |
