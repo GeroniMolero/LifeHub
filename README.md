@@ -1,6 +1,6 @@
 ﻿# LifeHub
 
-# <img width="1528" height="865" alt="image" src="https://github.com/user-attachments/assets/c34b8479-c8c8-44ad-bf5e-58f39ca258f7" />
+# <img width="1528" height="867" alt="image" src="https://github.com/user-attachments/assets/2e023cb4-c5f1-4fec-9b99-5e4402b35198" />
 
 **LifeHub** es un portal web completo desarrollado con **Angular** (frontend) y **.NET 8** (backend), diseñado como un entorno centralizado para herramientas útiles del día a día.
 
@@ -20,7 +20,7 @@
 
 ### Gestión de Amigos
 
-# <img width="1586" height="934" alt="image" src="https://github.com/user-attachments/assets/6b808a5b-939d-4181-83ea-f8f1197f6d32" />
+# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/c68f5efc-3d26-4210-897a-6cd932f3d1a8" />
 
 - Solicitudes de amistad
 - Aceptar/rechazar solicitudes
@@ -29,7 +29,7 @@
 
 ### Espacios creativos
 
-# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/7541261b-a7f4-4250-a84e-351aea4a8320" />
+# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/7a2a1263-cef6-44b4-8c57-9d13ce49ea26" />
 
 - Crear, editar y eliminar espacios.
 - Con acceso a editor markdown y recursos multimedia embebidos.
@@ -37,7 +37,7 @@
 
 ### Gestión de Documentos
 
-# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/3ccfbaa8-8545-483b-ae9f-b07afe98eda3" />
+# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/5f80560b-4c61-467b-a726-9f7f17b7b2e7" />
 
 - Crear, editar, eliminar y descargar documentos
 - Editor de texto en línea
@@ -45,14 +45,14 @@
 
 ### Perfil
 
-# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/0d6226ca-915e-4a1f-9dee-929b76346139" />
+# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/8e6061e8-ea45-4ff7-9c58-bc00c5dba8dc" />
 
 - Mostrar nombre, descripcion, imagen.
 - Añadir previsualización de hasta 2 espacios favoritos para mostrar en tu perfil.
 
 ### Panel de administrador
 
-# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/01ca65ca-d424-4e95-9c67-2e9b073ac5f3" />
+# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/58dc1465-dc9d-47a7-8701-f0177660a0b5" />
 
 - Añadir, eliminar y desactivar dominios permitidos para embebidos.
 - Visualizar usuarios (en un futuro acciones)
