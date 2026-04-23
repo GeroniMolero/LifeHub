@@ -387,7 +387,13 @@ if ($script:WebsiteId -and $script:AdminToken) {
     } catch {}
 }
 
-Write-Host "  Nota: el usuario $TestEmail no tiene endpoint de borrado -- eliminacion manual si se desea." -ForegroundColor DarkGray
+if ($script:UserToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/users/me" `
+            -Headers @{ Authorization="Bearer $($script:UserToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Usuario $TestEmail eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
 
 # --- BLOQUE 7: Resumen y generacion del informe ---
 

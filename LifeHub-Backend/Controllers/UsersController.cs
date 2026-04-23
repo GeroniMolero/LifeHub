@@ -118,6 +118,45 @@ namespace LifeHub.Controllers
             return Ok(_mapper.Map<UserDto>(user));
         }
 
+        [HttpDelete("me")]
+        [Authorize]
+        public async Task<IActionResult> DeleteCurrentUser()
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null) return authError;
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return UnauthorizedError("Sesión inválida. Inicia sesión de nuevo.");
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+                return BadRequestError("No se pudo eliminar la cuenta.");
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "CanViewAdmin")]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null) return authError;
+
+            if (id == userId)
+                return BadRequestError("No puedes eliminar tu propia cuenta desde el panel de administración.");
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                return NotFoundError("Usuario no encontrado.");
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+                return BadRequestError("No se pudo eliminar el usuario.");
+
+            return NoContent();
+        }
+
         [HttpPost("change-password")]
         [Authorize]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)

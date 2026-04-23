@@ -113,5 +113,13 @@
       </button>
     </form>
   </div>
+
+  <div class="profile-card danger-zone">
+    <h2>Zona de peligro</h2>
+    <p>Eliminar tu cuenta es una acción irreversible. Se borrarán todos tus datos permanentemente.</p>
+    <button type="button" class="btn-danger" (click)="deleteAccount()" [disabled]="loading">
+      Eliminar mi cuenta
+    </button>
+  </div>
 </div>
 </div>

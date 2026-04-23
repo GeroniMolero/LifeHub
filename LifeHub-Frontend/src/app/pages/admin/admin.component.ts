@@ -20,6 +20,7 @@ export class AdminComponent implements OnInit {
 
   loading = false;
   error = '';
+  usersError = '';
   websitesLoading = false;
   websitesError = '';
 
@@ -84,6 +85,20 @@ export class AdminComponent implements OnInit {
       },
       error: err => {
         this.websitesError = err?.error?.message || 'No se pudo eliminar el dominio.';
+      }
+    });
+  }
+
+  deleteUser(userId: string): void {
+    if (!this.confirmationService.confirmDelete('este usuario')) return;
+
+    this.usersError = '';
+    this.userService.deleteUser(userId).subscribe({
+      next: () => {
+        this.users = this.users.filter(u => u.id !== userId);
+      },
+      error: err => {
+        this.usersError = err?.error?.message || 'No se pudo eliminar el usuario.';
       }
     });
   }

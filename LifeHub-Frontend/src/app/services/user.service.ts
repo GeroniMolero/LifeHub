@@ -40,4 +40,12 @@ export class UserService {
       newPassword
     });
   }
+
+  deleteCurrentUser(): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/me`);
+  }
+
+  deleteUser(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`);
+  }
 }

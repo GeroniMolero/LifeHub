@@ -67,13 +67,43 @@ $DO_SEC   && SELECTED="${SELECTED:+$SELECTED, }SEGURIDAD"
 echo ""
 echo "  Modulos : $SELECTED"
 echo "  Endpoint: $BASE_URL"
-echo ""
 
-# ── ESTADO Y HELPERS ──────────────────────────────────────────────────────────
+# ── VALORES PERSONALIZADOS ─────────────────────────────────────────────────────
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-TEST_EMAIL="autotest_${TIMESTAMP}@lifehub-auto.test"
-TEST_PASS="AutoTest123!"
+
+echo ""
+echo "Valores de prueba (Enter para usar el valor por defecto):"
+echo ""
+
+def_email="autotest_${TIMESTAMP}@lifehub-auto.test"
+def_pass="AutoTest123!"
+read -rp "  Email de prueba        [$def_email]: " inp
+TEST_EMAIL="${inp:-$def_email}"
+read -rp "  Contrasena de prueba   [$def_pass]: " inp
+TEST_PASS="${inp:-$def_pass}"
+
+SPACE_NAME="Espacio AutoTest $TIMESTAMP"
+DOC_TITLE="Doc AutoTest $TIMESTAMP"
+DOC_CONTENT="# Test\nContenido de prueba."
+ADMIN_DOMAIN="autotest-$TIMESTAMP.io"
+
+if $DO_SPACE; then
+    read -rp "  Nombre del espacio     [$SPACE_NAME]: " inp
+    SPACE_NAME="${inp:-$SPACE_NAME}"
+fi
+if $DO_DOC; then
+    read -rp "  Titulo del documento   [$DOC_TITLE]: " inp
+    DOC_TITLE="${inp:-$DOC_TITLE}"
+    read -rp "  Contenido del documento [$DOC_CONTENT]: " inp
+    DOC_CONTENT="${inp:-$DOC_CONTENT}"
+fi
+if $DO_ADMIN; then
+    read -rp "  Dominio admin          [$ADMIN_DOMAIN]: " inp
+    ADMIN_DOMAIN="${inp:-$ADMIN_DOMAIN}"
+fi
+
+echo ""
 
 USER_TOKEN=""; ADMIN_TOKEN=""
 SPACE_ID=""; DOC_ID=""; VERSION_ID=""; WEBSITE_ID=""
@@ -186,13 +216,13 @@ if $DO_SPACE; then
         skip_test "T-SPACE-*" "Todos los tests de espacios" "UserToken no disponible"
     else
         if invoke_api_test "T-SPACE-01" "Crear espacio OK" POST /creativespaces \
-            "{\"name\":\"Espacio AutoTest $TIMESTAMP\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
+            "{\"name\":\"$SPACE_NAME\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
             "$USER_TOKEN" "201"; then SPACE_ID=$(json_val "id" "$(cat /tmp/lh_last_resp.txt)"); fi
         invoke_api_test "T-SPACE-02" "Crear espacio sin nombre -> error" POST /creativespaces \
             "{\"name\":\"\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" "$USER_TOKEN" "400" || true
         if [ -n "$SPACE_ID" ]; then
             invoke_api_test "T-SPACE-03" "Editar espacio OK" PUT "/creativespaces/$SPACE_ID" \
-                "{\"name\":\"Espacio Editado $TIMESTAMP\",\"description\":\"Editado\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
+                "{\"name\":\"$SPACE_NAME (editado)\",\"description\":\"Editado\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
                 "$USER_TOKEN" "200" || true
             invoke_api_test "T-SPACE-04" "Editar espacio de otro usuario -> 404" PUT "/creativespaces/99999" \
                 "{\"name\":\"X\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" "$USER_TOKEN" "404" || true
@@ -212,16 +242,16 @@ if $DO_DOC; then
         skip_test "T-DOC-*" "Todos los tests de documentos" "UserToken no disponible"
     else
         if invoke_api_test "T-DOC-01" "Crear documento OK" POST /documents \
-            "{\"title\":\"Doc AutoTest $TIMESTAMP\",\"content\":\"# Test\",\"description\":\"\"}" \
+            "{\"title\":\"$DOC_TITLE\",\"content\":\"$DOC_CONTENT\",\"description\":\"\"}" \
             "$USER_TOKEN" "201"; then DOC_ID=$(json_val "id" "$(cat /tmp/lh_last_resp.txt)"); fi
         invoke_api_test "T-DOC-02" "Crear documento sin titulo -> error" POST /documents \
             "{\"title\":\"\",\"content\":\"x\",\"description\":\"\"}" "$USER_TOKEN" "400" || true
         if [ -n "$DOC_ID" ]; then
             invoke_api_test "T-DOC-03" "Editar documento OK" PUT "/documents/$DOC_ID" \
-                "{\"title\":\"Doc AutoTest $TIMESTAMP\",\"content\":\"# Editado\",\"description\":\"\",\"creativeSpaceId\":null}" \
+                "{\"title\":\"$DOC_TITLE\",\"content\":\"$DOC_CONTENT (editado)\",\"description\":\"\",\"creativeSpaceId\":null}" \
                 "$USER_TOKEN" "200" || true
             invoke_api_test "T-DOC-04" "Contenido XSS almacenado (backend no sanitiza)" PUT "/documents/$DOC_ID" \
-                "{\"title\":\"Doc AutoTest $TIMESTAMP\",\"content\":\"<script>alert(xss)</script>\",\"description\":\"\",\"creativeSpaceId\":null}" \
+                "{\"title\":\"$DOC_TITLE\",\"content\":\"<script>alert(xss)</script>\",\"description\":\"\",\"creativeSpaceId\":null}" \
                 "$USER_TOKEN" "200" "<script>" || true
             if invoke_api_test "T-DOC-05" "Crear snapshot de version" POST "/documentversions/document/$DOC_ID/snapshot" \
                 "{\"comment\":\"snapshot-autotest\"}" "$USER_TOKEN" "201"; then
@@ -259,12 +289,12 @@ if $DO_ADMIN; then
     if [ -n "$ADMIN_TOKEN" ]; then
         invoke_api_test "T-ADMIN-03" "Acceso admin con rol Admin -> 200" GET /admin/allowed-websites "" "$ADMIN_TOKEN" "200" || true
         if invoke_api_test "T-ADMIN-04" "Anadir dominio permitido" POST /admin/allowed-websites \
-            "{\"domain\":\"autotest-$TIMESTAMP.io\",\"isActive\":true}" "$ADMIN_TOKEN" "201"; then
+            "{\"domain\":\"$ADMIN_DOMAIN\",\"isActive\":true}" "$ADMIN_TOKEN" "201"; then
             WEBSITE_ID=$(json_val "id" "$(cat /tmp/lh_last_resp.txt)")
         fi
         if [ -n "$WEBSITE_ID" ]; then
             invoke_api_test "T-ADMIN-05" "Desactivar dominio" PUT "/admin/allowed-websites/$WEBSITE_ID" \
-                "{\"domain\":\"autotest-$TIMESTAMP.io\",\"isActive\":false}" "$ADMIN_TOKEN" "200" || true
+                "{\"domain\":\"$ADMIN_DOMAIN\",\"isActive\":false}" "$ADMIN_TOKEN" "200" || true
         else
             skip_test "T-ADMIN-05" "Desactivar dominio" "WebsiteId no disponible"
         fi
@@ -301,7 +331,12 @@ if [ -n "$WEBSITE_ID" ] && [ -n "$ADMIN_TOKEN" ]; then
     curl -s -o /dev/null -X DELETE -H "Authorization: Bearer $ADMIN_TOKEN" \
         "$BASE_URL/admin/allowed-websites/$WEBSITE_ID" 2>/dev/null && echo "  Dominio $WEBSITE_ID eliminado." || true
 fi
-echo "  Nota: $TEST_EMAIL sin endpoint de borrado -- eliminacion manual si se desea."
+if [ -n "$USER_TOKEN" ]; then
+    curl -s -o /dev/null -X DELETE \
+        -H "Authorization: Bearer $USER_TOKEN" \
+        "$BASE_URL/users/me" 2>/dev/null && \
+        echo "  Usuario $TEST_EMAIL eliminado." || true
+fi
 
 # ── RESUMEN ────────────────────────────────────────────────────────────────────
 

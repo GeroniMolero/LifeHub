@@ -352,7 +352,12 @@ if [ -n "$WEBSITE_ID" ] && [ -n "$ADMIN_TOKEN" ]; then
         echo "  Dominio $WEBSITE_ID eliminado." || true
 fi
 
-echo "  Nota: el usuario $TEST_EMAIL no tiene endpoint de borrado -- eliminacion manual si se desea."
+if [ -n "$USER_TOKEN" ]; then
+    curl -s -o /dev/null -X DELETE \
+        -H "Authorization: Bearer $USER_TOKEN" \
+        "$BASE_URL/users/me" 2>/dev/null && \
+        echo "  Usuario $TEST_EMAIL eliminado." || true
+fi
 
 # --- BLOQUE 7: RESUMEN ---
 

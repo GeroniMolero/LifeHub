@@ -57,13 +57,43 @@ if ($doSec)   { $selectedNames += "SEGURIDAD" }
 Write-Host ""
 Write-Host "  Modulos : $($selectedNames -join ', ')" -ForegroundColor Yellow
 Write-Host "  Endpoint: $BaseUrl" -ForegroundColor Yellow
-Write-Host ""
 
-# ── ESTADO Y HELPERS ──────────────────────────────────────────────────────────
+# ── VALORES PERSONALIZADOS ─────────────────────────────────────────────────────
 
 $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$TestEmail = "autotest_$Timestamp@lifehub-auto.test"
-$TestPass  = "AutoTest123!"
+
+Write-Host ""
+Write-Host "Valores de prueba (Enter para usar el valor por defecto):" -ForegroundColor White
+Write-Host ""
+
+$defEmail = "autotest_$Timestamp@lifehub-auto.test"
+$defPass  = "AutoTest123!"
+$inp = Read-Host "  Email de prueba        [$defEmail]"
+$TestEmail = if ($inp.Trim()) { $inp.Trim() } else { $defEmail }
+$inp = Read-Host "  Contrasena de prueba   [$defPass]"
+$TestPass  = if ($inp.Trim()) { $inp.Trim() } else { $defPass }
+
+$SpaceName = "Espacio AutoTest $Timestamp"
+$DocTitle  = "Doc AutoTest $Timestamp"
+$DocContent = "# Test`nContenido de prueba."
+$AdminDomain = "autotest-$Timestamp.io"
+
+if ($doSpace) {
+    $inp = Read-Host "  Nombre del espacio     [$SpaceName]"
+    $SpaceName = if ($inp.Trim()) { $inp.Trim() } else { $SpaceName }
+}
+if ($doDoc) {
+    $inp = Read-Host "  Titulo del documento   [$DocTitle]"
+    $DocTitle = if ($inp.Trim()) { $inp.Trim() } else { $DocTitle }
+    $inp = Read-Host "  Contenido del documento [$DocContent]"
+    $DocContent = if ($inp.Trim()) { $inp.Trim() } else { $DocContent }
+}
+if ($doAdmin) {
+    $inp = Read-Host "  Dominio admin          [$AdminDomain]"
+    $AdminDomain = if ($inp.Trim()) { $inp.Trim() } else { $AdminDomain }
+}
+
+Write-Host ""
 
 $script:UserToken  = $null
 $script:AdminToken = $null
@@ -190,7 +220,7 @@ if ($doSpace) {
     } else {
         Invoke-ApiTest -Id "T-SPACE-01" -Description "Crear espacio OK" `
             -Method POST -Url "/creativespaces" -ExpectedStatus 201 -Token $script:UserToken `
-            -Body @{ name="Espacio AutoTest $Timestamp"; description=""; privacy=0; isPublicProfileVisible=$false } `
+            -Body @{ name=$SpaceName; description=""; privacy=0; isPublicProfileVisible=$false } `
             -OnPass { param($b); $script:SpaceId = ($b | ConvertFrom-Json).id }
         Invoke-ApiTest -Id "T-SPACE-02" -Description "Crear espacio sin nombre -> error" `
             -Method POST -Url "/creativespaces" -ExpectedStatus 400 -Token $script:UserToken `
@@ -198,7 +228,7 @@ if ($doSpace) {
         if ($script:SpaceId) {
             Invoke-ApiTest -Id "T-SPACE-03" -Description "Editar espacio OK" `
                 -Method PUT -Url "/creativespaces/$($script:SpaceId)" -ExpectedStatus 200 -Token $script:UserToken `
-                -Body @{ name="Espacio Editado $Timestamp"; description="Editado"; privacy=0; isPublicProfileVisible=$false }
+                -Body @{ name="$SpaceName (editado)"; description="Editado"; privacy=0; isPublicProfileVisible=$false }
             Invoke-ApiTest -Id "T-SPACE-04" -Description "Editar espacio de otro usuario -> 404" `
                 -Method PUT -Url "/creativespaces/99999" -ExpectedStatus 404 -Token $script:UserToken `
                 -Body @{ name="X"; description=""; privacy=0; isPublicProfileVisible=$false }
@@ -220,7 +250,7 @@ if ($doDoc) {
     } else {
         Invoke-ApiTest -Id "T-DOC-01" -Description "Crear documento OK" `
             -Method POST -Url "/documents" -ExpectedStatus 201 -Token $script:UserToken `
-            -Body @{ title="Doc AutoTest $Timestamp"; content="# Test"; description="" } `
+            -Body @{ title=$DocTitle; content=$DocContent; description="" } `
             -OnPass { param($b); $script:DocId = ($b | ConvertFrom-Json).id }
         Invoke-ApiTest -Id "T-DOC-02" -Description "Crear documento sin titulo -> error" `
             -Method POST -Url "/documents" -ExpectedStatus 400 -Token $script:UserToken `
@@ -228,10 +258,10 @@ if ($doDoc) {
         if ($script:DocId) {
             Invoke-ApiTest -Id "T-DOC-03" -Description "Editar documento OK" `
                 -Method PUT -Url "/documents/$($script:DocId)" -ExpectedStatus 200 -Token $script:UserToken `
-                -Body @{ title="Doc AutoTest $Timestamp"; content="# Editado"; description=""; creativeSpaceId=$null }
+                -Body @{ title=$DocTitle; content="$DocContent (editado)"; description=""; creativeSpaceId=$null }
             Invoke-ApiTest -Id "T-DOC-04" -Description "Contenido XSS almacenado (backend no sanitiza)" `
                 -Method PUT -Url "/documents/$($script:DocId)" -ExpectedStatus 200 -Contains "<script>" -Token $script:UserToken `
-                -Body @{ title="Doc AutoTest $Timestamp"; content="<script>alert(xss)</script>"; description=""; creativeSpaceId=$null }
+                -Body @{ title=$DocTitle; content="<script>alert(xss)</script>"; description=""; creativeSpaceId=$null }
             Invoke-ApiTest -Id "T-DOC-05" -Description "Crear snapshot de version" `
                 -Method POST -Url "/documentversions/document/$($script:DocId)/snapshot" -ExpectedStatus 201 -Token $script:UserToken `
                 -Body @{ comment="snapshot-autotest" } `
@@ -275,12 +305,12 @@ if ($doAdmin) {
             -Method GET -Url "/admin/allowed-websites" -ExpectedStatus 200 -Token $script:AdminToken
         Invoke-ApiTest -Id "T-ADMIN-04" -Description "Anadir dominio permitido" `
             -Method POST -Url "/admin/allowed-websites" -ExpectedStatus 201 -Token $script:AdminToken `
-            -Body @{ domain="autotest-$Timestamp.io"; isActive=$true } `
+            -Body @{ domain=$AdminDomain; isActive=$true } `
             -OnPass { param($b); $script:WebsiteId = ($b | ConvertFrom-Json).id }
         if ($script:WebsiteId) {
             Invoke-ApiTest -Id "T-ADMIN-05" -Description "Desactivar dominio" `
                 -Method PUT -Url "/admin/allowed-websites/$($script:WebsiteId)" -ExpectedStatus 200 -Token $script:AdminToken `
-                -Body @{ domain="autotest-$Timestamp.io"; isActive=$false }
+                -Body @{ domain=$AdminDomain; isActive=$false }
         } else {
             Skip-Test -Id "T-ADMIN-05" -Description "Desactivar dominio" -Reason "WebsiteId no disponible"
         }
@@ -325,7 +355,13 @@ if ($script:WebsiteId -and $script:AdminToken) {
         Write-Host "  Dominio $($script:WebsiteId) eliminado." -ForegroundColor DarkGray
     } catch {}
 }
-Write-Host "  Nota: $TestEmail sin endpoint de borrado -- eliminacion manual si se desea." -ForegroundColor DarkGray
+if ($script:UserToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/users/me" `
+            -Headers @{ Authorization="Bearer $($script:UserToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Usuario $TestEmail eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
 
 # ── RESUMEN ────────────────────────────────────────────────────────────────────
 

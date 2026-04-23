@@ -47,12 +47,16 @@
   <div class="admin-card admin-error" *ngIf="!loading && error">{{ error }}</div>
 
   <div class="admin-card" *ngIf="!loading && !error">
+    <h2>Usuarios</h2>
+    <div class="admin-error" *ngIf="usersError">{{ usersError }}</div>
+
     <table class="users-table" *ngIf="users.length > 0; else emptyState">
       <thead>
         <tr>
           <th>Nombre</th>
           <th>Email</th>
           <th>Roles</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -60,6 +64,9 @@
           <td>{{ user.fullName || 'Sin nombre' }}</td>
           <td>{{ user.email }}</td>
           <td>{{ (user.roles?.length ? user.roles?.join(', ') : 'User') }}</td>
+          <td class="actions">
+            <button type="button" class="danger" (click)="deleteUser(user.id)">Eliminar</button>
+          </td>
         </tr>
       </tbody>
     </table>

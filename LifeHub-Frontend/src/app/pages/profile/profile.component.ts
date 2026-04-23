@@ -1,7 +1,9 @@
 ﻿import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ConfirmationService } from '../../services/confirmation.service';
 import { LayoutHeaderStateService } from '../../services/layout-header-state.service';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/auth.model';
@@ -26,7 +28,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private userService: UserService,
     private authService: AuthService,
-    private layoutHeaderStateService: LayoutHeaderStateService
+    private confirmationService: ConfirmationService,
+    private layoutHeaderStateService: LayoutHeaderStateService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -105,6 +109,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.error = err?.error?.message || 'No se pudo actualizar la contraseña.';
+        this.loading = false;
+      }
+    });
+  }
+
+  deleteAccount(): void {
+    if (!this.confirmationService.confirmDelete('tu cuenta permanentemente')) return;
+
+    this.loading = true;
+    this.error = '';
+    this.userService.deleteCurrentUser().subscribe({
+      next: () => {
+        this.authService.logout();
+        this.router.navigate(['/login']);
+      },
+      error: err => {
+        this.error = err?.error?.message || 'No se pudo eliminar la cuenta.';
         this.loading = false;
       }
     });
