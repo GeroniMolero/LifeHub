@@ -112,9 +112,9 @@
 
 | ID | Descripción | Pasos | Resultado esperado | Resultado real | Estado |
 |----|-------------|-------|--------------------|----------------|--------|
-| CP-09-01 | Crear backup con stack activo | 1. Con stack en marcha, ejecutar `.\backup-db.ps1` | Archivo `.bak` generado en `backups/` con timestamp | Archivo `LifeHub_20260423_181124.bak` generado (738 páginas, 0.063s) | ✅ PASS |
-| CP-09-02 | Restaurar base de datos desde backup | 1. Ejecutar `.\restore-db.ps1 -BackupFile <ruta>` | BD restaurada. Datos accesibles tras reinicio del backend. | 738 páginas restauradas correctamente (0.036s) | ✅ PASS |
-| CP-09-03 | Backup genera nombre único por ejecución | 1. Ejecutar `.\backup-db.ps1` dos veces seguidas | Dos archivos `.bak` con timestamps distintos en `backups/` | `LifeHub_20260423_181124.bak` y `LifeHub_20260423_182959.bak` | ✅ PASS |
+| CP-09-01 | Crear backup con stack activo | 1. Con stack en marcha, ejecutar `.\scripts\windows\backup-db.ps1` | Archivo `.bak` generado en `backups/` con timestamp | Archivo `LifeHub_20260423_181124.bak` generado (738 páginas, 0.063s) | ✅ PASS |
+| CP-09-02 | Restaurar base de datos desde backup | 1. Ejecutar `.\scripts\windows\restore-db.ps1 -BackupFile <ruta>` | BD restaurada. Datos accesibles tras reinicio del backend. | 738 páginas restauradas correctamente (0.036s) | ✅ PASS |
+| CP-09-03 | Backup genera nombre único por ejecución | 1. Ejecutar `.\scripts\windows\backup-db.ps1` dos veces seguidas | Dos archivos `.bak` con timestamps distintos en `backups/` | `LifeHub_20260423_181124.bak` y `LifeHub_20260423_182959.bak` | ✅ PASS |
 
 ---
 
@@ -140,4 +140,4 @@
 | ID | Fecha | Descripción | Estado |
 |----|-------|-------------|--------|
 | INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Abierta — pendiente de valorar refactorización |
-| INC-02 | 23-04-2026 | `POST /api/creativespaces` y `POST /api/documents` aceptaban nombre/título vacío (`""`) sin devolver error. Detectado al ejecutar `run-tests.ps1` (T-SPACE-02 y T-DOC-02 fallaron con HTTP 201 en lugar de 400). Corregido añadiendo `[Required][MinLength(1)]` a `CreateCreativeSpaceDto.Name` y `CreateDocumentDto.Title`. | Resuelta |
+| INC-02 | 23-04-2026 | `POST /api/creativespaces` y `POST /api/documents` aceptaban nombre/título vacío (`""`) sin devolver error. Detectado al ejecutar `scripts/windows/run-tests.ps1` (T-SPACE-02 y T-DOC-02 fallaron con HTTP 201 en lugar de 400). Corregido añadiendo `[Required][MinLength(1)]` a `CreateCreativeSpaceDto.Name` y `CreateDocumentDto.Title`. | Resuelta |

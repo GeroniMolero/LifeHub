@@ -1,17 +1,19 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BACKUP_FILE="$1"
 CONTAINER="lifehub-sql-dev"
 DATABASE="LifeHubDB"
 
 if [ -z "$BACKUP_FILE" ]; then
-    echo "Uso: ./restore-db.sh <ruta-al-backup.bak>"
+    echo "Uso: ./scripts/linux/restore-db.sh <ruta-al-backup.bak>"
     exit 1
 fi
 
 # Load .env
-if [ -f .env ]; then
-    export $(grep -v '^\s*#' .env | xargs)
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    export $(grep -v '^\s*#' "$PROJECT_ROOT/.env" | xargs)
 fi
 
 if [ -z "$DB_PASSWORD" ]; then

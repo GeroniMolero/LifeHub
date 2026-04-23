@@ -6,9 +6,12 @@ Param(
 
 $ErrorActionPreference = "Stop"
 
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+
 # Load .env
-if (Test-Path .env) {
-    Get-Content .env | ForEach-Object {
+$EnvFile = Join-Path $ProjectRoot ".env"
+if (Test-Path $EnvFile) {
+    Get-Content $EnvFile | ForEach-Object {
         if ($_ -match '^\s*([^#][^=]+)=(.+)$') {
             [System.Environment]::SetEnvironmentVariable($Matches[1].Trim(), $Matches[2].Trim())
         }

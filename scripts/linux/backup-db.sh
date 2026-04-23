@@ -1,12 +1,14 @@
 #!/bin/bash
 
-BACKUP_DIR="${1:-./backups}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+BACKUP_DIR="${1:-$PROJECT_ROOT/backups}"
 CONTAINER="lifehub-sql-dev"
 DATABASE="LifeHubDB"
 
 # Load .env
-if [ -f .env ]; then
-    export $(grep -v '^\s*#' .env | xargs)
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    export $(grep -v '^\s*#' "$PROJECT_ROOT/.env" | xargs)
 fi
 
 if [ -z "$DB_PASSWORD" ]; then

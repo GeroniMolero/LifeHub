@@ -1,6 +1,6 @@
 Param(
     [string]$BaseUrl    = "http://localhost:5000/api",
-    [string]$OutputDir  = ".\documentacion"
+    [string]$OutputDir  = ""
 )
 
 $ErrorActionPreference = "Continue"
@@ -11,10 +11,13 @@ $Timestamp   = Get-Date -Format "yyyyMMdd_HHmmss"
 $TestEmail   = "autotest_$Timestamp@lifehub-auto.test"
 $TestPass    = "AutoTest123!"
 
+$ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+if (-not $OutputDir) { $OutputDir = Join-Path $ProjectRoot "documentacion" }
+
 # Leer credenciales de admin desde .env (nunca hardcodeadas en el script)
 $AdminEmail  = $null
 $AdminPass   = $null
-$envFile     = Join-Path $PSScriptRoot ".env"
+$envFile     = Join-Path $ProjectRoot ".env"
 if (Test-Path $envFile) {
     Get-Content $envFile | Where-Object { $_ -match '^\s*[^#]' } | ForEach-Object {
         if ($_ -match '^\s*ADMIN_EMAIL\s*=\s*(.+)$')    { $AdminEmail = $Matches[1].Trim() }

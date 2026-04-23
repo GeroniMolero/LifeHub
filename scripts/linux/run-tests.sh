@@ -1,7 +1,10 @@
 #!/bin/bash
 
 BASE_URL="${1:-http://localhost:5000/api}"
-OUTPUT_DIR="${2:-./documentacion}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+OUTPUT_DIR="${2:-$PROJECT_ROOT/documentacion}"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 TEST_EMAIL="autotest_${TIMESTAMP}@lifehub-auto.test"
@@ -9,11 +12,10 @@ TEST_PASS="AutoTest123!"
 
 # --- Leer credenciales de admin desde .env ---
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ADMIN_EMAIL=""
 ADMIN_PASS=""
 
-if [ -f "$SCRIPT_DIR/.env" ]; then
+if [ -f "$PROJECT_ROOT/.env" ]; then
     while IFS= read -r line; do
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ "$line" =~ ^[[:space:]]*$ ]] && continue
@@ -25,7 +27,7 @@ if [ -f "$SCRIPT_DIR/.env" ]; then
             ADMIN_EMAIL)    ADMIN_EMAIL="$val" ;;
             ADMIN_PASSWORD) ADMIN_PASS="$val" ;;
         esac
-    done < "$SCRIPT_DIR/.env"
+    done < "$PROJECT_ROOT/.env"
 fi
 
 if [ -z "$ADMIN_EMAIL" ] || [ -z "$ADMIN_PASS" ]; then

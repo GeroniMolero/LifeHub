@@ -183,19 +183,19 @@ Esto borra solo datos locales de desarrollo en Docker (`sql_data`).
 ### Windows
 ```powershell
 # Crear backup
-.\backup-db.ps1
+.\scripts\windows\backup-db.ps1
 
 # Restaurar
-.\restore-db.ps1 -BackupFile .\backups\LifeHub_20260423_143000.bak
+.\scripts\windows\restore-db.ps1 -BackupFile .\backups\LifeHub_20260423_143000.bak
 ```
 
 ### Linux / macOS
 ```bash
 # Crear backup
-./backup-db.sh
+./scripts/linux/backup-db.sh
 
 # Restaurar
-./restore-db.sh ./backups/LifeHub_20260423_143000.bak
+./scripts/linux/restore-db.sh ./backups/LifeHub_20260423_143000.bak
 ```
 
 Los backups se guardan en la carpeta `backups/` con timestamp. Requiere el stack de desarrollo en marcha.
@@ -222,6 +222,15 @@ LifeHub/
 │   │   ├── assets/           # Archivos estáticos
 │   │   └── styles.scss       # Estilos globales
 │   └── angular.json          # Configuración Angular
+├── scripts/
+│   ├── windows/              # Scripts PowerShell (Windows)
+│   │   ├── backup-db.ps1
+│   │   ├── restore-db.ps1
+│   │   └── run-tests.ps1
+│   └── linux/                # Scripts Bash (Linux / macOS)
+│       ├── backup-db.sh
+│       ├── restore-db.sh
+│       └── run-tests.sh
 └── docker-compose.yml        # Orquestación Docker
 
 ```
