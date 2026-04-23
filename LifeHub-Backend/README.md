@@ -17,19 +17,9 @@ Backend de LifeHub desarrollado con .NET 8
 dotnet restore
 ```
 
-2. Configura la cadena de conexión en `appsettings.json`:
+2. Copia `.env.example` a `.env` en la raíz del proyecto y rellena los valores reales (`DB_PASSWORD`, `JWT_KEY`). Las credenciales se inyectan como variables de entorno y no deben escribirse en `appsettings.json`.
 
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "Server=localhost,1433;Database=LifeHubDB;User=sa;Password=YourPassword;TrustServerCertificate=True;"
-}
-```
-
-3. Crea la base de datos y aplica las migraciones:
-
-```bash
-dotnet ef database update
-```
+3. Las migraciones de base de datos se aplican automáticamente al arrancar la aplicación. No es necesario ejecutar `dotnet ef database update` manualmente.
 
 ## Ejecución
 
@@ -37,17 +27,17 @@ dotnet ef database update
 dotnet run
 ```
 
-La API estará disponible en `https://localhost:5000` (o el puerto configurado).
+La API estará disponible en `http://localhost:5000` (o el puerto configurado).
 
 ## Características
 
 - **Autenticación JWT**: Sistema de autenticación basado en tokens
 - **Gestión de Usuarios**: Registro, login y perfil
 - **Amigos**: Sistema de solicitudes y gestión de amigos
-- **Mensajes**: Mensajería HTTP y chat en tiempo real con SignalR
-- **Recomendaciones**: Sistema de recomendaciones con ratings
-- **Documentos**: CRUD de documentos en línea
-- **Archivos de Música**: Metadatos de archivos de música locales
+- **Documentos**: CRUD de documentos en línea con versionado
+- **Mensajes**: Infraestructura SignalR y endpoints HTTP (sin frontend implementado)
+- **Recomendaciones**: API con sistema de valoraciones (sin frontend implementado)
+- **Música**: Gestión de metadatos de archivos locales (sin frontend implementado)
 
 ## Estructura del Proyecto
 

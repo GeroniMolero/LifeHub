@@ -99,6 +99,11 @@ tokens/
 docker-compose.override.yml
 
 #######################
+# Scripts de diagnóstico con credenciales de prueba
+#######################
+test/diagnostics/
+
+#######################
 # Local diagnostics artifacts
 #######################
 compose_ps.txt

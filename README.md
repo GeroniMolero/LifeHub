@@ -88,7 +88,6 @@
 - HttpClient con interceptores
 - Routing y Guards
 - Services para comunicación HTTP
-- SignalR para chat
 
 ## Documentación técnica
 
@@ -149,7 +148,7 @@ docker compose -f docker-compose.dev.yml up -d mssql backend
 **Terminal 2 - Frontend Local:**
 ```powershell
 cd LifeHub-Frontend
-npm ci
+npm ci --legacy-peer-deps
 npm start
 ```
 
@@ -215,7 +214,6 @@ LifeHub/
 
 - Autenticación basada en JWT
 - Hash de contraseñas con Identity
-- HTTPS en desarrollo y producción
 - Validación en servidor y cliente
 - Protección de rutas con Guards
 - No almacenamiento de contenido protegido por derechos de autor
