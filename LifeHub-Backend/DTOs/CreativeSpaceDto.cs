@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LifeHub.DTOs
 {
     public class SpaceMediaReferenceDto
@@ -34,6 +36,8 @@ namespace LifeHub.DTOs
 
     public class CreateCreativeSpaceDto
     {
+        [Required]
+        [MinLength(1)]
         public string Name { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public int Privacy { get; set; } = 0;

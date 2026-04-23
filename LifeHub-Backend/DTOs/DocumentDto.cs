@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LifeHub.DTOs
 {
     public class DocumentDto
@@ -18,6 +20,8 @@ namespace LifeHub.DTOs
 
     public class CreateDocumentDto
     {
+        [Required]
+        [MinLength(1)]
         public string Title { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
