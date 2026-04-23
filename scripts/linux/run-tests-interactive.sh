@@ -331,6 +331,10 @@ if [ -n "$WEBSITE_ID" ] && [ -n "$ADMIN_TOKEN" ]; then
     curl -s -o /dev/null -X DELETE -H "Authorization: Bearer $ADMIN_TOKEN" \
         "$BASE_URL/admin/allowed-websites/$WEBSITE_ID" 2>/dev/null && echo "  Dominio $WEBSITE_ID eliminado." || true
 fi
+if [ -n "$DOC_ID" ] && [ -n "$USER_TOKEN" ]; then
+    curl -s -o /dev/null -X DELETE -H "Authorization: Bearer $USER_TOKEN" \
+        "$BASE_URL/documents/$DOC_ID" 2>/dev/null && echo "  Documento $DOC_ID eliminado." || true
+fi
 if [ -n "$USER_TOKEN" ]; then
     curl -s -o /dev/null -X DELETE \
         -H "Authorization: Bearer $USER_TOKEN" \

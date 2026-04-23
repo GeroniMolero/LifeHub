@@ -141,6 +141,11 @@ LifeHub-Frontend/npm_ci_exit.txt
 backups/
 
 #######################
+# Informes de pruebas automáticas (generados por run-tests)
+#######################
+documentacion/RESULTADO_PRUEBAS_*.md
+
+#######################
 # Documentos binarios
 #######################
 *.pdf

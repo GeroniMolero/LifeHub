@@ -387,6 +387,14 @@ if ($script:WebsiteId -and $script:AdminToken) {
     } catch {}
 }
 
+if ($script:DocId -and $script:UserToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:DocId)" `
+            -Headers @{ Authorization="Bearer $($script:UserToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Documento $($script:DocId) eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
+
 if ($script:UserToken) {
     try {
         Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/users/me" `
