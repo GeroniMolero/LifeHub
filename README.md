@@ -45,7 +45,7 @@
 
 ### Perfil
 
-# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/58f61a7b-7781-4a9f-a7e9-ee028b58d755" />
+# <img width="1546" height="855" alt="image" src="https://github.com/user-attachments/assets/0d6226ca-915e-4a1f-9dee-929b76346139" />
 
 - Mostrar nombre, descripcion, imagen.
 - Añadir previsualización de hasta 2 espacios favoritos para mostrar en tu perfil.
