@@ -104,38 +104,32 @@
 
 ## Inicio Rápido
 
-### Opción Recomendada (más simple)
-
-Usa backend + base de datos en Docker y frontend local con Angular.
-
-En Windows, desde la raíz del proyecto:
-
-```powershell
-.\start.ps1 local
-```
-
-Este modo arranca SQL + backend en Docker y frontend en local. En un equipo nuevo
-solo necesitas Docker Desktop activo y este comando.
-
-Si ya tienes dependencias instaladas y quieres arrancar más rápido:
-
-```powershell
-.\start.ps1 local-noinstall
-```
-
-Para detener todo (frontend local y Docker dev):
-
-```powershell
-.\stop-local.ps1
-```
-
-### ¿Qué significa cada modo?
+### Windows
 
 ```powershell
 .\start.ps1 local            # Recomendado: Docker (backend+db) + frontend local
 .\start.ps1 local-noinstall  # Igual que local, pero sin npm ci
 .\start.ps1 dev              # Todo el stack dev en Docker
 .\start.ps1 prod             # Stack de producción en Docker
+```
+
+Para detener todo:
+```powershell
+.\stop-local.ps1
+```
+
+### Linux / macOS
+
+```bash
+./start.sh dev    # Stack dev en Docker
+./start.sh prod   # Stack de producción en Docker
+```
+
+En Linux el frontend se levanta manualmente en una segunda terminal:
+```bash
+cd LifeHub-Frontend
+npm ci --legacy-peer-deps
+npm start
 ```
 
 ### Si prefieres el flujo manual de siempre (2 terminales)
@@ -183,6 +177,28 @@ docker compose -f docker-compose.dev.yml down -v
 ```
 
 Esto borra solo datos locales de desarrollo en Docker (`sql_data`).
+
+## Copias de seguridad
+
+### Windows
+```powershell
+# Crear backup
+.\backup-db.ps1
+
+# Restaurar
+.\restore-db.ps1 -BackupFile .\backups\LifeHub_20260423_143000.bak
+```
+
+### Linux / macOS
+```bash
+# Crear backup
+./backup-db.sh
+
+# Restaurar
+./restore-db.sh ./backups/LifeHub_20260423_143000.bak
+```
+
+Los backups se guardan en la carpeta `backups/` con timestamp. Requiere el stack de desarrollo en marcha.
 
 ## Estructura del Proyecto
 
