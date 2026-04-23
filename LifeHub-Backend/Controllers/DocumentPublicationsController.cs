@@ -120,7 +120,7 @@ namespace LifeHub.Controllers
                     continue;
                 }
 
-                var host = NormalizeDomain(uri.Host);
+                var host = DomainHelper.NormalizeHost(uri.Host);
                 var isAllowed = allowedDomains.Any(domain => host == domain || host.EndsWith($".{domain}"));
                 if (!isAllowed)
                     rejected.Add(link);
@@ -168,11 +168,5 @@ namespace LifeHub.Controllers
             }
         }
 
-        private static string NormalizeDomain(string value)
-        {
-            var trimmed = (value ?? string.Empty).Trim().ToLowerInvariant();
-            if (trimmed.StartsWith("www.")) trimmed = trimmed[4..];
-            return trimmed;
-        }
     }
 }

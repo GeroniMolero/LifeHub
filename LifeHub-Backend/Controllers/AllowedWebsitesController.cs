@@ -36,7 +36,7 @@ namespace LifeHub.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAllowedWebsite([FromBody] CreateAllowedWebsiteDto dto)
         {
-            var normalizedDomain = NormalizeDomain(dto.Domain);
+            var normalizedDomain = DomainHelper.NormalizeUserInputDomain(dto.Domain);
             if (string.IsNullOrWhiteSpace(normalizedDomain))
                 return BadRequestError("Debes indicar un dominio válido.");
 
@@ -85,15 +85,5 @@ namespace LifeHub.Controllers
             return NoContent();
         }
 
-        private static string NormalizeDomain(string value)
-        {
-            var trimmed = (value ?? string.Empty).Trim().ToLowerInvariant();
-            if (trimmed.StartsWith("http://")) trimmed = trimmed[7..];
-            if (trimmed.StartsWith("https://")) trimmed = trimmed[8..];
-            if (trimmed.StartsWith("www.")) trimmed = trimmed[4..];
-            var slashIndex = trimmed.IndexOf('/');
-            if (slashIndex >= 0) trimmed = trimmed[..slashIndex];
-            return trimmed;
-        }
     }
 }
