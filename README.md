@@ -253,4 +253,3 @@ Para soporte y preguntas: gemordz@gmail.com
 ---
 
 **LifeHub** - Tu portal personal para herramientas útiles del día a día
-gemordz@gmail.com
