@@ -139,4 +139,4 @@
 
 | ID | Fecha | Descripción | Estado |
 |----|-------|-------------|--------|
-| — | — | Sin incidencias registradas hasta el momento | — |
+| INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Abierta — pendiente de valorar refactorización |
