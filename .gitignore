@@ -99,6 +99,11 @@ tokens/
 docker-compose.override.yml
 
 #######################
+# Scripts de diagnóstico con credenciales de prueba
+#######################
+test/diagnostics/
+
+#######################
 # Local diagnostics artifacts
 #######################
 compose_ps.txt
@@ -127,6 +132,11 @@ smoke_permissions_result_readable.txt
 smoke_permissions_result_utf8.txt
 LifeHub-Frontend/npm_ci_out.txt
 LifeHub-Frontend/npm_ci_exit.txt
+
+#######################
+# Documentos binarios
+#######################
+*.pdf
 
 #######################
 # Sistema operativo

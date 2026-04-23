@@ -5,7 +5,7 @@ Frontend de LifeHub desarrollado con Angular 19
 ## Instalación
 
 ```bash
-npm install
+npm ci --legacy-peer-deps
 ```
 
 ## Desarrollo
@@ -21,10 +21,11 @@ Abre `http://localhost:4200/` en tu navegador.
 - **Autenticación**: Registro e inicio de sesión con JWT
 - **Perfil de Usuario**: Gestión de perfil y contraseña
 - **Sistema de Amigos**: Solicitudes de amistad y gestión de amigos
-- **Chat en Tiempo Real**: Comunicación instantánea con SignalR
-- **Recomendaciones**: Recomienda películas y libros
-- **Documentos**: Crea y edita documentos en línea
-- **Música**: Registro de archivos de música locales
+- **Espacios creativos**: CRUD de espacios con editor Markdown y recursos embebidos
+- **Documentos**: Crea, edita y descarga documentos en línea
+- **Chat en Tiempo Real**: En desarrollo (infraestructura backend lista, sin interfaz)
+- **Recomendaciones**: En desarrollo (API backend lista, sin interfaz)
+- **Música**: En desarrollo (API backend lista, sin interfaz)
 
 ## Documentación
 

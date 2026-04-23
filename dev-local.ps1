@@ -24,7 +24,7 @@ docker compose -f docker-compose.dev.yml up -d
 # 2) Frontend deps (optional skip)
 if (-not $SkipInstall) {
     Write-Host "Installing frontend dependencies (npm ci)..." -ForegroundColor Yellow
-    npm --prefix LifeHub-Frontend ci
+    npm --prefix LifeHub-Frontend ci --legacy-peer-deps
 }
 
 # 3) Run Angular dev server in a separate process
