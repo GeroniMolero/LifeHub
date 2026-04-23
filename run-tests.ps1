@@ -10,8 +10,20 @@ $ErrorActionPreference = "Continue"
 $Timestamp   = Get-Date -Format "yyyyMMdd_HHmmss"
 $TestEmail   = "autotest_$Timestamp@lifehub-auto.test"
 $TestPass    = "AutoTest123!"
-$AdminEmail  = "admin@lifehub.com"
-$AdminPass   = "Admin123!"
+
+# Leer credenciales de admin desde .env (nunca hardcodeadas en el script)
+$AdminEmail  = $null
+$AdminPass   = $null
+$envFile     = Join-Path $PSScriptRoot ".env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | Where-Object { $_ -match '^\s*[^#]' } | ForEach-Object {
+        if ($_ -match '^\s*ADMIN_EMAIL\s*=\s*(.+)$')    { $AdminEmail = $Matches[1].Trim() }
+        if ($_ -match '^\s*ADMIN_PASSWORD\s*=\s*(.+)$') { $AdminPass  = $Matches[1].Trim() }
+    }
+}
+if (-not $AdminEmail -or -not $AdminPass) {
+    Write-Host "AVISO: ADMIN_EMAIL o ADMIN_PASSWORD no encontrados en .env -- los tests de admin seran SKIP." -ForegroundColor DarkYellow
+}
 
 # Estado entre tests
 $script:UserToken      = $null
@@ -148,15 +160,19 @@ Invoke-ApiTest -Id "T-AUTH-07" -Description "Ruta protegida con token invalido -
     -Method GET -Url "/creativespaces" -ExpectedStatus 401 `
     -Token "este.token.esinvalido"
 
-Invoke-ApiTest -Id "T-AUTH-08" -Description "Login admin (setup para tests admin)" `
-    -Method POST -Url "/auth/login" -ExpectedStatus 200 `
-    -Contains '"success":true' `
-    -Body @{ email=$AdminEmail; password=$AdminPass } `
-    -OnPass {
-        param($body)
-        $obj = $body | ConvertFrom-Json
-        $script:AdminToken = $obj.token
-    }
+if ($AdminEmail -and $AdminPass) {
+    Invoke-ApiTest -Id "T-AUTH-08" -Description "Login admin (setup para tests admin)" `
+        -Method POST -Url "/auth/login" -ExpectedStatus 200 `
+        -Contains '"success":true' `
+        -Body @{ email=$AdminEmail; password=$AdminPass } `
+        -OnPass {
+            param($body)
+            $obj = $body | ConvertFrom-Json
+            $script:AdminToken = $obj.token
+        }
+} else {
+    Skip-Test -Id "T-AUTH-08" -Description "Login admin" -Reason "ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env"
+}
 
 # --- BLOQUE 2: Espacios creativos ---
 
@@ -498,7 +514,7 @@ if ($failures) {
                 if ($num -gt $lastIncNum) { $lastIncNum = $num }
             }
 
-            $today = (Get-Date).ToString("dd-MM-yyyy")
+            $today = (Get-Date).ToString("dd-MM-yyyy HH:mm")
             $insertLines = [System.Collections.Generic.List[string]]::new()
             foreach ($f in $failures) {
                 $lastIncNum++
