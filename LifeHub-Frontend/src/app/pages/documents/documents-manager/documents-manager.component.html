@@ -1,22 +1,4 @@
 <div class="documents-container">
-  <div *ngIf="showForm" class="create-form card">
-    <h2>Crear Documento</h2>
-    <form [formGroup]="createForm" (ngSubmit)="onCreate()">
-      <div class="form-group">
-        <label>Título:</label>
-        <input type="text" formControlName="title" />
-      </div>
-      <div class="form-group">
-        <label>Descripción:</label>
-        <input type="text" formControlName="description" />
-      </div>
-      <div class="form-group">
-        <label>Contenido:</label>
-        <textarea formControlName="content" rows="10"></textarea>
-      </div>
-      <button type="submit" class="btn-primary" [disabled]="createForm.invalid">Crear</button>
-    </form>
-  </div>
 
   <div *ngIf="loading" class="loading">Cargando...</div>
 
@@ -204,3 +186,43 @@
     </div>
   </div>
 </div>
+
+<!-- ── Modal crear documento ── -->
+<app-modal [visible]="showForm" title="Nuevo documento" (closed)="closeForm()">
+  <form [formGroup]="createForm" (ngSubmit)="onCreate()" class="modal-form">
+
+    <div class="form-field">
+      <label for="doc-title">Título</label>
+      <input id="doc-title" type="text" formControlName="title" placeholder="Título del documento" />
+    </div>
+
+    <div class="form-field">
+      <label for="doc-description">Descripción <span class="optional-label">(opcional)</span></label>
+      <input id="doc-description" type="text" formControlName="description" placeholder="Descripción breve" />
+    </div>
+
+    <div class="form-field">
+      <label for="doc-type">Tipo</label>
+      <select id="doc-type" formControlName="type">
+        <option [value]="DocumentType.Note">Nota</option>
+        <option [value]="DocumentType.TextFile">Archivo de texto</option>
+        <option [value]="DocumentType.List">Lista</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label for="doc-content">Contenido <span class="optional-label">(opcional)</span></label>
+      <textarea id="doc-content" formControlName="content" rows="7" placeholder="Puedes añadir el contenido ahora o editarlo después"></textarea>
+    </div>
+
+    <div class="error-banner" *ngIf="createError">{{ createError }}</div>
+
+    <div class="modal-form-actions">
+      <button type="button" class="btn-secondary" (click)="closeForm()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="createForm.invalid || loading">
+        {{ loading ? 'Creando...' : 'Crear documento' }}
+      </button>
+    </div>
+
+  </form>
+</app-modal>

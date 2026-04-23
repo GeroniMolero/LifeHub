@@ -1,52 +1,54 @@
+@use '../../../../styles/design-tokens' as *;
+
 .spaces-container { max-width: 980px; margin: 0 auto; }
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.card { border: 1px solid #e3e3e3; border-radius: 12px; padding: 1rem; background: #fff; }
+.card { border: 1px solid $color-border; border-radius: $border-radius-xl; padding: 1rem; background: $color-white; }
 .form-card form, .edit-form { display: grid; gap: 0.5rem; }
-input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; }
+input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid $color-border; border-radius: $border-radius-md; }
 .checkbox { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem; }
 .checkbox input { width: auto; }
 .actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
-.btn-primary, .btn-secondary, .btn-danger { border: 0; border-radius: 6px; padding: 0.45rem 0.75rem; cursor: pointer; text-decoration: none; }
-.btn-primary { background: #1f7a8c; color: #fff; }
-.btn-secondary { background: #e5e7eb; color: #111827; }
-.btn-danger { background: #b91c1c; color: #fff; }
-.error { color: #b91c1c; margin: 0.5rem 0; }
-.loading, .empty { margin: 0.75rem 0; color: #374151; }
+.btn-primary, .btn-secondary, .btn-danger { border: 0; border-radius: $border-radius-md; padding: 0.45rem 0.75rem; cursor: pointer; text-decoration: none; }
+.btn-primary { background: $color-brand-700; color: $color-white; }
+.btn-secondary { background: $color-slate-100; color: $color-slate-700; }
+.btn-danger { background: $color-danger; color: $color-white; }
+.error { color: $color-danger; margin: 0.5rem 0; }
+.loading, .empty { margin: 0.75rem 0; color: $color-text-secondary; }
 
 .permissions-panel {
-	margin-top: 1rem;
-	padding-top: 1rem;
-	border-top: 1px solid #e5e7eb;
-	display: grid;
-	gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid $color-divider;
+  display: grid;
+  gap: 0.75rem;
 }
 
 .permissions-panel h4 {
-	margin: 0;
-	color: #111827;
+  margin: 0;
+  color: $color-text-heading;
 }
 
 .permission-form {
-	display: grid;
-	gap: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .permissions-list {
-	display: grid;
-	gap: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .permission-item {
-	border: 1px solid #e5e7eb;
-	border-radius: 8px;
-	padding: 0.6rem;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.75rem;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-lg;
+  padding: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .permission-item small {
-	display: block;
-	color: #6b7280;
+  display: block;
+  color: $color-text-secondary;
 }

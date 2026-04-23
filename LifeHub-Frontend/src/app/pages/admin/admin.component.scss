@@ -1,102 +1,132 @@
 @use '../../../styles/design-tokens' as *;
+@use '../../../styles/table-toolbar';
+@use '../../../styles/modal-form';
 
-.admin-page {
+// ── Layout ────────────────────────────────────────────────────────────────────
+
+.admin-container {
   display: grid;
-  gap: $space-6;
+  gap: $space-4;
 }
 
-.admin-header h1 {
-  margin: 0 0 $space-2;
-  color: $color-text-heading;
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid $color-border-light;
+
+  button {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: $space-3 $space-5;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+
+    &:hover  { color: $color-text-heading; }
+    &.active { color: $color-primary; border-bottom-color: $color-primary; }
+  }
 }
 
-.admin-header p {
-  margin: 0;
-  color: $color-text-secondary;
-}
+// ── Cards ─────────────────────────────────────────────────────────────────────
 
-.section-description {
-  margin: 0 0 $space-4;
-  color: $color-text-secondary;
-}
-
-.admin-card {
+.admin-toolbar,
+.admin-table-shell {
   background: $color-white;
-  border: $border-width-base solid $color-border-light;
   border-radius: $border-radius-lg;
-  box-shadow: $shadow-base;
-  padding: $space-6;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: $space-5;
 }
 
-.admin-error {
+// ── Error banner ──────────────────────────────────────────────────────────────
+
+.error-banner {
+  padding: $space-3 $space-4;
+  border-radius: $border-radius-base;
+  background: rgba(180, 57, 31, 0.1);
   color: $color-danger;
-  border-color: $color-danger-light;
+  border: 1px solid rgba(180, 57, 31, 0.18);
+  font-size: $font-size-sm;
 }
 
-.website-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-3;
-  align-items: center;
-  margin-bottom: $space-4;
+// ── Toolbar / filters input reset ─────────────────────────────────────────────
+
+.filters-form input,
+.filters-form select {
+  width: 100%;
+  padding: $space-3;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  font-family: inherit;
+  background: $color-white;
 }
 
-.website-form input[type='text'] {
-  min-width: 280px;
-  padding: $space-2 $space-3;
-  border: $border-width-base solid $color-border-light;
-  border-radius: $border-radius-md;
-}
+// ── Tabla ─────────────────────────────────────────────────────────────────────
 
-.website-form button,
-.actions button {
-  border: 0;
-  border-radius: $border-radius-md;
-  padding: $space-2 $space-3;
-  cursor: pointer;
-  background: $color-info;
-  color: $color-white;
-}
+.admin-table-scroll { overflow-x: auto; }
 
-.actions {
-  display: flex;
-  gap: $space-2;
-}
-
-.actions button.danger {
-  background: $color-danger;
-}
-
-.check-row {
-  display: flex;
-  align-items: center;
-  gap: $space-2;
-  color: $color-text-secondary;
-}
-
-.loading-note {
-  color: $color-text-secondary;
-  margin-bottom: $space-3;
-}
-
-.users-table {
+.admin-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 540px;
+
+  th, td {
+    padding: $space-3 $space-2;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid $color-divider;
+  }
+
+  th {
+    font-size: $font-size-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-text-secondary;
+  }
+
+  tbody tr:hover { background: rgba(15, 23, 42, 0.03); }
 }
 
-.users-table th,
-.users-table td {
-  text-align: left;
-  padding: $space-3;
-  border-bottom: $border-width-base solid $color-divider;
+// ── Status pill variants ───────────────────────────────────────────────────────
+
+.status-pill-active { background: rgba(21, 128, 61, 0.12); color: #166534; }
+.status-pill-admin  { background: #ede9fe; color: #5b21b6; }
+
+// ── Acciones de fila ──────────────────────────────────────────────────────────
+
+.row-actions {
+  display: flex;
+  gap: $space-2;
 }
 
-.users-table th {
-  color: $color-text-secondary;
+.action-btn {
+  border-radius: $border-radius-md;
+  padding: $space-1 $space-3;
+  font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
+  cursor: pointer;
+  border: $border-width-base solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+
+  &--toggle {
+    background: $color-white;
+    border-color: $color-border;
+    color: $color-text-heading;
+    &:hover { border-color: $color-primary; color: $color-primary; }
+  }
+
+  &--danger {
+    background: $color-white;
+    border-color: $color-danger;
+    color: $color-danger;
+    &:hover { background: $color-danger; color: $color-white; }
+  }
 }
 
-.empty-state {
-  margin: 0;
-  color: $color-text-secondary;
-}
+

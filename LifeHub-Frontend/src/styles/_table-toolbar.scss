@@ -1,0 +1,111 @@
+@use 'design-tokens' as *;
+
+// ── Toolbar / filters ─────────────────────────────────────────────────────────
+
+.filters-form { display: block; }
+
+.search-line {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-2;
+}
+
+.filter-field-search {
+  flex: 1;
+
+  input { height: 42px; }
+}
+
+.search-line-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-2;
+}
+
+.clear-filters-btn {
+  height: 42px;
+  min-width: 92px;
+  white-space: nowrap;
+}
+
+.clear-filters-btn-invisible {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.filters-toggle {
+  min-width: 120px;
+  height: 42px;
+  white-space: nowrap;
+}
+
+.filters-expand-panel {
+  margin-top: $space-3;
+  padding: $space-4;
+  border-radius: $border-radius-base;
+  border: $border-width-base solid $color-border;
+  background: rgba(15, 23, 42, 0.02);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: $space-3;
+}
+
+.filter-field {
+  display: grid;
+  gap: $space-2;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+  }
+}
+
+.filters-form select {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px 12px;
+}
+
+// ── Empty state ────────────────────────────────────────────────────────────────
+
+.empty-state {
+  padding: $space-8;
+  border-radius: $border-radius-lg;
+  background: rgba(15, 23, 42, 0.03);
+  color: $color-text-secondary;
+  text-align: center;
+
+  p { margin: 0; }
+}
+
+// ── Status pill (base) ────────────────────────────────────────────────────────
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: $space-1 $space-2;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: $color-text-secondary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+// ── Table utility ─────────────────────────────────────────────────────────────
+
+.actions-column {
+  width: 1%;
+  white-space: nowrap;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 960px) {
+  .search-line { flex-direction: column; align-items: stretch; }
+  .search-line-actions { width: 100%; justify-content: space-between; }
+  .filters-expand-panel { grid-template-columns: 1fr; }
+}

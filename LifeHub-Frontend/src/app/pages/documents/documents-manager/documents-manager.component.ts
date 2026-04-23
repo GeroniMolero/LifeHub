@@ -1,9 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Document, DocumentType } from '../../../models/document.model';
+import { ModalComponent } from '../../../components/modal/modal.component';
 import { User } from '../../../models/auth.model';
 import { AuthService } from '../../../services/auth.service';
 import { ConfirmationService } from '../../../services/confirmation.service';
@@ -13,11 +15,12 @@ import { LayoutHeaderStateService } from '../../../services/layout-header-state.
 @Component({
   selector: 'app-documents',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, ModalComponent],
   templateUrl: './documents-manager.component.html',
   styleUrls: ['./documents-manager.component.scss']
 })
 export class DocumentsComponent implements OnInit, OnDestroy {
+  private readonly destroyRef = inject(DestroyRef);
   documents: Document[] = [];
   createForm!: FormGroup;
   filterForm!: FormGroup;
@@ -25,6 +28,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   showFiltersDropdown = false;
   loading = false;
   error = '';
+  createError = '';
   showForm = false;
   readonly DocumentType = DocumentType;
   readonly pageSizeOptions = [5, 10, 20, 50];
@@ -48,8 +52,8 @@ export class DocumentsComponent implements OnInit, OnDestroy {
     this.createForm = this.fb.group({
       title: ['', Validators.required],
       description: [''],
-      content: [''],
-      type: [DocumentType.Note]
+      type: [DocumentType.Note],
+      content: ['']
     });
 
     this.filterForm = this.fb.group({
@@ -73,7 +77,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.pageSizeControl.valueChanges.subscribe((size) => {
+    this.pageSizeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((size) => {
       const parsed = Number(size);
       if (!Number.isFinite(parsed) || parsed <= 0) {
         return;
@@ -97,22 +101,16 @@ export class DocumentsComponent implements OnInit, OnDestroy {
     if (this.createForm.invalid) return;
 
     this.loading = true;
-    this.error = '';
+    this.createError = '';
     this.documentService.createDocument(this.createForm.value).subscribe({
       next: (createdDocument) => {
         this.documents = [createdDocument, ...this.documents];
-        this.createForm.reset({
-          title: '',
-          description: '',
-          content: '',
-          type: DocumentType.Note
-        });
-        this.showForm = false;
-        this.setHeaderState();
+        this.createForm.reset({ title: '', description: '', content: '', type: DocumentType.Note });
+        this.closeForm();
         this.loading = false;
       },
-      error: () => {
-        this.error = 'No se pudo crear el documento.';
+      error: (err) => {
+        this.createError = err?.error?.message || 'No se pudo crear el documento.';
         this.loading = false;
       }
     });
@@ -152,23 +150,16 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   }
 
   toggleForm(): void {
-    this.showForm = !this.showForm;
-    this.setHeaderState();
+    this.showForm = true;
   }
 
   closeForm(): void {
     this.showForm = false;
-    this.setHeaderState();
+    this.createError = '';
   }
 
   getTypeText(type?: DocumentType | string | number): string {
-    const typeMap: { [key: number]: string } = {
-      [DocumentType.Note]: 'Nota',
-      [DocumentType.TextFile]: 'Archivo de texto',
-      [DocumentType.List]: 'Lista'
-    };
-
-    return type !== undefined ? (typeMap[Number(type)] || 'Nota') : 'Nota';
+    return DocumentService.getTypeText(type);
   }
 
   get filteredDocuments(): Document[] {
@@ -352,13 +343,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 
   private setHeaderState(): void {
     this.layoutHeaderStateService.setOverride({
-      actions: [
-        {
-          label: this.showForm ? 'Cancelar' : 'Nuevo documento',
-          variant: this.showForm ? 'secondary' : 'primary',
-          action: () => this.toggleForm()
-        }
-      ]
+      actions: [{ label: 'Nuevo documento', variant: 'primary', action: () => this.toggleForm() }]
     });
   }
 }

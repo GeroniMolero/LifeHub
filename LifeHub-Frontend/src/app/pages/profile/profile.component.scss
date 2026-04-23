@@ -130,3 +130,28 @@
   object-fit: cover;
   border: $border-width-base solid $color-border;
 }
+
+.danger-zone {
+  border: 1px solid #fca5a5;
+
+  h2 { color: #dc2626; }
+
+  p {
+    color: $color-text-secondary;
+    margin-bottom: $space-5;
+  }
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: $color-white;
+  border: none;
+  padding: $space-3 $space-5;
+  border-radius: $border-radius-base;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: #b91c1c; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
