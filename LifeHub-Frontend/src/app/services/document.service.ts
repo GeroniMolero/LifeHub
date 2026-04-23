@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Document, CreateDocumentRequest, UpdateDocumentRequest } from '../models/document.model';
+import { Document, CreateDocumentRequest, DocumentType, UpdateDocumentRequest } from '../models/document.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
@@ -30,5 +30,14 @@ export class DocumentService {
 
   deleteDocument(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  static getTypeText(type?: DocumentType | string | number): string {
+    const typeMap: { [key: number]: string } = {
+      [DocumentType.Note]: 'Nota',
+      [DocumentType.TextFile]: 'Archivo de texto',
+      [DocumentType.List]: 'Lista'
+    };
+    return type !== undefined ? (typeMap[Number(type)] || 'Nota') : 'Nota';
   }
 }

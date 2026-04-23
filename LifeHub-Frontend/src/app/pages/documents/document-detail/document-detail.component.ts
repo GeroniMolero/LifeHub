@@ -218,13 +218,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
   }
 
   getTypeText(type?: DocumentType | string | number): string {
-    const typeMap: { [key: number]: string } = {
-      [DocumentType.Note]: 'Nota',
-      [DocumentType.TextFile]: 'Archivo de texto',
-      [DocumentType.List]: 'Lista'
-    };
-
-    return type !== undefined ? (typeMap[Number(type)] || 'Nota') : 'Nota';
+    return DocumentService.getTypeText(type);
   }
 
   private setDocumentState(document: Document, loadRelated = true): void {

@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/auth.model';
@@ -68,8 +67,6 @@ export class AdminComponent implements OnInit, OnDestroy {
   showUsersFilters    = false;
   showWebsitesFilters = false;
 
-  private filterSubs: Subscription[] = [];
-
   // ── Create forms ───────────────────────────────────────────────────────────
 
   createUserForm = this.fb.group({
@@ -93,17 +90,12 @@ export class AdminComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.filterSubs.push(
-      this.usersFilterForm.valueChanges.subscribe(() => {}),
-      this.websitesFilterForm.valueChanges.subscribe(() => {})
-    );
     this.setHeaderState();
     this.loadUsers();
     this.loadWebsites();
   }
 
   ngOnDestroy(): void {
-    this.filterSubs.forEach(s => s.unsubscribe());
     this.layoutHeaderStateService.clearOverride();
   }
 
