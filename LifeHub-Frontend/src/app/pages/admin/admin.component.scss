@@ -1,102 +1,304 @@
 @use '../../../styles/design-tokens' as *;
 
-.admin-page {
+// ── Layout ────────────────────────────────────────────────────────────────────
+
+.admin-container {
   display: grid;
-  gap: $space-6;
+  gap: $space-4;
 }
 
-.admin-header h1 {
-  margin: 0 0 $space-2;
-  color: $color-text-heading;
-}
+// ── Tabs ──────────────────────────────────────────────────────────────────────
 
-.admin-header p {
-  margin: 0;
-  color: $color-text-secondary;
-}
-
-.section-description {
-  margin: 0 0 $space-4;
-  color: $color-text-secondary;
-}
-
-.admin-card {
-  background: $color-white;
-  border: $border-width-base solid $color-border-light;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-base;
-  padding: $space-6;
-}
-
-.admin-error {
-  color: $color-danger;
-  border-color: $color-danger-light;
-}
-
-.website-form {
+.admin-tabs {
   display: flex;
-  flex-wrap: wrap;
+  gap: 0;
+  border-bottom: 2px solid $color-border-light;
+
+  button {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: $space-3 $space-5;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+
+    &:hover  { color: $color-text-heading; }
+    &.active { color: $color-primary; border-bottom-color: $color-primary; }
+  }
+}
+
+// ── Cards ─────────────────────────────────────────────────────────────────────
+
+.admin-toolbar,
+.admin-table-shell {
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: $space-5;
+}
+
+// ── Error banner ──────────────────────────────────────────────────────────────
+
+.error-banner {
+  padding: $space-3 $space-4;
+  border-radius: $border-radius-base;
+  background: rgba(180, 57, 31, 0.1);
+  color: $color-danger;
+  border: 1px solid rgba(180, 57, 31, 0.18);
+  font-size: $font-size-sm;
+}
+
+// ── Toolbar / filters ─────────────────────────────────────────────────────────
+
+.filters-form { display: block; }
+
+.search-line {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-2;
+}
+
+.filter-field-search { flex: 1; }
+.filter-field-search input { height: 42px; }
+
+.search-line-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-2;
+}
+
+.clear-filters-btn {
+  height: 42px;
+  min-width: 92px;
+  white-space: nowrap;
+}
+
+.clear-filters-btn-invisible {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.filters-toggle {
+  min-width: 120px;
+  height: 42px;
+  white-space: nowrap;
+}
+
+.filters-expand-panel {
+  margin-top: $space-3;
+  padding: $space-4;
+  border-radius: $border-radius-base;
+  border: $border-width-base solid $color-border;
+  background: rgba(15, 23, 42, 0.02);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
   gap: $space-3;
+}
+
+.filter-field {
+  display: grid;
+  gap: $space-2;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+  }
+}
+
+.filters-form input,
+.filters-form select {
+  width: 100%;
+  padding: $space-3;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  font-family: inherit;
+  background: $color-white;
+}
+
+.filters-form select {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px 12px;
+}
+
+// ── Tabla ─────────────────────────────────────────────────────────────────────
+
+.admin-table-scroll { overflow-x: auto; }
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 540px;
+
+  th, td {
+    padding: $space-3 $space-2;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid $color-divider;
+  }
+
+  th {
+    font-size: $font-size-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-text-secondary;
+  }
+
+  tbody tr:hover { background: rgba(15, 23, 42, 0.03); }
+}
+
+.actions-column {
+  width: 1%;
+  white-space: nowrap;
+}
+
+// ── Status pills ──────────────────────────────────────────────────────────────
+
+.status-pill {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: $space-4;
+  padding: $space-1 $space-2;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: $color-text-secondary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+
+  &.status-pill-active { background: rgba(21, 128, 61, 0.12); color: #166534; }
+  &.status-pill-admin  { background: #ede9fe; color: #5b21b6; }
 }
 
-.website-form input[type='text'] {
-  min-width: 280px;
-  padding: $space-2 $space-3;
-  border: $border-width-base solid $color-border-light;
-  border-radius: $border-radius-md;
-}
+// ── Acciones de fila ──────────────────────────────────────────────────────────
 
-.website-form button,
-.actions button {
-  border: 0;
-  border-radius: $border-radius-md;
-  padding: $space-2 $space-3;
-  cursor: pointer;
-  background: $color-info;
-  color: $color-white;
-}
-
-.actions {
+.row-actions {
   display: flex;
   gap: $space-2;
 }
 
-.actions button.danger {
-  background: $color-danger;
+.action-btn {
+  border-radius: $border-radius-md;
+  padding: $space-1 $space-3;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  border: $border-width-base solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+
+  &--toggle {
+    background: $color-white;
+    border-color: $color-border;
+    color: $color-text-heading;
+    &:hover { border-color: $color-primary; color: $color-primary; }
+  }
+
+  &--danger {
+    background: $color-white;
+    border-color: $color-danger;
+    color: $color-danger;
+    &:hover { background: $color-danger; color: $color-white; }
+  }
+}
+
+// ── Empty states ──────────────────────────────────────────────────────────────
+
+.empty-state {
+  padding: $space-8;
+  border-radius: $border-radius-lg;
+  background: rgba(15, 23, 42, 0.03);
+  color: $color-text-secondary;
+  text-align: center;
+
+  p { margin: 0; }
+}
+
+// ── Modal form ────────────────────────────────────────────────────────────────
+
+.modal-form {
+  display: grid;
+  gap: $space-4;
+}
+
+.form-field {
+  display: grid;
+  gap: $space-2;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+  }
+
+  input {
+    width: 100%;
+    padding: $space-3;
+    border: $border-width-base solid $color-border;
+    border-radius: $border-radius-base;
+    font-family: inherit;
+    font-size: $font-size-base;
+    box-sizing: border-box;
+
+    &:focus { outline: 2px solid $color-primary; outline-offset: 1px; }
+  }
 }
 
 .check-row {
   display: flex;
   align-items: center;
   gap: $space-2;
+  font-size: $font-size-sm;
   color: $color-text-secondary;
+  cursor: pointer;
 }
 
-.loading-note {
-  color: $color-text-secondary;
-  margin-bottom: $space-3;
+.modal-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-3;
+  padding-top: $space-2;
+  border-top: $border-width-base solid $color-divider;
 }
 
-.users-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+// ── Botones ───────────────────────────────────────────────────────────────────
 
-.users-table th,
-.users-table td {
-  text-align: left;
-  padding: $space-3;
-  border-bottom: $border-width-base solid $color-divider;
-}
-
-.users-table th {
-  color: $color-text-secondary;
+.btn-primary {
+  border: 0;
+  border-radius: $border-radius-md;
+  padding: $space-2 $space-5;
+  background: $color-primary;
+  color: $color-white;
   font-weight: $font-weight-semibold;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:not(:disabled):hover { background: $color-primary-hover; }
 }
 
-.empty-state {
-  margin: 0;
-  color: $color-text-secondary;
+.btn-secondary {
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-md;
+  padding: $space-2 $space-4;
+  background: $color-white;
+  color: $color-text-heading;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:not(:disabled):hover { border-color: $color-primary; color: $color-primary; }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (max-width: 960px) {
+  .search-line { flex-direction: column; align-items: stretch; }
+  .search-line-actions { width: 100%; justify-content: space-between; }
+  .filters-expand-panel { grid-template-columns: 1fr; }
 }
