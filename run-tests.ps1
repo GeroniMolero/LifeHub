@@ -468,4 +468,63 @@ if ($failed -gt 0) {
     Write-Host "Informe generado: $outputPath" -ForegroundColor Green
 }
 
+# --- Actualizar PLAN_PRUEBAS.md con nuevas incidencias ---
+
+if ($failures) {
+    $planPath = Join-Path $OutputDir "PLAN_PRUEBAS.md"
+    if (Test-Path $planPath) {
+        $planLines = [System.IO.File]::ReadAllLines($planPath, [System.Text.Encoding]::UTF8)
+
+        # Buscar el ultimo indice INC-XX y el separador de la tabla de incidencias
+        $lastIncIdx = -1
+        $incSepIdx  = -1
+        $inIncSection = $false
+        for ($i = 0; $i -lt $planLines.Count; $i++) {
+            if ($planLines[$i] -match '^##\s+Incidencias') { $inIncSection = $true }
+            if ($inIncSection) {
+                if ($planLines[$i] -match '^\|[-| ]+\|') { $incSepIdx = $i }
+                if ($planLines[$i] -match '^\|\s*INC-\d+')  { $lastIncIdx = $i }
+            }
+        }
+
+        $insertAfterIdx = if ($lastIncIdx -ge 0) { $lastIncIdx } elseif ($incSepIdx -ge 0) { $incSepIdx } else { -1 }
+
+        if ($insertAfterIdx -ge 0) {
+            # Determinar el siguiente numero de incidencia
+            $incMatches = [regex]::Matches(($planLines -join "`n"), '\|\s*INC-(\d+)')
+            $lastIncNum = 0
+            foreach ($m in $incMatches) {
+                $num = [int]$m.Groups[1].Value
+                if ($num -gt $lastIncNum) { $lastIncNum = $num }
+            }
+
+            $today = (Get-Date).ToString("dd-MM-yyyy")
+            $insertLines = [System.Collections.Generic.List[string]]::new()
+            foreach ($f in $failures) {
+                $lastIncNum++
+                $incId  = "INC-{0:D2}" -f $lastIncNum
+                $desc   = "Test ``$($f.Id)`` ($($f.Description)) fallo: esperado HTTP $($f.ExpectedStatus), obtenido $($f.ActualStatus). Detectado automaticamente por ``run-tests.ps1``."
+                $insertLines.Add("| $incId | $today | $desc | Abierta |")
+            }
+
+            $newLines = [System.Collections.Generic.List[string]]::new()
+            for ($i = 0; $i -lt $planLines.Count; $i++) {
+                $newLines.Add($planLines[$i])
+                if ($i -eq $insertAfterIdx) {
+                    foreach ($line in $insertLines) { $newLines.Add($line) }
+                }
+            }
+
+            [System.IO.File]::WriteAllLines($planPath, $newLines, [System.Text.Encoding]::UTF8)
+            Write-Host "$($failures.Count) incidencia(s) registrada(s) en PLAN_PRUEBAS.md" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "No se encontro la tabla de incidencias en PLAN_PRUEBAS.md -- nada actualizado." -ForegroundColor DarkYellow
+        }
+    }
+    else {
+        Write-Host "PLAN_PRUEBAS.md no encontrado en $OutputDir -- nada actualizado." -ForegroundColor DarkYellow
+    }
+}
+
 exit $(if ($failed -gt 0) { 1 } else { 0 })

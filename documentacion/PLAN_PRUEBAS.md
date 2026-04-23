@@ -1,4 +1,4 @@
-# Plan de Pruebas — LifeHub
+﻿# Plan de Pruebas — LifeHub
 
 **Fecha:** 23-04-2026  
 **Versión del proyecto:** master (post-limpieza de seguridad)  
