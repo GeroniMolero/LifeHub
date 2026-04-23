@@ -134,6 +134,11 @@ LifeHub-Frontend/npm_ci_out.txt
 LifeHub-Frontend/npm_ci_exit.txt
 
 #######################
+# Documentos binarios
+#######################
+*.pdf
+
+#######################
 # Sistema operativo
 #######################
 .DS_Store
