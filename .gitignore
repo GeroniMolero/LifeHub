@@ -122,6 +122,8 @@ frontend_build_container_exit.txt
 frontend_build_container_out.txt
 frontend_compose_build_exit.txt
 frontend_compose_build_out.txt
+smoke_backend_in_container.sh
+smoke_permissions_in_container.sh
 smoke_backend_exit.txt
 smoke_backend_result.txt
 smoke_permissions_exit.txt
