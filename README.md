@@ -200,6 +200,57 @@ Esto borra solo datos locales de desarrollo en Docker (`sql_data`).
 
 Los backups se guardan en la carpeta `backups/` con timestamp. Requiere el stack de desarrollo en marcha.
 
+## Pruebas
+
+La suite cubre **30 casos de prueba** sobre la API REST del backend, agrupados en cinco módulos:
+
+| Módulo | Casos | Qué se verifica |
+|--------|-------|-----------------|
+| AUTH | 8 | Registro, login, validación de campos, tokens inválidos |
+| DOCS | 9 | CRUD de documentos, versionado, control de acceso |
+| SPACES | 5 | CRUD de espacios creativos, validación de nombre |
+| ADMIN | 6 | Gestión de dominios permitidos (requiere rol Admin) |
+| SEGURIDAD | 2 | Acceso sin token y token manipulado |
+
+Los tests crean un usuario temporal propio y lo eliminan al finalizar — la base de datos queda limpia. Los tests de administrador requieren credenciales de admin en el `.env`.
+
+### Prerequisitos
+
+- El backend debe estar en marcha (`http://localhost:5000`)
+- Las variables `ADMIN_EMAIL` y `ADMIN_PASSWORD` en el `.env` de la raíz (sin ellas, los tests de admin se omiten con SKIP)
+
+### Ejecución automatizada (genera informe Markdown)
+
+**Windows:**
+```powershell
+.\scripts\windows\run-tests.ps1
+# Con backend en otra URL:
+.\scripts\windows\run-tests.ps1 -BaseUrl http://localhost:5001/api
+```
+
+**Linux / macOS:**
+```bash
+./scripts/linux/run-tests.sh
+# Con backend en otra URL:
+./scripts/linux/run-tests.sh http://localhost:5001/api
+```
+
+El informe se guarda en `documentacion/RESULTADO_PRUEBAS_<timestamp>.md` (archivo ignorado por git).
+
+### Ejecución interactiva (resultados en tiempo real en la terminal)
+
+**Windows:**
+```powershell
+.\scripts\windows\run-tests-interactive.ps1
+```
+
+**Linux / macOS:**
+```bash
+./scripts/linux/run-tests-interactive.sh
+```
+
+---
+
 ## Estructura del Proyecto
 
 ```
@@ -222,17 +273,19 @@ LifeHub/
 │   │   ├── assets/           # Archivos estáticos
 │   │   └── styles.scss       # Estilos globales
 │   └── angular.json          # Configuración Angular
+├── documentacion/            # Plan de pruebas y documentación del proyecto
 ├── scripts/
 │   ├── windows/              # Scripts PowerShell (Windows)
 │   │   ├── backup-db.ps1
 │   │   ├── restore-db.ps1
-│   │   └── run-tests.ps1
+│   │   ├── run-tests.ps1             # Suite automatizada → genera informe .md
+│   │   └── run-tests-interactive.ps1 # Resultados en tiempo real en terminal
 │   └── linux/                # Scripts Bash (Linux / macOS)
 │       ├── backup-db.sh
 │       ├── restore-db.sh
-│       └── run-tests.sh
+│       ├── run-tests.sh
+│       └── run-tests-interactive.sh
 └── docker-compose.yml        # Orquestación Docker
-
 ```
 
 ## Seguridad
