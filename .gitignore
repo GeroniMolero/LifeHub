@@ -134,6 +134,11 @@ LifeHub-Frontend/npm_ci_out.txt
 LifeHub-Frontend/npm_ci_exit.txt
 
 #######################
+# Backups de base de datos
+#######################
+backups/
+
+#######################
 # Documentos binarios
 #######################
 *.pdf
