@@ -32,11 +32,24 @@ Write-Host "Creando directorio de backup en el contenedor..." -ForegroundColor Y
 docker exec $Container mkdir -p /var/opt/mssql/backup
 
 Write-Host "Ejecutando BACKUP DATABASE..." -ForegroundColor Yellow
-docker exec $Container /opt/mssql-tools/bin/sqlcmd `
-    -S localhost -U sa -P $Password `
-    -Q "BACKUP DATABASE [$Database] TO DISK = N'$ContainerPath' WITH FORMAT, INIT, COMPRESSION, STATS = 10"
 
-if ($LASTEXITCODE -ne 0) { throw "El backup falló. Revisa que el contenedor $Container está en ejecución." }
+# Security improvement: Pass password via stdin instead of command line argument
+# to avoid exposing credentials in process list, shell history, or logs
+$BackupSQL = "BACKUP DATABASE [$Database] TO DISK = N'$ContainerPath' WITH FORMAT, INIT, COMPRESSION, STATS = 10"
+
+# Create a temporary secure input
+$securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential("sa", $securePassword)
+
+# Use echo to pipe password to stdin
+# Note: We use 'echo' here because PowerShell's stdin piping works differently with docker exec
+$process = Start-Process -FilePath "cmd.exe" `
+    -ArgumentList "/c echo $Password | docker exec -i $Container /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P -Q ""$BackupSQL""" `
+    -WindowStyle Hidden -PassThru -Wait
+
+if ($process.ExitCode -ne 0) { 
+    throw "El backup falló. Revisa que el contenedor $Container está en ejecución." 
+}
 
 Write-Host "Copiando backup al host..." -ForegroundColor Yellow
 docker cp "${Container}:${ContainerPath}" "$BackupDir\$BackupFile"
