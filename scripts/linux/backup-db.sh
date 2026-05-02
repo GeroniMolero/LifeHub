@@ -26,16 +26,24 @@ CONTAINER_PATH="/var/opt/mssql/backup/${BACKUP_FILE}"
 mkdir -p "$BACKUP_DIR"
 
 echo "Creando directorio de backup en el contenedor..."
-docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+if [ -n "${MSYSTEM:-}" ]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+else
+    docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+fi
 
 echo "Ejecutando BACKUP DATABASE..."
 
-# Security improvement: Pass password via stdin instead of command line argument
-# to avoid exposing credentials in process list, shell history, or logs
 BACKUP_SQL="BACKUP DATABASE [$DATABASE] TO DISK = N'$CONTAINER_PATH' WITH FORMAT, INIT, COMPRESSION, STATS = 10"
-echo "$DB_PASSWORD" | docker exec -i "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
-    -S localhost -U sa -U sa -P -C \
-    -Q "$BACKUP_SQL"
+if [ -n "${MSYSTEM:-}" ]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
+        -S localhost -U sa \
+        -Q "$BACKUP_SQL"
+else
+    docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
+        -S localhost -U sa \
+        -Q "$BACKUP_SQL"
+fi
 
 if [ $? -ne 0 ]; then
     echo "Error: el backup falló. Revisa que el contenedor $CONTAINER está en ejecución."

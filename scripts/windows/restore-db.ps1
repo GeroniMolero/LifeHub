@@ -39,16 +39,14 @@ RESTORE DATABASE [$Database] FROM DISK = N'$ContainerPath' WITH REPLACE, RECOVER
 ALTER DATABASE [$Database] SET MULTI_USER;
 "@
 
-# Security improvement: Pass password via stdin instead of command line argument
-# to avoid exposing credentials in process list, shell history, or logs
-$process = Start-Process -FilePath "cmd.exe" `
-    -ArgumentList "/c echo $Password | docker exec -i $Container /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P -Q ""$RestoreSQL""" `
-    -WindowStyle Hidden -PassThru -Wait
-
-if ($process.ExitCode -ne 0) { 
-    throw "La restauración falló. Revisa los mensajes anteriores." 
+$output = docker exec -e "SQLCMDPASSWORD=$Password" $Container /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -Q "$RestoreSQL" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host $output -ForegroundColor Red
+    throw "La restauración falló. Revisa los mensajes anteriores."
 }
+
+Remove-Variable Password -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "Base de datos restaurada correctamente desde: $BackupFile" -ForegroundColor Green
-Write-Host "Reinicia el backend para que reconecte: docker restart $Container" -ForegroundColor Yellow
+Write-Host "Reinicia el backend para que reconecte: docker restart lifehub-backend-dev" -ForegroundColor Yellow

@@ -120,6 +120,8 @@
 
 ## Resumen de resultados
 
+### Pruebas manuales (23-04-2026)
+
 | Módulo | Total casos | Pasados | Fallidos | Pendientes |
 |--------|-------------|---------|----------|------------|
 | CP-01 Autenticación | 6 | 6 | 0 | 0 |
@@ -133,6 +135,17 @@
 | CP-09 Backup y restauración | 3 | 3 | 0 | 0 |
 | **TOTAL** | **37** | **37** | **0** | **0** |
 
+### Pruebas automatizadas — suite `run-tests.ps1` (02-05-2026)
+
+| Bloque | Tests | OK | FAIL | SKIP |
+|--------|-------|----|------|------|
+| AUTH | 8 | 8 | 0 | 0 |
+| Espacios creativos | 5 | 5 | 0 | 0 |
+| Documentos y versiones | 9 | 9 | 0 | 0 |
+| Panel de administración | 6 | 6 | 0 | 0 |
+| Seguridad | 2 | 2 | 0 | 0 |
+| **TOTAL** | **30** | **30** | **0** | **0** |
+
 ---
 
 ## Incidencias registradas
@@ -141,3 +154,5 @@
 |----|-------|-------------|--------|
 | INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Abierta — pendiente de valorar refactorización |
 | INC-02 | 23-04-2026 | Validación de entrada ausente en dos endpoints de creación de recursos: aceptaban campos obligatorios vacíos sin devolver error. Detectado durante la ejecución de la suite de pruebas automatizada. Corregido añadiendo validación a nivel de DTO. | Resuelta |
+| INC-03 | 02-05-2026 20:24 | Test `T-DOC-07` (Snapshot de documento ajeno -> 403) fallaba: esperado HTTP 403, obtenido 404. El script usaba el ID hardcodeado `1` asumiendo que existía y pertenecía a otro usuario; el backend devuelve 404 antes de comprobar permisos si el documento no existe. Corregido: el test ahora crea un documento temporal con el token admin, intenta el snapshot con el token de usuario (obtiene 403 correctamente) y lo elimina al finalizar. Resultado tras el fix: **30/30 PASS**. | Resuelta |
+| INC-04 | 02-05-2026 21:25 | Test `T-AUTH-08` (Login admin (setup para tests admin)) fallaba: esperado HTTP 200, obtenido 400 en `run-tests.sh` bajo Git Bash/Windows. Causa raíz: parseo de `.env` en scripts Bash no eliminaba `CRLF` (`\r`) y el valor de `ADMIN_PASSWORD` se enviaba con carácter extra. Corregido normalizando `ADMIN_EMAIL/ADMIN_PASSWORD` (trim + eliminación de `\r`) en los runners Linux. Resultado tras el fix: **30/30 PASS**. | Resuelta |

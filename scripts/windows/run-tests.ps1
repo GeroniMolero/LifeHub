@@ -273,10 +273,35 @@ else {
             -Method GET -Url "/documentversions/document/$($script:DocId)" -ExpectedStatus 200 `
             -Token $script:UserToken
 
-        Invoke-ApiTest -Id "T-DOC-07" -Description "Snapshot de documento ajeno -> 403" `
-            -Method POST -Url "/documentversions/document/1/snapshot" -ExpectedStatus 403 `
-            -Token $script:UserToken `
-            -Body @{ comment="intruso" }
+        # T-DOC-07: necesita un documento que pertenezca a OTRO usuario (admin).
+        # Crear uno temporalmente con el token admin y eliminarlo tras el test.
+        $script:AdminDocId = $null
+        if ($script:AdminToken) {
+            try {
+                $adminDocBody = @{ title="Doc Admin T-DOC-07 $Timestamp"; content="doc temporal para test acceso ajeno"; description="" } | ConvertTo-Json -Compress
+                $adminDocResp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/documents" `
+                    -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                    -Body $adminDocBody -UseBasicParsing -ErrorAction Stop
+                $script:AdminDocId = ($adminDocResp.Content | ConvertFrom-Json).id
+            } catch { }
+        }
+
+        if ($script:AdminDocId) {
+            Invoke-ApiTest -Id "T-DOC-07" -Description "Snapshot de documento ajeno -> 403" `
+                -Method POST -Url "/documentversions/document/$($script:AdminDocId)/snapshot" -ExpectedStatus 403 `
+                -Token $script:UserToken `
+                -Body @{ comment="intruso" }
+
+            # Cleanup: eliminar el documento temporal del admin
+            try {
+                Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:AdminDocId)" `
+                    -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+                    -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+            } catch { }
+        } else {
+            Skip-Test -Id "T-DOC-07" -Description "Snapshot de documento ajeno -> 403" `
+                -Reason "AdminToken no disponible; configurar ADMIN_EMAIL/ADMIN_PASSWORD en .env"
+        }
 
         if ($script:VersionId) {
             Invoke-ApiTest -Id "T-DOC-08" -Description "Restaurar version anterior" `

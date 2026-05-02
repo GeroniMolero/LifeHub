@@ -23,6 +23,9 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
         val="${line#*=}"
         key="${key#"${key%%[![:space:]]*}"}"
         key="${key%"${key##*[![:space:]]}"}"
+        val="${val%$'\r'}"
+        val="${val#"${val%%[![:space:]]*}"}"
+        val="${val%"${val##*[![:space:]]}"}"
         case "$key" in
             ADMIN_EMAIL)    ADMIN_EMAIL="$val" ;;
             ADMIN_PASSWORD) ADMIN_PASS="$val" ;;
@@ -260,9 +263,28 @@ else
         invoke_api_test "T-DOC-06" "Listar versiones del documento" GET "/documentversions/document/$DOC_ID" \
             "" "$USER_TOKEN" "200" || true
 
-        invoke_api_test "T-DOC-07" "Snapshot de documento ajeno -> 403" POST "/documentversions/document/1/snapshot" \
-            "{\"comment\":\"intruso\"}" \
-            "$USER_TOKEN" "403" || true
+        # T-DOC-07: necesita un documento que pertenezca a OTRO usuario (admin).
+        # Crear uno temporalmente con el token admin y eliminarlo tras el test.
+        ADMIN_DOC_ID=""
+        if [ -n "$ADMIN_TOKEN" ]; then
+            admin_doc_resp=$(curl -s -X POST "$BASE_URL/documents" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" \
+                -d "{\"title\":\"Doc Admin T-DOC-07 $TIMESTAMP\",\"content\":\"doc temporal para test acceso ajeno\",\"description\":\"\"}")
+            ADMIN_DOC_ID=$(json_val "id" "$admin_doc_resp")
+        fi
+
+        if [ -n "$ADMIN_DOC_ID" ]; then
+            invoke_api_test "T-DOC-07" "Snapshot de documento ajeno -> 403" POST "/documentversions/document/$ADMIN_DOC_ID/snapshot" \
+                "{\"comment\":\"intruso\"}" \
+                "$USER_TOKEN" "403" || true
+
+            # Cleanup: eliminar el documento temporal del admin
+            curl -s -X DELETE "$BASE_URL/documents/$ADMIN_DOC_ID" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
+        else
+            skip_test "T-DOC-07" "Snapshot de documento ajeno -> 403" "AdminToken no disponible; configurar ADMIN_EMAIL/ADMIN_PASSWORD en .env"
+        fi
 
         if [ -n "$VERSION_ID" ]; then
             invoke_api_test "T-DOC-08" "Restaurar version anterior" POST "/documentversions/$VERSION_ID/restore" \

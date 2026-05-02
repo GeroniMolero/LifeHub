@@ -33,17 +33,25 @@ FILENAME=$(basename "$BACKUP_FILE")
 CONTAINER_PATH="/var/opt/mssql/backup/${FILENAME}"
 
 echo "Copiando backup al contenedor..."
-docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+if [ -n "${MSYSTEM:-}" ]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+else
+    docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+fi
 docker cp "$BACKUP_FILE" "${CONTAINER}:${CONTAINER_PATH}"
 
 echo "Ejecutando RESTORE DATABASE..."
 
-# Security improvement: Pass password via stdin instead of command line argument
-# to avoid exposing credentials in process list, shell history, or logs
 RESTORE_SQL="ALTER DATABASE [$DATABASE] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; RESTORE DATABASE [$DATABASE] FROM DISK = N'$CONTAINER_PATH' WITH REPLACE, RECOVERY; ALTER DATABASE [$DATABASE] SET MULTI_USER;"
-echo "$DB_PASSWORD" | docker exec -i "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
-    -S localhost -U sa -U sa -P -C \
-    -Q "$RESTORE_SQL"
+if [ -n "${MSYSTEM:-}" ]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
+        -S localhost -U sa \
+        -Q "$RESTORE_SQL"
+else
+    docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
+        -S localhost -U sa \
+        -Q "$RESTORE_SQL"
+fi
 
 if [ $? -ne 0 ]; then
     echo "Error: la restauración falló. Revisa los mensajes anteriores."
