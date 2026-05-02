@@ -324,7 +324,100 @@ else {
     }
 }
 
-# --- BLOQUE 4: Panel de administracion ---
+# --- BLOQUE 4: Colaboracion en documentos compartidos ---
+
+Section "COLABORACION EN ESPACIOS COMPARTIDOS"
+
+if ($script:AdminToken -and $script:UserToken) {
+
+    # Obtener el ID del usuario normal (necesario para compartir el espacio con el)
+    $script:UserId = $null
+    try {
+        $meResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/users/me" `
+            -Headers @{ "Authorization"="Bearer $script:UserToken" } `
+            -UseBasicParsing -ErrorAction Stop
+        $script:UserId = ($meResp.Content | ConvertFrom-Json).id
+    } catch { }
+
+    if ($script:UserId) {
+        # Setup: admin crea un espacio y un documento temporales
+        $script:ColSpaceId = $null
+        $script:ColDocId   = $null
+
+        try {
+            $colSpaceBody = @{ name="Col-Test-$Timestamp"; description="temp"; privacy=0 } | ConvertTo-Json -Compress
+            $colSpaceResp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces" `
+                -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                -Body $colSpaceBody -UseBasicParsing -ErrorAction Stop
+            $script:ColSpaceId = ($colSpaceResp.Content | ConvertFrom-Json).id
+        } catch { }
+
+        if ($script:ColSpaceId) {
+            try {
+                $colDocBody = @{ title="Doc-Col-$Timestamp"; content="contenido original"; description=""; creativeSpaceId=$script:ColSpaceId } | ConvertTo-Json -Compress
+                $colDocResp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/documents" `
+                    -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                    -Body $colDocBody -UseBasicParsing -ErrorAction Stop
+                $script:ColDocId = ($colDocResp.Content | ConvertFrom-Json).id
+            } catch { }
+        }
+
+        if ($script:ColSpaceId -and $script:ColDocId) {
+
+            # Compartir espacio con usuario como Editor (permissionLevel=1)
+            try {
+                $shareBody = @{ userId=$script:UserId; permissionLevel=1 } | ConvertTo-Json -Compress
+                Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces/$($script:ColSpaceId)/permissions" `
+                    -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                    -Body $shareBody -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+            } catch { }
+
+            Invoke-ApiTest -Id "T-COL-01" -Description "Editor del espacio puede editar documento ajeno -> 200" `
+                -Method PUT -Url "/documents/$($script:ColDocId)" -ExpectedStatus 200 `
+                -Token $script:UserToken `
+                -Body @{ title="Doc-Col-$Timestamp"; content="editado por colaborador"; description="" }
+
+            Invoke-ApiTest -Id "T-COL-02" -Description "Editor del espacio no puede borrar documento ajeno -> 403" `
+                -Method DELETE -Url "/documents/$($script:ColDocId)" -ExpectedStatus 403 `
+                -Token $script:UserToken
+
+            # Cambiar permiso a Viewer (permissionLevel=0) para verificar bloqueo de edicion
+            try {
+                $viewerBody = @{ userId=$script:UserId; permissionLevel=0 } | ConvertTo-Json -Compress
+                Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces/$($script:ColSpaceId)/permissions" `
+                    -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                    -Body $viewerBody -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+            } catch { }
+
+            Invoke-ApiTest -Id "T-COL-03" -Description "Viewer del espacio no puede editar documento ajeno -> 403" `
+                -Method PUT -Url "/documents/$($script:ColDocId)" -ExpectedStatus 403 `
+                -Token $script:UserToken `
+                -Body @{ title="Doc-Col-$Timestamp"; content="intento de edicion viewer"; description="" }
+
+            # Cleanup: eliminar espacio temporal (borra documentos y permisos por cascade)
+            try {
+                Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/creativespaces/$($script:ColSpaceId)" `
+                    -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+                    -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+            } catch { }
+
+        } else {
+            Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+            Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+            Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+        }
+    } else {
+        Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "No se pudo obtener UserId"
+        Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "No se pudo obtener UserId"
+        Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "No se pudo obtener UserId"
+    }
+} else {
+    Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "AdminToken o UserToken no disponibles"
+    Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "AdminToken o UserToken no disponibles"
+    Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "AdminToken o UserToken no disponibles"
+}
+
+# --- BLOQUE 5: Panel de administracion ---
 
 Section "PANEL DE ADMINISTRACION"
 
@@ -375,7 +468,7 @@ else {
     }
 }
 
-# --- BLOQUE 5: Seguridad adicional ---
+# --- BLOQUE 6: Seguridad adicional ---
 
 Section "SEGURIDAD"
 
@@ -392,7 +485,7 @@ else {
     Skip-Test -Id "T-SEC-02" -Description "Token User en endpoint Admin" -Reason "Tokens no disponibles"
 }
 
-# --- BLOQUE 6: Limpieza ---
+# --- BLOQUE 7: Limpieza ---
 
 Section "LIMPIEZA"
 
@@ -442,11 +535,12 @@ Write-Host "===========================================" -ForegroundColor White
 
 # Generar markdown
 $groups = [ordered]@{
-    "Autenticacion"           = "T-AUTH"
-    "Espacios Creativos"      = "T-SPACE"
-    "Documentos y Versiones"  = "T-DOC"
-    "Panel de Administracion" = "T-ADMIN"
-    "Seguridad"               = "T-SEC"
+    "Autenticacion"                     = "T-AUTH"
+    "Espacios Creativos"                = "T-SPACE"
+    "Documentos y Versiones"            = "T-DOC"
+    "Colaboracion en espacios"          = "T-COL"
+    "Panel de Administracion"           = "T-ADMIN"
+    "Seguridad"                         = "T-SEC"
 }
 
 $sb = [System.Text.StringBuilder]::new()

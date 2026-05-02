@@ -118,10 +118,20 @@ namespace LifeHub.Controllers
             if (authError != null)
                 return authError;
 
-            var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId);
+            var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id);
 
             if (document == null)
                 return NotFoundError("Documento no encontrado.");
+
+            var isOwner = document.UserId == userId;
+            var isSpaceEditor = document.CreativeSpaceId.HasValue &&
+                await _context.SpacePermissions.AnyAsync(p =>
+                    p.CreativeSpaceId == document.CreativeSpaceId.Value &&
+                    p.UserId == userId &&
+                    p.PermissionLevel == SpacePermissionLevel.Editor);
+
+            if (!isOwner && !isSpaceEditor)
+                return ForbiddenError("No tienes permiso para editar este documento.");
 
             dto.Content = SanitizeHtml(dto.Content);
 
@@ -147,10 +157,13 @@ namespace LifeHub.Controllers
             if (authError != null)
                 return authError;
 
-            var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == userId);
+            var document = await _context.Documents.FirstOrDefaultAsync(d => d.Id == id);
 
             if (document == null)
                 return NotFoundError("Documento no encontrado.");
+
+            if (document.UserId != userId)
+                return ForbiddenError("Solo el propietario del documento puede eliminarlo.");
 
             _context.Documents.Remove(document);
             await _context.SaveChangesAsync();

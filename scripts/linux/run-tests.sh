@@ -306,7 +306,83 @@ else
     fi
 fi
 
-# --- BLOQUE 4: PANEL DE ADMINISTRACION ---
+# --- BLOQUE 4: COLABORACION EN ESPACIOS COMPARTIDOS ---
+
+section "COLABORACION EN ESPACIOS COMPARTIDOS"
+
+if [ -n "$ADMIN_TOKEN" ] && [ -n "$USER_TOKEN" ]; then
+
+    # Obtener ID del usuario normal para compartir el espacio con el
+    COL_USER_ID=""
+    _me_resp=$(curl -s -X GET "$BASE_URL/users/me" \
+        -H "Authorization: Bearer $USER_TOKEN" 2>/dev/null)
+    COL_USER_ID=$(json_val "id" "$_me_resp")
+
+    if [ -n "$COL_USER_ID" ]; then
+        # Setup: admin crea espacio y documento temporales
+        COL_SPACE_ID=""
+        COL_DOC_ID=""
+
+        _cs_body="{\"name\":\"Col-Test-$TIMESTAMP\",\"description\":\"temp\",\"privacy\":0}"
+        _cs_resp=$(curl -s -X POST "$BASE_URL/creativespaces" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -d "$_cs_body" 2>/dev/null)
+        COL_SPACE_ID=$(json_val "id" "$_cs_resp")
+
+        if [ -n "$COL_SPACE_ID" ]; then
+            _cd_body="{\"title\":\"Doc-Col-$TIMESTAMP\",\"content\":\"contenido original\",\"description\":\"\",\"creativeSpaceId\":$COL_SPACE_ID}"
+            _cd_resp=$(curl -s -X POST "$BASE_URL/documents" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" \
+                -d "$_cd_body" 2>/dev/null)
+            COL_DOC_ID=$(json_val "id" "$_cd_resp")
+        fi
+
+        if [ -n "$COL_SPACE_ID" ] && [ -n "$COL_DOC_ID" ]; then
+            # Compartir como Editor (permissionLevel=1)
+            curl -s -X POST "$BASE_URL/creativespaces/$COL_SPACE_ID/permissions" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" \
+                -d "{\"userId\":\"$COL_USER_ID\",\"permissionLevel\":1}" > /dev/null 2>&1
+
+            invoke_api_test "T-COL-01" "Editor del espacio puede editar documento ajeno -> 200" PUT "/documents/$COL_DOC_ID" \
+                "{\"title\":\"Doc-Col-$TIMESTAMP\",\"content\":\"editado por colaborador\",\"description\":\"\"}" \
+                "$USER_TOKEN" "200" || true
+
+            invoke_api_test "T-COL-02" "Editor del espacio no puede borrar documento ajeno -> 403" DELETE "/documents/$COL_DOC_ID" \
+                "" "$USER_TOKEN" "403" || true
+
+            # Cambiar a Viewer (permissionLevel=0)
+            curl -s -X POST "$BASE_URL/creativespaces/$COL_SPACE_ID/permissions" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" \
+                -d "{\"userId\":\"$COL_USER_ID\",\"permissionLevel\":0}" > /dev/null 2>&1
+
+            invoke_api_test "T-COL-03" "Viewer del espacio no puede editar documento ajeno -> 403" PUT "/documents/$COL_DOC_ID" \
+                "{\"title\":\"Doc-Col-$TIMESTAMP\",\"content\":\"intento viewer\",\"description\":\"\"}" \
+                "$USER_TOKEN" "403" || true
+
+            # Cleanup
+            curl -s -X DELETE "$BASE_URL/creativespaces/$COL_SPACE_ID" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
+        else
+            skip_test "T-COL-01" "Editor puede editar documento ajeno" "No se pudo crear espacio/documento temporal"
+            skip_test "T-COL-02" "Editor no puede borrar documento ajeno" "No se pudo crear espacio/documento temporal"
+            skip_test "T-COL-03" "Viewer no puede editar documento ajeno" "No se pudo crear espacio/documento temporal"
+        fi
+    else
+        skip_test "T-COL-01" "Editor puede editar documento ajeno" "No se pudo obtener UserId"
+        skip_test "T-COL-02" "Editor no puede borrar documento ajeno" "No se pudo obtener UserId"
+        skip_test "T-COL-03" "Viewer no puede editar documento ajeno" "No se pudo obtener UserId"
+    fi
+else
+    skip_test "T-COL-01" "Editor puede editar documento ajeno" "AdminToken o UserToken no disponibles"
+    skip_test "T-COL-02" "Editor no puede borrar documento ajeno" "AdminToken o UserToken no disponibles"
+    skip_test "T-COL-03" "Viewer no puede editar documento ajeno" "AdminToken o UserToken no disponibles"
+fi
+
+# --- BLOQUE 5: PANEL DE ADMINISTRACION ---
 
 section "PANEL DE ADMINISTRACION"
 
@@ -346,7 +422,7 @@ else
     done
 fi
 
-# --- BLOQUE 5: SEGURIDAD ---
+# --- BLOQUE 6: SEGURIDAD ---
 
 section "SEGURIDAD"
 
@@ -360,7 +436,7 @@ else
     skip_test "T-SEC-02" "Token User en endpoint Admin" "Tokens no disponibles"
 fi
 
-# --- BLOQUE 6: LIMPIEZA ---
+# --- BLOQUE 7: LIMPIEZA ---
 
 section "LIMPIEZA"
 
@@ -403,7 +479,7 @@ echo "==========================================="
 
 OUTPUT_PATH="$OUTPUT_DIR/RESULTADO_PRUEBAS_$TIMESTAMP.md"
 FECHA_STR=$(date +"%Y-%m-%d %H:%M:%S")
-SECTIONS_ORDER=("AUTH" "ESPACIOS CREATIVOS" "DOCUMENTOS Y VERSIONES" "PANEL DE ADMINISTRACION" "SEGURIDAD")
+SECTIONS_ORDER=("AUTH" "ESPACIOS CREATIVOS" "DOCUMENTOS Y VERSIONES" "COLABORACION EN ESPACIOS COMPARTIDOS" "PANEL DE ADMINISTRACION" "SEGURIDAD")
 
 {
     echo "# Informe de Pruebas Automaticas -- LifeHub"
