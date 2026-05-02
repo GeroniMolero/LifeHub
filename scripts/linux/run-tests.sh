@@ -95,6 +95,7 @@ invoke_api_test() {
     local token="${6:-}"
     local expected="$7"
     local contains="${8:-}"
+    local notcontains="${9:-}"
 
     local curl_args=(-s -o /tmp/lh_resp.txt -w "%{http_code}" -X "$method"
                      -H "Content-Type: application/json")
@@ -110,6 +111,9 @@ invoke_api_test() {
     [ "$actual" != "$expected" ] && pass=false
     if $pass && [ -n "$contains" ]; then
         echo "$response_body" | grep -qF "$contains" || pass=false
+    fi
+    if $pass && [ -n "$notcontains" ]; then
+        echo "$response_body" | grep -qF "$notcontains" && pass=false
     fi
 
     ALL_IDS+=("$id")
@@ -250,9 +254,9 @@ else
             "{\"title\":\"Doc AutoTest $TIMESTAMP\",\"content\":\"# Test\nContenido editado.\",\"description\":\"\",\"creativeSpaceId\":null}" \
             "$USER_TOKEN" "200" || true
 
-        invoke_api_test "T-DOC-04" "Contenido XSS almacenado (backend no sanitiza)" PUT "/documents/$DOC_ID" \
+        invoke_api_test "T-DOC-04" "XSS sanitizado en backend" PUT "/documents/$DOC_ID" \
             "{\"title\":\"Doc AutoTest $TIMESTAMP\",\"content\":\"<script>alert(xss)</script>\",\"description\":\"\",\"creativeSpaceId\":null}" \
-            "$USER_TOKEN" "200" "<script>" || true
+            "$USER_TOKEN" "200" "" "<script>" || true
 
         if invoke_api_test "T-DOC-05" "Crear snapshot de version" POST "/documentversions/document/$DOC_ID/snapshot" \
             "{\"comment\":\"snapshot-autotest\"}" \

@@ -259,8 +259,8 @@ if ($doDoc) {
             Invoke-ApiTest -Id "T-DOC-03" -Description "Editar documento OK" `
                 -Method PUT -Url "/documents/$($script:DocId)" -ExpectedStatus 200 -Token $script:UserToken `
                 -Body @{ title=$DocTitle; content="$DocContent (editado)"; description=""; creativeSpaceId=$null }
-            Invoke-ApiTest -Id "T-DOC-04" -Description "Contenido XSS almacenado (backend no sanitiza)" `
-                -Method PUT -Url "/documents/$($script:DocId)" -ExpectedStatus 200 -Contains "<script>" -Token $script:UserToken `
+            Invoke-ApiTest -Id "T-DOC-04" -Description "XSS sanitizado en backend" `
+                -Method PUT -Url "/documents/$($script:DocId)" -ExpectedStatus 200 -NotContains "<script>" -Token $script:UserToken `
                 -Body @{ title=$DocTitle; content="<script>alert(xss)</script>"; description=""; creativeSpaceId=$null }
             Invoke-ApiTest -Id "T-DOC-05" -Description "Crear snapshot de version" `
                 -Method POST -Url "/documentversions/document/$($script:DocId)/snapshot" -ExpectedStatus 201 -Token $script:UserToken `

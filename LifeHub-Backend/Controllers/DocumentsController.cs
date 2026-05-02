@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
@@ -92,6 +93,8 @@ namespace LifeHub.Controllers
             if (sessionError != null)
                 return sessionError;
 
+            dto.Content = SanitizeHtml(dto.Content);
+
             var document = _mapper.Map<Document>(dto);
             document.UserId = userId;
 
@@ -119,6 +122,8 @@ namespace LifeHub.Controllers
 
             if (document == null)
                 return NotFoundError("Documento no encontrado.");
+
+            dto.Content = SanitizeHtml(dto.Content);
 
             _mapper.Map(dto, document);
             document.UpdatedAt = DateTime.UtcNow;
@@ -156,6 +161,31 @@ namespace LifeHub.Controllers
         private bool HasPermission(string value)
         {
             return User.HasClaim("permission", value);
+        }
+
+        private static string SanitizeHtml(string content)
+        {
+            if (string.IsNullOrEmpty(content)) return content;
+
+            // Remove <script>...</script> blocks
+            content = Regex.Replace(content,
+                @"<script\b[^<]*(?:(?!</script>)<[^<]*)*</script>",
+                string.Empty,
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            // Remove on* event handlers (e.g. onclick=, onerror=)
+            content = Regex.Replace(content,
+                @"\son\w+\s*=\s*(""[^""]*""|'[^']*'|[^\s>]*)",
+                string.Empty,
+                RegexOptions.IgnoreCase);
+
+            // Remove javascript: URIs
+            content = Regex.Replace(content,
+                @"href\s*=\s*(""javascript:[^""]*""|'javascript:[^']*')",
+                string.Empty,
+                RegexOptions.IgnoreCase);
+
+            return content;
         }
     }
 }

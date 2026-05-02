@@ -125,8 +125,16 @@ json_val() {
     echo "$val"
 }
 
+json_escape() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "${s//$'\n'/\\n}"
+}
+
 invoke_api_test() {
-    local id="$1" desc="$2" method="$3" url="$4" body="${5:-}" token="${6:-}" expected="$7" contains="${8:-}"
+    local id="$1" desc="$2" method="$3" url="$4" body="${5:-}" token="${6:-}" expected="$7" contains="${8:-}" notcontains="${9:-}"
     local curl_args=(-s -o /tmp/lh_resp.txt -w "%{http_code}" -X "$method" -H "Content-Type: application/json")
     [ -n "$token" ] && curl_args+=(-H "Authorization: Bearer $token")
     [ -n "$body" ]  && curl_args+=(-d "$body")
@@ -135,6 +143,7 @@ invoke_api_test() {
     local pass=true
     [ "$actual" != "$expected" ] && pass=false
     if $pass && [ -n "$contains" ]; then echo "$response_body" | grep -qF "$contains" || pass=false; fi
+    if $pass && [ -n "$notcontains" ]; then echo "$response_body" | grep -qF "$notcontains" && pass=false; fi
     ALL_IDS+=("$id"); ALL_DESCS+=("$desc"); ALL_EXPECTED+=("$expected")
     ALL_ACTUAL+=("$actual"); ALL_SECTION+=("$CURRENT_SECTION"); TOTAL=$((TOTAL + 1))
     if $pass; then
@@ -159,13 +168,20 @@ skip_test() {
 
 # ── SETUP SILENCIOSO DE TOKENS ─────────────────────────────────────────────────
 
+E_TEST_EMAIL=$(json_escape "$TEST_EMAIL")
+E_TEST_PASS=$(json_escape "$TEST_PASS")
+E_SPACE_NAME=$(json_escape "$SPACE_NAME")
+E_DOC_TITLE=$(json_escape "$DOC_TITLE")
+E_DOC_CONTENT=$(json_escape "$DOC_CONTENT")
+E_ADMIN_DOMAIN=$(json_escape "$ADMIN_DOMAIN")
+
 if $NEEDS_USER && ! $DO_AUTH; then
     echo "  [setup] Registrando usuario de prueba..."
     curl -s -o /dev/null -X POST -H "Content-Type: application/json" \
-        -d "{\"email\":\"$TEST_EMAIL\",\"fullName\":\"Test AutoScript\",\"password\":\"$TEST_PASS\",\"confirmPassword\":\"$TEST_PASS\"}" \
+        -d "{\"email\":\"$E_TEST_EMAIL\",\"fullName\":\"Test AutoScript\",\"password\":\"$E_TEST_PASS\",\"confirmPassword\":\"$E_TEST_PASS\"}" \
         "$BASE_URL/auth/register" 2>/dev/null || true
     resp=$(curl -s -X POST -H "Content-Type: application/json" \
-        -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASS\"}" \
+        -d "{\"email\":\"$E_TEST_EMAIL\",\"password\":\"$E_TEST_PASS\"}" \
         "$BASE_URL/auth/login" 2>/dev/null)
     USER_TOKEN=$(json_val "token" "$resp")
     [ -n "$USER_TOKEN" ] && echo "  [setup] Token de usuario obtenido." || echo "  [setup] No se pudo obtener token de usuario."
@@ -184,20 +200,20 @@ fi
 if $DO_AUTH; then
     section "AUTH"
     invoke_api_test "T-AUTH-01" "Registro nuevo usuario" POST /auth/register \
-        "{\"email\":\"$TEST_EMAIL\",\"fullName\":\"Test AutoScript\",\"password\":\"$TEST_PASS\",\"confirmPassword\":\"$TEST_PASS\"}" \
+        "{\"email\":\"$E_TEST_EMAIL\",\"fullName\":\"Test AutoScript\",\"password\":\"$E_TEST_PASS\",\"confirmPassword\":\"$E_TEST_PASS\"}" \
         "" "200" '"success":true' || true
     invoke_api_test "T-AUTH-02" "Registro email duplicado" POST /auth/register \
-        "{\"email\":\"$TEST_EMAIL\",\"fullName\":\"Test AutoScript\",\"password\":\"$TEST_PASS\",\"confirmPassword\":\"$TEST_PASS\"}" \
+        "{\"email\":\"$E_TEST_EMAIL\",\"fullName\":\"Test AutoScript\",\"password\":\"$E_TEST_PASS\",\"confirmPassword\":\"$E_TEST_PASS\"}" \
         "" "400" || true
     invoke_api_test "T-AUTH-03" "Registro email con formato invalido" POST /auth/register \
-        "{\"email\":\"esto-no-es-email\",\"fullName\":\"X\",\"password\":\"$TEST_PASS\",\"confirmPassword\":\"$TEST_PASS\"}" \
+        "{\"email\":\"esto-no-es-email\",\"fullName\":\"X\",\"password\":\"$E_TEST_PASS\",\"confirmPassword\":\"$E_TEST_PASS\"}" \
         "" "400" || true
     if invoke_api_test "T-AUTH-04" "Login correcto - obtener token" POST /auth/login \
-        "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASS\"}" "" "200" '"success":true'; then
+        "{\"email\":\"$E_TEST_EMAIL\",\"password\":\"$E_TEST_PASS\"}" "" "200" '"success":true'; then
         USER_TOKEN=$(json_val "token" "$(cat /tmp/lh_last_resp.txt)")
     fi
     invoke_api_test "T-AUTH-05" "Login contrasena incorrecta" POST /auth/login \
-        "{\"email\":\"$TEST_EMAIL\",\"password\":\"WrongPass999!\"}" "" "401" || true
+        "{\"email\":\"$E_TEST_EMAIL\",\"password\":\"WrongPass999!\"}" "" "401" || true
     invoke_api_test "T-AUTH-06" "Ruta protegida sin token -> 401" GET /creativespaces "" "" "401" || true
     invoke_api_test "T-AUTH-07" "Ruta protegida con token invalido -> 401" GET /creativespaces \
         "" "este.token.esinvalido" "401" || true
@@ -219,13 +235,13 @@ if $DO_SPACE; then
         skip_test "T-SPACE-*" "Todos los tests de espacios" "UserToken no disponible"
     else
         if invoke_api_test "T-SPACE-01" "Crear espacio OK" POST /creativespaces \
-            "{\"name\":\"$SPACE_NAME\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
+            "{\"name\":\"$E_SPACE_NAME\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
             "$USER_TOKEN" "201"; then SPACE_ID=$(json_val "id" "$(cat /tmp/lh_last_resp.txt)"); fi
         invoke_api_test "T-SPACE-02" "Crear espacio sin nombre -> error" POST /creativespaces \
             "{\"name\":\"\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" "$USER_TOKEN" "400" || true
         if [ -n "$SPACE_ID" ]; then
             invoke_api_test "T-SPACE-03" "Editar espacio OK" PUT "/creativespaces/$SPACE_ID" \
-                "{\"name\":\"$SPACE_NAME (editado)\",\"description\":\"Editado\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
+                "{\"name\":\"$E_SPACE_NAME (editado)\",\"description\":\"Editado\",\"privacy\":0,\"isPublicProfileVisible\":false}" \
                 "$USER_TOKEN" "200" || true
             invoke_api_test "T-SPACE-04" "Editar espacio de otro usuario -> 404" PUT "/creativespaces/99999" \
                 "{\"name\":\"X\",\"description\":\"\",\"privacy\":0,\"isPublicProfileVisible\":false}" "$USER_TOKEN" "404" || true
@@ -245,17 +261,17 @@ if $DO_DOC; then
         skip_test "T-DOC-*" "Todos los tests de documentos" "UserToken no disponible"
     else
         if invoke_api_test "T-DOC-01" "Crear documento OK" POST /documents \
-            "{\"title\":\"$DOC_TITLE\",\"content\":\"$DOC_CONTENT\",\"description\":\"\"}" \
+            "{\"title\":\"$E_DOC_TITLE\",\"content\":\"$E_DOC_CONTENT\",\"description\":\"\"}" \
             "$USER_TOKEN" "201"; then DOC_ID=$(json_val "id" "$(cat /tmp/lh_last_resp.txt)"); fi
         invoke_api_test "T-DOC-02" "Crear documento sin titulo -> error" POST /documents \
             "{\"title\":\"\",\"content\":\"x\",\"description\":\"\"}" "$USER_TOKEN" "400" || true
         if [ -n "$DOC_ID" ]; then
             invoke_api_test "T-DOC-03" "Editar documento OK" PUT "/documents/$DOC_ID" \
-                "{\"title\":\"$DOC_TITLE\",\"content\":\"$DOC_CONTENT (editado)\",\"description\":\"\",\"creativeSpaceId\":null}" \
+                "{\"title\":\"$E_DOC_TITLE\",\"content\":\"$E_DOC_CONTENT (editado)\",\"description\":\"\",\"creativeSpaceId\":null}" \
                 "$USER_TOKEN" "200" || true
-            invoke_api_test "T-DOC-04" "Contenido XSS almacenado (backend no sanitiza)" PUT "/documents/$DOC_ID" \
-                "{\"title\":\"$DOC_TITLE\",\"content\":\"<script>alert(xss)</script>\",\"description\":\"\",\"creativeSpaceId\":null}" \
-                "$USER_TOKEN" "200" "<script>" || true
+            invoke_api_test "T-DOC-04" "XSS sanitizado en backend" PUT "/documents/$DOC_ID" \
+                "{\"title\":\"$E_DOC_TITLE\",\"content\":\"<script>alert(xss)</script>\",\"description\":\"\",\"creativeSpaceId\":null}" \
+                "$USER_TOKEN" "200" "" "" "<script>" || true
             if invoke_api_test "T-DOC-05" "Crear snapshot de version" POST "/documentversions/document/$DOC_ID/snapshot" \
                 "{\"comment\":\"snapshot-autotest\"}" "$USER_TOKEN" "201"; then
                 VERSION_ID=$(json_val "id" "$(cat /tmp/lh_last_resp.txt)")
@@ -311,12 +327,12 @@ if $DO_ADMIN; then
     if [ -n "$ADMIN_TOKEN" ]; then
         invoke_api_test "T-ADMIN-03" "Acceso admin con rol Admin -> 200" GET /admin/allowed-websites "" "$ADMIN_TOKEN" "200" || true
         if invoke_api_test "T-ADMIN-04" "Anadir dominio permitido" POST /admin/allowed-websites \
-            "{\"domain\":\"$ADMIN_DOMAIN\",\"isActive\":true}" "$ADMIN_TOKEN" "201"; then
+            "{\"domain\":\"$E_ADMIN_DOMAIN\",\"isActive\":true}" "$ADMIN_TOKEN" "201"; then
             WEBSITE_ID=$(json_val "id" "$(cat /tmp/lh_last_resp.txt)")
         fi
         if [ -n "$WEBSITE_ID" ]; then
             invoke_api_test "T-ADMIN-05" "Desactivar dominio" PUT "/admin/allowed-websites/$WEBSITE_ID" \
-                "{\"domain\":\"$ADMIN_DOMAIN\",\"isActive\":false}" "$ADMIN_TOKEN" "200" || true
+                "{\"domain\":\"$E_ADMIN_DOMAIN\",\"isActive\":false}" "$ADMIN_TOKEN" "200" || true
         else
             skip_test "T-ADMIN-05" "Desactivar dominio" "WebsiteId no disponible"
         fi

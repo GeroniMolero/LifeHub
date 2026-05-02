@@ -253,9 +253,9 @@ else {
             -Body @{ title="Doc AutoTest $Timestamp"; content="# Test\nContenido editado."; description=""; creativeSpaceId=$null }
 
         $xssContent = "<script>alert(xss)</script>"
-        Invoke-ApiTest -Id "T-DOC-04" -Description "Contenido XSS almacenado (backend no sanitiza)" `
+        Invoke-ApiTest -Id "T-DOC-04" -Description "XSS sanitizado en backend" `
             -Method PUT -Url "/documents/$($script:DocId)" -ExpectedStatus 200 `
-            -Contains "<script>" `
+            -NotContains "<script>" `
             -Token $script:UserToken `
             -Body @{ title="Doc AutoTest $Timestamp"; content=$xssContent; description=""; creativeSpaceId=$null }
 
