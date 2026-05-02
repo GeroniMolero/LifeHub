@@ -57,7 +57,10 @@
         <div>
           <strong>Versión #{{ version.versionNumber }}</strong>
           <p>{{ version.description }}</p>
-          <small>{{ version.createdAt | date:'short' }} · por {{ version.createdByUserName ?? version.createdByUserId }}</small>
+          <small>{{ version.createdAt | date:'short' }} · por <span
+              [title]="version.createdByUserEmail ?? ''"
+              [class.user-tip]="!!version.createdByUserEmail"
+            >{{ version.createdByUserName ?? version.createdByUserId }}</span></small>
         </div>
         <div class="version-actions">
           <button type="button" class="btn-secondary" (click)="restoreVersion(version.id)">Restaurar</button>

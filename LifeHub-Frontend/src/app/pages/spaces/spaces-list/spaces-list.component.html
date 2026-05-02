@@ -137,7 +137,10 @@
         <div class="permissions-list" *ngIf="(permissionsBySpace[space.id] || []).length > 0">
           <article class="permission-item" *ngFor="let permission of permissionsBySpace[space.id]">
             <div>
-              <strong>{{ permission.userId }}</strong>
+              <strong
+                [title]="permission.userEmail ?? ''"
+                [class.user-tip]="!!permission.userEmail"
+              >{{ permission.userName ?? permission.userId }}</strong>
               <small>{{ permissionText(permission.permissionLevel) }} · {{ permission.createdAt | date:'short' }}</small>
             </div>
             <button class="btn-danger" type="button" (click)="removePermission(space, permission.userId)">Revocar</button>

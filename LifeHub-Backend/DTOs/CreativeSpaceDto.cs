@@ -66,6 +66,8 @@ namespace LifeHub.DTOs
         public int Id { get; set; }
         public int CreativeSpaceId { get; set; }
         public string UserId { get; set; } = null!;
+        public string? UserName { get; set; }
+        public string? UserEmail { get; set; }
         public int PermissionLevel { get; set; }
         public string GrantedByUserId { get; set; } = null!;
         public DateTime CreatedAt { get; set; }

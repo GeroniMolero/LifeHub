@@ -40,6 +40,8 @@ export interface SpacePermission {
   id: number;
   creativeSpaceId: number;
   userId: string;
+  userName?: string;
+  userEmail?: string;
   permissionLevel: SpacePermissionLevel;
   grantedByUserId: string;
   createdAt: Date;

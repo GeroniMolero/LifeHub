@@ -174,3 +174,10 @@ input, textarea {
   color: $color-info-text;
   border-color: color.adjust($color-info-light, $lightness: -10%);
 }
+
+/* Tooltip de usuario (nombre visible, email en title nativo) */
+.user-tip {
+  cursor: help;
+  border-bottom: 1px dashed currentColor;
+  text-decoration: none;
+}

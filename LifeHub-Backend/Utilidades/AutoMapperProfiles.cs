@@ -61,6 +61,11 @@ namespace LifeHub.Utilidades
 
             CreateMap<SpacePermission, SpacePermissionDto>()
                 .ForMember(d => d.PermissionLevel, o => o.MapFrom(s => (int)s.PermissionLevel))
+                .ForMember(d => d.UserName, o => o.MapFrom(s =>
+                    s.User != null
+                        ? (!string.IsNullOrWhiteSpace(s.User.FullName) ? s.User.FullName : s.User.Email)
+                        : null))
+                .ForMember(d => d.UserEmail, o => o.MapFrom(s => s.User != null ? s.User.Email : null))
                 .ReverseMap()
                 .ForMember(d => d.PermissionLevel, o => o.MapFrom(s => (SpacePermissionLevel)s.PermissionLevel));
 
@@ -69,6 +74,8 @@ namespace LifeHub.Utilidades
                     s.CreatedByUser != null
                         ? (!string.IsNullOrWhiteSpace(s.CreatedByUser.FullName) ? s.CreatedByUser.FullName : s.CreatedByUser.Email)
                         : null))
+                .ForMember(d => d.CreatedByUserEmail, o => o.MapFrom(s =>
+                    s.CreatedByUser != null ? s.CreatedByUser.Email : null))
                 .ReverseMap();
 
             // MusicFile mappings

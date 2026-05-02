@@ -11,6 +11,7 @@ namespace LifeHub.DTOs
         public DateTime CreatedAt { get; set; }
         public string CreatedByUserId { get; set; } = null!;
         public string? CreatedByUserName { get; set; }
+        public string? CreatedByUserEmail { get; set; }
     }
 
     public class CreateDocumentVersionDto

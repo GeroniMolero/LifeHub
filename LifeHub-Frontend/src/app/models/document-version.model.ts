@@ -8,6 +8,7 @@ export interface DocumentVersion {
   createdAt: Date;
   createdByUserId: string;
   createdByUserName?: string;
+  createdByUserEmail?: string;
 }
 
 export interface CreateDocumentVersionRequest {
