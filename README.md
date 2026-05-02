@@ -34,6 +34,9 @@
 - Crear, editar y eliminar espacios.
 - Con acceso a editor markdown y recursos multimedia embebidos.
 - Posibilidad de espacio colaborativo con tu lista de amigos.
+- **Colaboración por roles**: invitados con rol Viewer (solo lectura) o Editor (lectura y escritura)
+- Los editores pueden crear y modificar documentos del espacio
+- Solo el propietario puede eliminar documentos
 
 ### Gestión de Documentos
 
@@ -42,6 +45,10 @@
 - Crear, editar, eliminar y descargar documentos
 - Editor de texto en línea
 - Diferentes tipos de documentos (notas, archivos, listas)
+- **Versionado automático**: cada guardado crea una snapshot de la versión anterior
+- Límite de 30 versiones por documento
+- Eliminación de versiones individuales (solo propietario)
+- Atribución: cada versión muestra quién la creó
 
 ### Perfil
 
@@ -88,6 +95,7 @@
 - HttpClient con interceptores
 - Routing y Guards
 - Services para comunicación HTTP
+- Sistema global de notificaciones toast (éxito, error, info) con animaciones de entrada/salida, límite de 5 simultáneos y truncado de mensajes largos
 
 ## Documentación técnica
 
@@ -202,13 +210,14 @@ Los backups se guardan en la carpeta `backups/` con timestamp. Requiere el stack
 
 ## Pruebas
 
-La suite cubre **30 casos de prueba** sobre la API REST del backend, agrupados en cinco módulos:
+La suite cubre **33 casos de prueba** sobre la API REST del backend, agrupados en seis módulos:
 
 | Módulo | Casos | Qué se verifica |
-|--------|-------|-----------------|
+|--------|-------|------------------|
 | AUTH | 8 | Registro, login, validación de campos, tokens inválidos |
 | DOCS | 9 | CRUD de documentos, versionado, control de acceso |
 | SPACES | 5 | CRUD de espacios creativos, validación de nombre |
+| COL | 3 | Permisos de colaboración (Viewer vs Editor), acceso a documentos compartidos |
 | ADMIN | 6 | Gestión de dominios permitidos (requiere rol Admin) |
 | SEGURIDAD | 2 | Acceso sin token y token manipulado |
 
@@ -266,7 +275,8 @@ LifeHub/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── models/       # Interfaces
-│   │   │   ├── services/     # HTTP Services
+│   │   │   ├── services/     # HTTP Services (incluye ToastService)
+│   │   │   ├── components/   # Componentes reutilizables (ToastContainer, ...)
 │   │   │   ├── pages/        # Componentes de página
 │   │   │   ├── guards/       # Auth Guards
 │   │   │   └── interceptors/ # HTTP Interceptors
