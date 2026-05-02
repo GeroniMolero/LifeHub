@@ -4,6 +4,7 @@ export interface CreativeSpace {
   name: string;
   description: string;
   privacy: SpacePrivacy;
+  isFavorite: boolean;
   isPublicProfileVisible: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +19,7 @@ export interface CreateCreativeSpaceRequest {
   name: string;
   description: string;
   privacy: SpacePrivacy;
+  isFavorite: boolean;
   isPublicProfileVisible: boolean;
 }
 
@@ -25,6 +27,7 @@ export interface UpdateCreativeSpaceRequest {
   name: string;
   description: string;
   privacy: SpacePrivacy;
+  isFavorite: boolean;
   isPublicProfileVisible: boolean;
 }
 

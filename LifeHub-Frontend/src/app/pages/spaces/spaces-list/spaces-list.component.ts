@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -20,7 +20,7 @@ import { LayoutHeaderStateService } from '../../../services/layout-header-state.
 @Component({
   selector: 'app-spaces-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './spaces-list.component.html',
   styleUrls: ['./spaces-list.component.scss']
 })
@@ -28,7 +28,10 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   spaces: CreativeSpace[] = [];
-  favoriteIds = new Set<number>();
+  searchTerm = '';
+  favoriteFilter: 'all' | 'favorites' | 'non-favorites' = 'all';
+  permissionFilter: 'all' | 'shared' | 'private' = 'all';
+  dateSort: 'updated-desc' | 'updated-asc' = 'updated-desc';
   createForm!: FormGroup;
   editForm!: FormGroup;
   editingId: number | null = null;
@@ -61,6 +64,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
       name: ['', Validators.required],
       description: [''],
       privacy: [SpacePrivacy.Private],
+      isFavorite: [false],
       isPublicProfileVisible: [false]
     });
 
@@ -68,6 +72,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
       name: ['', Validators.required],
       description: [''],
       privacy: [SpacePrivacy.Private],
+      isFavorite: [false],
       isPublicProfileVisible: [false]
     });
 
@@ -75,7 +80,6 @@ export class SpacesListComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(user => {
         this.currentUserId = user?.id || '';
-        this.favoriteIds = new Set(this.creativeSpaceService.getFavoriteSpaceIds(this.currentUserId));
       });
 
     this.setHeaderState();
@@ -108,6 +112,36 @@ export class SpacesListComponent implements OnInit, OnDestroy {
     });
   }
 
+  get filteredSpaces(): CreativeSpace[] {
+    const term = this.searchTerm.trim().toLowerCase();
+
+    const filtered = this.spaces.filter(space => {
+      const matchesName = !term || space.name.toLowerCase().includes(term);
+      const isFav = this.isFavorite(space.id);
+      const matchesFavorite = this.favoriteFilter === 'all'
+        || (this.favoriteFilter === 'favorites' && isFav)
+        || (this.favoriteFilter === 'non-favorites' && !isFav);
+      const matchesPermission = this.permissionFilter === 'all'
+        || (this.permissionFilter === 'shared' && space.privacy === SpacePrivacy.Shared)
+        || (this.permissionFilter === 'private' && space.privacy === SpacePrivacy.Private);
+
+      return matchesName && matchesFavorite && matchesPermission;
+    });
+
+    return filtered.sort((a, b) => {
+      const aDate = new Date(a.updatedAt).getTime();
+      const bDate = new Date(b.updatedAt).getTime();
+      return this.dateSort === 'updated-asc' ? aDate - bDate : bDate - aDate;
+    });
+  }
+
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.favoriteFilter = 'all';
+    this.permissionFilter = 'all';
+    this.dateSort = 'updated-desc';
+  }
+
   toggleCreate(): void {
     this.showCreate = !this.showCreate;
     this.setHeaderState();
@@ -126,6 +160,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
           name: '',
           description: '',
           privacy: SpacePrivacy.Private,
+          isFavorite: false,
           isPublicProfileVisible: false
         });
         this.setHeaderState();
@@ -187,13 +222,29 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   }
 
   isFavorite(spaceId: number): boolean {
-    return this.favoriteIds.has(spaceId);
+    return this.spaces.find(space => space.id === spaceId)?.isFavorite ?? false;
   }
 
   toggleFavorite(spaceId: number): void {
     if (!this.currentUserId) return;
-    const next = this.creativeSpaceService.toggleFavoriteSpace(this.currentUserId, spaceId);
-    this.favoriteIds = new Set(next);
+
+    const target = this.spaces.find(space => space.id === spaceId);
+    if (!target) return;
+
+    const request$ = target.isFavorite
+      ? this.creativeSpaceService.removeFavoriteSpace(spaceId)
+      : this.creativeSpaceService.addFavoriteSpace(spaceId);
+
+    request$.subscribe({
+      next: () => {
+        target.isFavorite = !target.isFavorite;
+        target.updatedAt = new Date();
+        this.spaces = [...this.spaces];
+      },
+      error: () => {
+        this.error = 'No se pudo actualizar favorito.';
+      }
+    });
   }
 
   togglePermissions(space: CreativeSpace): void {

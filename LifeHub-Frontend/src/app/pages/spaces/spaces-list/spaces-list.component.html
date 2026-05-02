@@ -26,12 +26,46 @@
   <div *ngIf="error" class="error">{{ error }}</div>
   <div *ngIf="loading" class="loading">Cargando...</div>
 
+  <section class="filters" *ngIf="!loading && spaces.length > 0">
+    <div class="filters-row">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Buscar por nombre"
+        aria-label="Buscar espacios por nombre"
+      />
+
+      <select [(ngModel)]="favoriteFilter" aria-label="Filtrar por favoritos">
+        <option value="all">Favoritos: Todos</option>
+        <option value="favorites">Solo favoritos</option>
+        <option value="non-favorites">Solo no favoritos</option>
+      </select>
+
+      <select [(ngModel)]="permissionFilter" aria-label="Filtrar por permisos">
+        <option value="all">Permisos: Todos</option>
+        <option value="shared">Compartidos</option>
+        <option value="private">Privados</option>
+      </select>
+
+      <select [(ngModel)]="dateSort" aria-label="Ordenar por fecha">
+        <option value="updated-desc">Fecha: más recientes</option>
+        <option value="updated-asc">Fecha: más antiguos</option>
+      </select>
+
+      <button class="btn-secondary" type="button" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+  </section>
+
   <div *ngIf="!loading && spaces.length === 0" class="empty">
     Aún no tienes espacios creativos.
   </div>
 
-  <div class="grid" *ngIf="!loading && spaces.length > 0">
-    <article class="card" *ngFor="let space of spaces">
+  <div *ngIf="!loading && spaces.length > 0 && filteredSpaces.length === 0" class="empty filtered-empty">
+    No hay espacios que coincidan con tu búsqueda o filtros.
+  </div>
+
+  <div class="grid" *ngIf="!loading && filteredSpaces.length > 0">
+    <article class="card" *ngFor="let space of filteredSpaces">
       <h3>{{ space.name }}</h3>
       <p>{{ space.description || 'Sin descripción' }}</p>
       <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>

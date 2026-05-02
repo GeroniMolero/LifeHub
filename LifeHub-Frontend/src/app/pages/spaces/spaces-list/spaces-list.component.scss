@@ -8,12 +8,43 @@ input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid $color
 .checkbox { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem; }
 .checkbox input { width: auto; }
 .actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+.filters {
+  margin: 0.75rem 0 1rem;
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.3fr) repeat(3, minmax(160px, 1fr)) auto;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .btn-primary, .btn-secondary, .btn-danger { border: 0; border-radius: $border-radius-md; padding: 0.45rem 0.75rem; cursor: pointer; text-decoration: none; }
 .btn-primary { background: $color-brand-700; color: $color-white; }
 .btn-secondary { background: $color-slate-100; color: $color-slate-700; }
 .btn-danger { background: $color-danger; color: $color-white; }
 .error { color: $color-danger; margin: 0.5rem 0; }
 .loading, .empty { margin: 0.75rem 0; color: $color-text-secondary; }
+
+.spaces-container > .empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  text-align: center;
+}
+
+.spaces-container > .empty.filtered-empty {
+  display: block;
+  min-height: 0;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+}
 
 .permissions-panel {
   margin-top: 1rem;

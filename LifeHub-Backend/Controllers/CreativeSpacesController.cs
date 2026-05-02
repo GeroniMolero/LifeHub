@@ -154,6 +154,48 @@ namespace LifeHub.Controllers
             return NoContent();
         }
 
+        [HttpPut("{id:int}/favorite")]
+        public async Task<IActionResult> AddFavorite(int id)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var space = await _context.CreativeSpaces.FirstOrDefaultAsync(cs => cs.Id == id && cs.OwnerId == userId);
+            if (space == null)
+                return NotFoundError("Espacio creativo no encontrado.");
+
+            if (!space.IsFavorite)
+            {
+                space.IsFavorite = true;
+                space.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id:int}/favorite")]
+        public async Task<IActionResult> RemoveFavorite(int id)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var space = await _context.CreativeSpaces.FirstOrDefaultAsync(cs => cs.Id == id && cs.OwnerId == userId);
+            if (space == null)
+                return NotFoundError("Espacio creativo no encontrado.");
+
+            if (space.IsFavorite)
+            {
+                space.IsFavorite = false;
+                space.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            return NoContent();
+        }
+
         [HttpGet("{id:int}/permissions")]
         public async Task<IActionResult> GetPermissions(int id)
         {

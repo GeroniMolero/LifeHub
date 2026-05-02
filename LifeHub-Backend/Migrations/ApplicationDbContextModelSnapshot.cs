@@ -157,6 +157,9 @@ namespace LifeHub.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsPublicProfileVisible")
                         .HasColumnType("bit");
 

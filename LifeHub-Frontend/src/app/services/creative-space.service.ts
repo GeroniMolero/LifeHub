@@ -17,7 +17,6 @@ import { SpaceMediaReference } from '../models/space-media-reference.model';
 })
 export class CreativeSpaceService {
   private apiUrl = `${API_BASE_URL}/creativespaces`;
-  private readonly favoriteStorageKeyPrefix = 'lifehub:favorites:';
 
   constructor(private http: HttpClient) {}
 
@@ -65,39 +64,11 @@ export class CreativeSpaceService {
     return this.http.delete<void>(`${this.apiUrl}/${spaceId}/media-references/${referenceId}`);
   }
 
-  getFavoriteSpaceIds(userId: string): number[] {
-    if (!userId) return [];
-
-    const raw = localStorage.getItem(`${this.favoriteStorageKeyPrefix}${userId}`);
-    if (!raw) return [];
-
-    try {
-      const parsed = JSON.parse(raw) as number[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+  addFavoriteSpace(spaceId: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${spaceId}/favorite`, {});
   }
 
-  isFavoriteSpace(userId: string, spaceId: number): boolean {
-    return this.getFavoriteSpaceIds(userId).includes(spaceId);
-  }
-
-  toggleFavoriteSpace(userId: string, spaceId: number): number[] {
-    const current = new Set<number>(this.getFavoriteSpaceIds(userId));
-    if (current.has(spaceId)) {
-      current.delete(spaceId);
-    } else {
-      current.add(spaceId);
-    }
-
-    const next = Array.from(current.values());
-    this.saveFavoriteSpaceIds(userId, next);
-    return next;
-  }
-
-  private saveFavoriteSpaceIds(userId: string, favoriteIds: number[]): void {
-    if (!userId) return;
-    localStorage.setItem(`${this.favoriteStorageKeyPrefix}${userId}`, JSON.stringify(favoriteIds));
+  removeFavoriteSpace(spaceId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${spaceId}/favorite`);
   }
 }

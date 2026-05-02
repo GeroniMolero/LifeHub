@@ -24,7 +24,6 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   currentUserId = '';
   spaces: CreativeSpace[] = [];
-  favoriteIds = new Set<number>();
   friendships: Friendship[] = [];
   searchQuery = '';
   searchResults: User[] = [];
@@ -53,7 +52,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(user => {
         this.currentUserId = user?.id || '';
-        this.favoriteIds = new Set(this.creativeSpaceService.getFavoriteSpaceIds(this.currentUserId));
         this.setHeaderState();
       });
 
@@ -66,7 +64,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   get favoriteSpaces(): CreativeSpace[] {
-    return this.spaces.filter(space => this.favoriteIds.has(space.id));
+    return this.spaces.filter(space => space.isFavorite);
   }
 
   get acceptedFriends(): Friendship[] {

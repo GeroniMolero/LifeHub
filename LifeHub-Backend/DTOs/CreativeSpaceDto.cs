@@ -29,6 +29,7 @@ namespace LifeHub.DTOs
         public string Name { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public int Privacy { get; set; }
+        public bool IsFavorite { get; set; }
         public bool IsPublicProfileVisible { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -41,6 +42,7 @@ namespace LifeHub.DTOs
         public string Name { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public int Privacy { get; set; } = 0;
+        public bool IsFavorite { get; set; } = false;
         public bool IsPublicProfileVisible { get; set; } = false;
     }
 
@@ -49,6 +51,7 @@ namespace LifeHub.DTOs
         public string Name { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public int Privacy { get; set; }
+        public bool IsFavorite { get; set; }
         public bool IsPublicProfileVisible { get; set; }
     }
 

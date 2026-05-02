@@ -7,6 +7,7 @@ namespace LifeHub.Models
         public string Name { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public SpacePrivacy Privacy { get; set; } = SpacePrivacy.Private;
+        public bool IsFavorite { get; set; } = false;
         public bool IsPublicProfileVisible { get; set; } = false;
         public string MediaReferencesJson { get; set; } = "[]";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
