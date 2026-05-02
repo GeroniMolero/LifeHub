@@ -209,6 +209,7 @@ namespace LifeHub.Controllers
                 return ForbiddenError("Solo el propietario puede ver permisos del espacio.");
 
             var permissions = await _context.SpacePermissions
+                .Include(p => p.User)
                 .Where(p => p.CreativeSpaceId == id)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
@@ -264,6 +265,9 @@ namespace LifeHub.Controllers
                 id.ToString(),
                 $"Shared space with user '{dto.UserId}'",
                 HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+
+            // Reload with User navigation property so the DTO includes UserName/UserEmail
+            await _context.Entry(permission).Reference(p => p.User).LoadAsync();
 
             return Ok(_mapper.Map<SpacePermissionDto>(permission));
         }
