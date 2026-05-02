@@ -16,6 +16,7 @@ import { Friendship } from '../../../models/friendship.model';
 import { FriendshipService } from '../../../services/friendship.service';
 import { User } from '../../../models/auth.model';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-spaces-list',
@@ -56,7 +57,8 @@ export class SpacesListComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private authService: AuthService,
     private friendshipService: FriendshipService,
-    private layoutHeaderStateService: LayoutHeaderStateService
+    private layoutHeaderStateService: LayoutHeaderStateService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -167,7 +169,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'No se pudo crear el espacio.';
+        this.toastService.error('No se pudo crear el espacio.');
         this.loading = false;
       }
     });
@@ -194,7 +196,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'No se pudo actualizar el espacio.';
+        this.toastService.error('No se pudo actualizar el espacio.');
         this.loading = false;
       }
     });
@@ -211,7 +213,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'No se pudo eliminar el espacio.';
+        this.toastService.error('No se pudo eliminar el espacio.');
         this.loading = false;
       }
     });
@@ -242,7 +244,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.spaces = [...this.spaces];
       },
       error: () => {
-        this.error = 'No se pudo actualizar favorito.';
+        this.toastService.error('No se pudo actualizar favorito.');
       }
     });
   }
@@ -283,7 +285,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.permissionLoadingBySpace[space.id] = false;
       },
       error: (err) => {
-        this.permissionErrorBySpace[space.id] = err?.error?.message || 'No se pudo compartir el espacio.';
+        this.toastService.error(err?.error?.message || 'No se pudo compartir el espacio.');
         this.permissionLoadingBySpace[space.id] = false;
       }
     });
@@ -302,7 +304,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.permissionLoadingBySpace[space.id] = false;
       },
       error: (err) => {
-        this.permissionErrorBySpace[space.id] = err?.error?.message || 'No se pudo revocar el permiso.';
+        this.toastService.error(err?.error?.message || 'No se pudo revocar el permiso.');
         this.permissionLoadingBySpace[space.id] = false;
       }
     });
@@ -336,7 +338,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'No se pudieron cargar los espacios.';
+        this.toastService.error('No se pudieron cargar los espacios.');
         this.loading = false;
       }
     });
@@ -361,7 +363,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.permissionLoadingBySpace[spaceId] = false;
       },
       error: (err) => {
-        this.permissionErrorBySpace[spaceId] = err?.error?.message || 'No se pudieron cargar los permisos.';
+        this.toastService.error(err?.error?.message || 'No se pudieron cargar los permisos.');
         this.permissionLoadingBySpace[spaceId] = false;
       }
     });
@@ -377,7 +379,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
         this.friendsLoading = false;
       },
       error: (err) => {
-        this.friendsError = err?.error?.message || 'No se pudo cargar la lista de amigos.';
+        this.toastService.error(err?.error?.message || 'No se pudo cargar la lista de amigos.');
         this.friendsLoading = false;
       }
     });

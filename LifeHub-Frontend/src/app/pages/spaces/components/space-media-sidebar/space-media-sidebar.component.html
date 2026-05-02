@@ -26,7 +26,6 @@
     </div>
   </div>
 
-  <div *ngIf="mediaError" class="sidebar-muted sidebar-error">{{ mediaError }}</div>
   <div *ngIf="loadingMedia" class="sidebar-muted">Cargando...</div>
   <div *ngIf="!loadingMedia && mediaReferences.length === 0 && !showCreateMedia" class="sidebar-empty">
     Sin recursos. Usa <strong>+</strong> para agregar.

@@ -23,7 +23,6 @@
     </form>
   </div>
 
-  <div *ngIf="error" class="error">{{ error }}</div>
   <div *ngIf="loading" class="loading">Cargando...</div>
 
   <section class="filters" *ngIf="!loading && spaces.length > 0">
@@ -131,11 +130,9 @@
 
         <div class="loading" *ngIf="permissionLoadingBySpace[space.id]">Cargando permisos...</div>
         <div class="loading" *ngIf="friendsLoading">Cargando amigos...</div>
-        <div class="error" *ngIf="friendsError">{{ friendsError }}</div>
         <div class="empty" *ngIf="!friendsLoading && !friendsError && friendOptions.length === 0">
           No tienes amigos aceptados para compartir este espacio.
         </div>
-        <div class="error" *ngIf="permissionErrorBySpace[space.id]">{{ permissionErrorBySpace[space.id] }}</div>
 
         <div class="permissions-list" *ngIf="(permissionsBySpace[space.id] || []).length > 0">
           <article class="permission-item" *ngFor="let permission of permissionsBySpace[space.id]">

@@ -5,6 +5,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { marked } from 'marked';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { CreativeSpace, SpacePrivacy, UpdateCreativeSpaceRequest } from '../../../models/creative-space.model';
 import { CreateDocumentRequest, Document, DocumentType, UpdateDocumentRequest } from '../../../models/document.model';
@@ -14,8 +15,10 @@ import { AllowedWebsiteService } from '../../../services/allowed-website.service
 import { ConfirmationService } from '../../../services/confirmation.service';
 import { CreativeSpaceService } from '../../../services/creative-space.service';
 import { DocumentService } from '../../../services/document.service';
+import { DocumentVersionService } from '../../../services/document-version.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
 import { SpaceMediaSessionService } from '../../../services/space-media-session.service';
+import { ToastService } from '../../../services/toast.service';
 import { SpaceSettingsPanelComponent } from '../components/space-settings-panel/space-settings-panel.component';
 import { SpaceDocumentsSidebarComponent } from '../components/space-documents-sidebar/space-documents-sidebar.component';
 import { SpaceEditorMainComponent } from '../components/space-editor-main/space-editor-main.component';
@@ -88,8 +91,10 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private creativeSpaceService: CreativeSpaceService,
     private documentService: DocumentService,
+    private documentVersionService: DocumentVersionService,
     private layoutHeaderStateService: LayoutHeaderStateService,
-    private mediaSessionService: SpaceMediaSessionService
+    private mediaSessionService: SpaceMediaSessionService,
+    private toastService: ToastService
   ) {
     // Defense-in-depth: do not render raw HTML blocks/tags from markdown input.
     this.markdownRenderer.html = ({ text }) => this.escapeHtml(text);
@@ -144,7 +149,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
           this.loadMediaReferences();
         },
         error: () => {
-          this.error = 'No se pudo cargar el espacio creativo.';
+          this.toastService.error('No se pudo cargar el espacio creativo.');
           this.loading = false;
         }
       });
@@ -208,7 +213,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'No se pudo actualizar el espacio creativo.';
+        this.toastService.error('No se pudo actualizar el espacio creativo.');
         this.loading = false;
       }
     });
@@ -247,7 +252,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.loadingDocuments = false;
       },
       error: () => {
-        this.error = 'No se pudo crear el documento en este espacio.';
+        this.toastService.error('No se pudo crear el documento en este espacio.');
         this.loadingDocuments = false;
       }
     });
@@ -270,12 +275,32 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   saveDocument(): void {
     if (!this.selectedDocument || this.editDocumentForm.invalid || !this.space) return;
 
+    this.loadingDocuments = true;
+    this.documentVersionService.getDocumentVersions(this.selectedDocument.id).subscribe({
+      next: (versions) => {
+        if (versions.length >= 30) {
+          this.toastService.error('Este documento ya tiene 30 versiones. Debes borrar una versión antes de guardar.');
+          this.loadingDocuments = false;
+          return;
+        }
+
+        this.performDocumentSave();
+      },
+      error: () => {
+        this.toastService.error('No se pudo verificar el límite de versiones antes de guardar.');
+        this.loadingDocuments = false;
+      }
+    });
+  }
+
+  private performDocumentSave(): void {
+    if (!this.selectedDocument || this.editDocumentForm.invalid || !this.space) return;
+
     const payload: UpdateDocumentRequest = {
       ...this.editDocumentForm.value,
       creativeSpaceId: this.space.id
     };
 
-    this.loadingDocuments = true;
     this.documentService.updateDocument(this.selectedDocument.id, payload).subscribe({
       next: (updated) => {
         this.documents = this.documents.map(doc => doc.id === updated.id ? updated : doc);
@@ -284,8 +309,8 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.updateRenderedPreview();
         this.loadingDocuments = false;
       },
-      error: () => {
-        this.error = 'No se pudo guardar el documento.';
+      error: (err: HttpErrorResponse) => {
+        this.toastService.error(err?.error?.message ?? 'No se pudo guardar el documento.');
         this.loadingDocuments = false;
       }
     });
@@ -304,7 +329,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.loadingDocuments = false;
       },
       error: () => {
-        this.error = 'No se pudo eliminar el documento.';
+        this.toastService.error('No se pudo eliminar el documento.');
         this.loadingDocuments = false;
       }
     });
@@ -319,7 +344,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
     const parsed = this.parseAndValidateEmbedUrl(sourceUrl);
     if (!parsed) {
-      this.mediaError = 'Enlace no permitido. Usa una URL https de una web autorizada y compatible con embed.';
+      this.toastService.error('Enlace no permitido. Usa una URL https de una web autorizada y compatible con embed.');
       return;
     }
 
@@ -340,7 +365,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.loadingMedia = false;
       },
       error: () => {
-        this.mediaError = 'No se pudo guardar el enlace multimedia en la base de datos.';
+        this.toastService.error('No se pudo guardar el enlace multimedia en la base de datos.');
         this.loadingMedia = false;
       }
     });
@@ -355,7 +380,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
     const file = target.files[0];
     if (!(file.type.startsWith('audio/') || file.type.startsWith('video/') || file.type.startsWith('image/'))) {
-      this.mediaError = 'Selecciona un archivo de audio, video o imagen válido.';
+      this.toastService.error('Selecciona un archivo de audio, video o imagen válido.');
       this.selectedLocalFile = null;
       return;
     }
@@ -475,7 +500,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
           this.loadingMedia = false;
         },
         error: () => {
-          this.mediaError = 'No se pudo eliminar el enlace multimedia en la base de datos.';
+          this.toastService.error('No se pudo eliminar el enlace multimedia en la base de datos.');
           this.loadingMedia = false;
         }
       });
@@ -496,11 +521,11 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.loadingDocuments = true;
     this.documentService.getDocuments().subscribe({
       next: (documents) => {
-        this.documents = documents.filter(doc => Number(doc.creativeSpaceId) === this.space!.id);
+        this.documents = documents;
         this.loadingDocuments = false;
       },
       error: () => {
-        this.error = 'No se pudieron cargar los documentos del espacio.';
+        this.toastService.error('No se pudieron cargar los documentos del espacio.');
         this.loadingDocuments = false;
       }
     });
@@ -523,7 +548,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       error: () => {
         this.mediaReferences = [...localSessionReferences];
         this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
-        this.mediaError = 'No se pudieron cargar los enlaces multimedia guardados.';
+        this.toastService.error('No se pudieron cargar los enlaces multimedia guardados.');
         this.loadingMedia = false;
       }
     });
