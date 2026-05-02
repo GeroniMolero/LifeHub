@@ -39,11 +39,15 @@ RESTORE DATABASE [$Database] FROM DISK = N'$ContainerPath' WITH REPLACE, RECOVER
 ALTER DATABASE [$Database] SET MULTI_USER;
 "@
 
-docker exec $Container /opt/mssql-tools/bin/sqlcmd `
-    -S localhost -U sa -P $Password `
-    -Q $RestoreSQL
+# Security improvement: Pass password via stdin instead of command line argument
+# to avoid exposing credentials in process list, shell history, or logs
+$process = Start-Process -FilePath "cmd.exe" `
+    -ArgumentList "/c echo $Password | docker exec -i $Container /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P -Q ""$RestoreSQL""" `
+    -WindowStyle Hidden -PassThru -Wait
 
-if ($LASTEXITCODE -ne 0) { throw "La restauración falló. Revisa los mensajes anteriores." }
+if ($process.ExitCode -ne 0) { 
+    throw "La restauración falló. Revisa los mensajes anteriores." 
+}
 
 Write-Host ""
 Write-Host "Base de datos restaurada correctamente desde: $BackupFile" -ForegroundColor Green
