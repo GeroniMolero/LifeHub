@@ -10,6 +10,7 @@ namespace LifeHub.DTOs
         public string Content { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public string CreatedByUserId { get; set; } = null!;
+        public string? CreatedByUserName { get; set; }
     }
 
     public class CreateDocumentVersionDto

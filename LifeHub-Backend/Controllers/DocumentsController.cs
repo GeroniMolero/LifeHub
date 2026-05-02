@@ -133,11 +133,33 @@ namespace LifeHub.Controllers
             if (!isOwner && !isSpaceEditor)
                 return ForbiddenError("No tienes permiso para editar este documento.");
 
+            const int MaxVersions = 30;
+            var versionCount = await _context.DocumentVersions.CountAsync(v => v.DocumentId == id);
+            if (versionCount >= MaxVersions)
+                return BadRequestError($"Este documento ha alcanzado el límite de {MaxVersions} versiones. Elimina alguna versión antes de guardar.");
+
             dto.Content = SanitizeHtml(dto.Content);
 
             _mapper.Map(dto, document);
             document.UpdatedAt = DateTime.UtcNow;
 
+            var lastVersion = await _context.DocumentVersions
+                .Where(v => v.DocumentId == id)
+                .OrderByDescending(v => v.VersionNumber)
+                .Select(v => (int?)v.VersionNumber)
+                .FirstOrDefaultAsync();
+
+            var newVersion = new DocumentVersion
+            {
+                DocumentId = document.Id,
+                VersionNumber = (lastVersion ?? 0) + 1,
+                Title = document.Title,
+                Description = document.Description,
+                Content = document.Content,
+                CreatedByUserId = userId
+            };
+
+            _context.DocumentVersions.Add(newVersion);
             await _context.SaveChangesAsync();
 
             var updatedDocument = await _context.Documents

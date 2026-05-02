@@ -44,6 +44,7 @@ namespace LifeHub.Controllers
                 return ForbiddenError("No tienes permisos para ver las versiones de este documento.");
 
             var versions = await _context.DocumentVersions
+                .Include(v => v.CreatedByUser)
                 .Where(v => v.DocumentId == documentId)
                 .OrderByDescending(v => v.VersionNumber)
                 .ToListAsync();
@@ -74,6 +75,11 @@ namespace LifeHub.Controllers
                 .OrderByDescending(v => v.VersionNumber)
                 .Select(v => (int?)v.VersionNumber)
                 .FirstOrDefaultAsync();
+
+            const int MaxVersions = 30;
+            var versionCount = await _context.DocumentVersions.CountAsync(v => v.DocumentId == documentId);
+            if (versionCount >= MaxVersions)
+                return BadRequestError($"Este documento ha alcanzado el límite de {MaxVersions} versiones. Elimina alguna versión antes de crear una nueva.");
 
             var nextVersion = (lastVersion ?? 0) + 1;
 
@@ -136,6 +142,37 @@ namespace LifeHub.Controllers
                 HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
 
             return Ok(new { message = "Versión restaurada", documentId = version.DocumentId, restoredVersion = version.VersionNumber });
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteDocumentVersion(int id)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null)
+                return authError;
+
+            var version = await _context.DocumentVersions
+                .Include(v => v.Document)
+                .FirstOrDefaultAsync(v => v.Id == id);
+
+            if (version == null)
+                return NotFoundError("Versión de documento no encontrada.");
+
+            if (version.Document.UserId != userId)
+                return ForbiddenError("Solo el propietario del documento puede eliminar versiones.");
+
+            _context.DocumentVersions.Remove(version);
+            await _context.SaveChangesAsync();
+
+            await _activityLogService.LogAsync(
+                userId,
+                "document.version-deleted",
+                nameof(Document),
+                version.DocumentId.ToString(),
+                $"Deleted version {version.VersionNumber}",
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty);
+
+            return NoContent();
         }
 
         private static bool CanAccessDocument(Document document, string userId)

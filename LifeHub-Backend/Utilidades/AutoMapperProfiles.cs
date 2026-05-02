@@ -64,7 +64,12 @@ namespace LifeHub.Utilidades
                 .ReverseMap()
                 .ForMember(d => d.PermissionLevel, o => o.MapFrom(s => (SpacePermissionLevel)s.PermissionLevel));
 
-            CreateMap<DocumentVersion, DocumentVersionDto>().ReverseMap();
+            CreateMap<DocumentVersion, DocumentVersionDto>()
+                .ForMember(d => d.CreatedByUserName, o => o.MapFrom(s =>
+                    s.CreatedByUser != null
+                        ? (!string.IsNullOrWhiteSpace(s.CreatedByUser.FullName) ? s.CreatedByUser.FullName : s.CreatedByUser.Email)
+                        : null))
+                .ReverseMap();
 
             // MusicFile mappings
             CreateMap<MusicFile, MusicFileDto>().ReverseMap();
