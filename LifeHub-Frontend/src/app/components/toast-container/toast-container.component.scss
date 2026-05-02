@@ -1,0 +1,131 @@
+@use '../../../styles/design-tokens' as *;
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-6px);
+  }
+}
+
+:host {
+  position: fixed;
+  top: $space-4;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+  width: min(500px, calc(100vw - 2rem));
+}
+
+.toast-container {
+  display: grid;
+  gap: $space-3;
+  width: 100%;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  border-radius: $border-radius-xl;
+  border: $border-width-base solid $color-divider;
+  box-shadow: $shadow-base;
+  background: $color-white;
+  color: $color-text-primary;
+  animation: toast-in 0.25s ease-out both;
+}
+
+.toast.leaving {
+  animation: toast-out 0.3s ease-in both;
+  pointer-events: none;
+}
+
+.toast-message {
+  margin: 0;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.toast-actions {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  flex-shrink: 0;
+}
+
+.toast-expand {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  opacity: 0.65;
+  padding: 0;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.toast-expand:hover {
+  opacity: 1;
+}
+
+.toast-close {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.75;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+.toast-error {
+  border-color: color-mix(in srgb, $color-danger 35%, $color-white);
+  background: color-mix(in srgb, $color-danger-light 65%, $color-white);
+  color: $color-danger-text;
+}
+
+.toast-success {
+  border-color: color-mix(in srgb, $color-success 35%, $color-white);
+  background: color-mix(in srgb, $color-success-light 60%, $color-white);
+}
+
+.toast-info {
+  border-color: color-mix(in srgb, $color-info 35%, $color-white);
+  background: color-mix(in srgb, $color-info-light 60%, $color-white);
+}
+
+@media (max-width: 640px) {
+  :host {
+    left: $space-3;
+    right: $space-3;
+    transform: none;
+    width: auto;
+  }
+}

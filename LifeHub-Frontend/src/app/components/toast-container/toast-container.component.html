@@ -1,0 +1,26 @@
+<section class="toast-container" aria-live="polite" aria-atomic="false">
+  <article
+    class="toast"
+    *ngFor="let toast of toasts$ | async; trackBy: trackById"
+    [class.toast-error]="toast.type === 'error'"
+    [class.toast-success]="toast.type === 'success'"
+    [class.toast-info]="toast.type === 'info'"
+    [class.leaving]="toast.leaving"
+  >
+    <p class="toast-message">
+      <ng-container *ngIf="isLong(toast.message) && !isExpanded(toast.id); else fullMsg">
+        {{ toast.message | slice:0:TRUNCATE_LIMIT }}&hellip;
+      </ng-container>
+      <ng-template #fullMsg>{{ toast.message }}</ng-template>
+    </p>
+    <div class="toast-actions">
+      <button
+        *ngIf="isLong(toast.message)"
+        type="button"
+        class="toast-expand"
+        (click)="toggleExpand(toast.id)"
+      >{{ isExpanded(toast.id) ? 'ver menos' : 'ver más' }}</button>
+      <button type="button" class="toast-close" (click)="dismiss(toast.id)" aria-label="Cerrar notificación">×</button>
+    </div>
+  </article>
+</section>
