@@ -38,6 +38,7 @@
 
   <section class="card detail-section versions-panel">
     <h2>Historial de versiones</h2>
+    <p class="version-limit-info">Límite: {{ versions.length }}/30 versiones. Solo el propietario puede eliminar versiones.</p>
     <div class="version-create">
       <input
         type="text"
@@ -56,9 +57,12 @@
         <div>
           <strong>Versión #{{ version.versionNumber }}</strong>
           <p>{{ version.description }}</p>
-          <small>{{ version.createdAt | date:'short' }}</small>
+          <small>{{ version.createdAt | date:'short' }} · por {{ version.createdByUserName ?? version.createdByUserId }}</small>
         </div>
-        <button type="button" class="btn-secondary" (click)="restoreVersion(version.id)">Restaurar</button>
+        <div class="version-actions">
+          <button type="button" class="btn-secondary" (click)="restoreVersion(version.id)">Restaurar</button>
+          <button *ngIf="isDocumentOwner" type="button" class="btn-danger-sm" (click)="deleteVersion(version.id)">Eliminar</button>
+        </div>
       </div>
     </div>
   </section>
@@ -104,7 +108,6 @@
     </form>
   </section>
 
-  <div *ngIf="error" class="error-message">{{ error }}</div>
   <div *ngIf="loading" class="loading">Cargando...</div>
 
 </div>

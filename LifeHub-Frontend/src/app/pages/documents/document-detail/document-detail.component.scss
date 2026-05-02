@@ -83,6 +83,34 @@
   border-radius: $border-radius-base;
 }
 
+.version-actions {
+  display: flex;
+  gap: $space-2;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.version-limit-info {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $space-3;
+}
+
+.btn-danger-sm {
+  padding: $space-1 $space-3;
+  font-size: $font-size-sm;
+  border: $border-width-base solid $color-danger;
+  border-radius: $border-radius-base;
+  background: transparent;
+  color: $color-danger;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-danger;
+    color: white;
+  }
+}
+
 .publication-message,
 .error-message {
   color: $color-text-secondary;

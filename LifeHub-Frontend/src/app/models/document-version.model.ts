@@ -7,6 +7,7 @@ export interface DocumentVersion {
   content: string;
   createdAt: Date;
   createdByUserId: string;
+  createdByUserName?: string;
 }
 
 export interface CreateDocumentVersionRequest {

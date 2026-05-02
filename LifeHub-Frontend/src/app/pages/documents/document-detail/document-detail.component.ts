@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { Document, DocumentType } from '../../../models/document.model';
 import { DocumentVersion } from '../../../models/document-version.model';
@@ -14,6 +15,8 @@ import { DocumentVersionService } from '../../../services/document-version.servi
 import { DocumentPublicationService } from '../../../services/document-publication.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
 import { SpaceMediaSessionService } from '../../../services/space-media-session.service';
+import { AuthService } from '../../../services/auth.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-document-detail',
@@ -36,6 +39,11 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
   publicUrl = '';
   loading = true;
   error = '';
+  currentUserId: string | null = null;
+
+  get isDocumentOwner(): boolean {
+    return !!this.currentUserId && this.document?.userId === this.currentUserId;
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -46,7 +54,9 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     private documentVersionService: DocumentVersionService,
     private publicationService: DocumentPublicationService,
     private layoutHeaderStateService: LayoutHeaderStateService,
-    private mediaSessionService: SpaceMediaSessionService
+    private mediaSessionService: SpaceMediaSessionService,
+    private authService: AuthService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +73,10 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
       mediaReferences: [[]]
     });
 
+    this.authService.getCurrentUser()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(user => { this.currentUserId = user?.id ?? null; });
+
     this.route.data
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -71,7 +85,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
           this.setDocumentState(document);
         },
         error: () => {
-          this.error = 'No se pudo cargar el documento.';
+          this.toastService.error('No se pudo cargar el documento.');
           this.loading = false;
         }
       });
@@ -93,16 +107,21 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
 
   saveDocument(): void {
     if (!this.document || this.editForm.invalid) return;
+    if (this.versions.length >= 30) {
+      this.toastService.error('Este documento ya tiene 30 versiones. Debes borrar una versión antes de guardar.');
+      return;
+    }
 
     this.loading = true;
     this.error = '';
     this.documentService.updateDocument(this.document.id, this.editForm.value).subscribe({
       next: (updatedDocument) => {
         this.setDocumentState(updatedDocument, false);
+        this.loadVersions(updatedDocument.id);
         this.loading = false;
       },
-      error: () => {
-        this.error = 'No se pudo actualizar el documento.';
+      error: (err: HttpErrorResponse) => {
+        this.toastService.error(err?.error?.message ?? 'No se pudo actualizar el documento.');
         this.loading = false;
       }
     });
@@ -122,7 +141,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         this.router.navigate(target);
       },
       error: () => {
-        this.error = 'No se pudo eliminar el documento.';
+        this.toastService.error('No se pudo eliminar el documento.');
         this.loading = false;
       }
     });
@@ -130,6 +149,10 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
 
   createVersion(): void {
     if (!this.document) return;
+    if (this.versions.length >= 30) {
+      this.toastService.error('Este documento ya tiene 30 versiones. Debes borrar una versión antes de crear una nueva.');
+      return;
+    }
 
     this.loading = true;
     this.error = '';
@@ -138,8 +161,8 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         this.versionNote = '';
         this.loadVersions(this.document!.id);
       },
-      error: () => {
-        this.error = 'No se pudo crear la versión del documento.';
+      error: (err: HttpErrorResponse) => {
+        this.toastService.error(err?.error?.message ?? 'No se pudo crear la versión del documento.');
         this.loading = false;
       }
     });
@@ -156,7 +179,22 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         this.refreshDocument();
       },
       error: () => {
-        this.error = 'No se pudo restaurar la versión.';
+        this.toastService.error('No se pudo restaurar la versión.');
+        this.loading = false;
+      }
+    });
+  }
+
+  deleteVersion(versionId: number): void {
+    if (!this.confirmationService.confirmDelete('esta versión')) return;
+    this.loading = true;
+    this.error = '';
+    this.documentVersionService.deleteVersion(versionId).subscribe({
+      next: () => {
+        this.loadVersions(this.document!.id);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.toastService.error(err?.error?.message ?? 'No se pudo eliminar la versión.');
         this.loading = false;
       }
     });
@@ -250,7 +288,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'La versión se restauró, pero no se pudo refrescar el documento.';
+        this.toastService.error('La versión se restauró, pero no se pudo refrescar el documento.');
         this.loading = false;
       }
     });

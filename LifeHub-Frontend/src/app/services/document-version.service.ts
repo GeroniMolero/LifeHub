@@ -23,4 +23,8 @@ export class DocumentVersionService {
   restoreVersion(versionId: number): Observable<{ message: string; documentId: number; restoredVersion: number }> {
     return this.http.post<{ message: string; documentId: number; restoredVersion: number }>(`${this.apiUrl}/${versionId}/restore`, {});
   }
+
+  deleteVersion(versionId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${versionId}`);
+  }
 }
