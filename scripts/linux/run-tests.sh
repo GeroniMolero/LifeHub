@@ -363,13 +363,21 @@ if [ -n "$ADMIN_TOKEN" ] && [ -n "$USER_TOKEN" ]; then
                 "{\"title\":\"Doc-Col-$TIMESTAMP\",\"content\":\"intento viewer\",\"description\":\"\"}" \
                 "$USER_TOKEN" "403" || true
 
-            # Cleanup
-            curl -s -X DELETE "$BASE_URL/creativespaces/$COL_SPACE_ID" \
-                -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
         else
             skip_test "T-COL-01" "Editor puede editar documento ajeno" "No se pudo crear espacio/documento temporal"
             skip_test "T-COL-02" "Editor no puede borrar documento ajeno" "No se pudo crear espacio/documento temporal"
             skip_test "T-COL-03" "Viewer no puede editar documento ajeno" "No se pudo crear espacio/documento temporal"
+        fi
+
+        # Cleanup robusto: eliminar documento temporal y luego espacio temporal
+        if [ -n "$COL_DOC_ID" ]; then
+            curl -s -X DELETE "$BASE_URL/documents/$COL_DOC_ID" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
+        fi
+
+        if [ -n "$COL_SPACE_ID" ]; then
+            curl -s -X DELETE "$BASE_URL/creativespaces/$COL_SPACE_ID" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
         fi
     else
         skip_test "T-COL-01" "Editor puede editar documento ajeno" "No se pudo obtener UserId"

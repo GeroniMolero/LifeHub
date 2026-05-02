@@ -394,17 +394,27 @@ if ($script:AdminToken -and $script:UserToken) {
                 -Token $script:UserToken `
                 -Body @{ title="Doc-Col-$Timestamp"; content="intento de edicion viewer"; description="" }
 
-            # Cleanup: eliminar espacio temporal (borra documentos y permisos por cascade)
+        } else {
+            Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+            Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+            Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+        }
+
+        # Cleanup robusto: eliminar documento temporal y luego espacio temporal
+        if ($script:ColDocId) {
+            try {
+                Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:ColDocId)" `
+                    -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+                    -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+            } catch { }
+        }
+
+        if ($script:ColSpaceId) {
             try {
                 Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/creativespaces/$($script:ColSpaceId)" `
                     -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
                     -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
             } catch { }
-
-        } else {
-            Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
-            Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
-            Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
         }
     } else {
         Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "No se pudo obtener UserId"
