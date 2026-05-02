@@ -11,9 +11,12 @@ if [ -z "$BACKUP_FILE" ]; then
     exit 1
 fi
 
-# Load .env
+# Load .env with proper variable handling
 if [ -f "$PROJECT_ROOT/.env" ]; then
-    export $(grep -v '^\s*#' "$PROJECT_ROOT/.env" | xargs)
+    set -a
+    # shellcheck source=/dev/null
+    source "$PROJECT_ROOT/.env"
+    set +a
 fi
 
 if [ -z "$DB_PASSWORD" ]; then
@@ -34,14 +37,21 @@ docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
 docker cp "$BACKUP_FILE" "${CONTAINER}:${CONTAINER_PATH}"
 
 echo "Ejecutando RESTORE DATABASE..."
-docker exec "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
-    -S localhost -U sa -P "$DB_PASSWORD" \
-    -Q "ALTER DATABASE [$DATABASE] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; RESTORE DATABASE [$DATABASE] FROM DISK = N'$CONTAINER_PATH' WITH REPLACE, RECOVERY; ALTER DATABASE [$DATABASE] SET MULTI_USER;"
+
+# Security improvement: Pass password via stdin instead of command line argument
+# to avoid exposing credentials in process list, shell history, or logs
+RESTORE_SQL="ALTER DATABASE [$DATABASE] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; RESTORE DATABASE [$DATABASE] FROM DISK = N'$CONTAINER_PATH' WITH REPLACE, RECOVERY; ALTER DATABASE [$DATABASE] SET MULTI_USER;"
+echo "$DB_PASSWORD" | docker exec -i "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
+    -S localhost -U sa -U sa -P -C \
+    -Q "$RESTORE_SQL"
 
 if [ $? -ne 0 ]; then
     echo "Error: la restauración falló. Revisa los mensajes anteriores."
     exit 1
 fi
+
+# Clean up sensitive data from memory
+unset DB_PASSWORD
 
 echo ""
 echo "Base de datos restaurada correctamente desde: $BACKUP_FILE"
