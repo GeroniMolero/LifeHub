@@ -1,7 +1,7 @@
 ﻿# Plan de Pruebas — LifeHub
 
-**Fecha:** 23-04-2026  
-**Versión del proyecto:** master (post-limpieza de seguridad)  
+**Fecha:** 04-05-2026 (última actualización)  
+**Versión del proyecto:** master (post-colaboración y versionado completo)  
 **Entorno de pruebas:** Docker dev stack (lifehub-sql-dev + lifehub-backend-dev) + frontend local
 
 ---
@@ -135,16 +135,17 @@
 | CP-09 Backup y restauración | 3 | 3 | 0 | 0 |
 | **TOTAL** | **37** | **37** | **0** | **0** |
 
-### Pruebas automatizadas — suite `run-tests.ps1` (02-05-2026)
+### Pruebas automatizadas — suite `run-tests.ps1` (04-05-2026)
 
 | Bloque | Tests | OK | FAIL | SKIP |
 |--------|-------|----|------|------|
 | AUTH | 8 | 8 | 0 | 0 |
 | Espacios creativos | 5 | 5 | 0 | 0 |
 | Documentos y versiones | 9 | 9 | 0 | 0 |
+| Colaboración en espacios | 3 | 3 | 0 | 0 |
 | Panel de administración | 6 | 6 | 0 | 0 |
 | Seguridad | 2 | 2 | 0 | 0 |
-| **TOTAL** | **30** | **30** | **0** | **0** |
+| **TOTAL** | **33** | **33** | **0** | **0** |
 
 ---
 
@@ -157,3 +158,5 @@
 | INC-03 | 02-05-2026 20:24 | Test `T-DOC-07` (Snapshot de documento ajeno -> 403) fallaba: esperado HTTP 403, obtenido 404. El script usaba el ID hardcodeado `1` asumiendo que existía y pertenecía a otro usuario; el backend devuelve 404 antes de comprobar permisos si el documento no existe. Corregido: el test ahora crea un documento temporal con el token admin, intenta el snapshot con el token de usuario (obtiene 403 correctamente) y lo elimina al finalizar. Resultado tras el fix: **30/30 PASS**. | Resuelta |
 | INC-04 | 02-05-2026 21:25 | Test `T-AUTH-08` (Login admin (setup para tests admin)) fallaba: esperado HTTP 200, obtenido 400 en `run-tests.sh` bajo Git Bash/Windows. Causa raíz: parseo de `.env` en scripts Bash no eliminaba `CRLF` (`\r`) y el valor de `ADMIN_PASSWORD` se enviaba con carácter extra. Corregido normalizando `ADMIN_EMAIL/ADMIN_PASSWORD` (trim + eliminación de `\r`) en los runners Linux. Resultado tras el fix: **30/30 PASS**. | Resuelta |
 | INC-05 | 02-05-2026 | Vulnerabilidad XSS en backend: los endpoints de creación y actualización de documentos almacenaban el contenido sin sanitizar. Un atacante con acceso directo a la API podía persistir payloads maliciosos independientemente de la validación del frontend. Corregido implementando `SanitizeHtml()` en `DocumentsController.cs` (elimina bloques `<script>`, atributos `on\w+=` y URIs `javascript:`). Test `T-DOC-04` corregido en los cuatro runners: ahora verifica que el payload XSS es eliminado por el backend (usa `NotContains` en lugar de `Contains`). | Resuelta |
+| INC-06 | 02-05-2026 | Inyección JSON en `run-tests-interactive.sh`: el script construía los cuerpos JSON interpolando directamente los valores del usuario sin escapar, por lo que un valor con `"` cerraba prematuramente la cadena y alteraba la estructura de la petición. Corregido implementando `json_escape()` que escapa `\`, `"`, tabuladores y saltos de línea antes de la interpolación. | Resuelta |
+| INC-07 | 04-05-2026 | Tests T-COL fallaban durante la limpieza: la restricción de FK impedía eliminar el espacio temporal si el documento creado en el test no se borraba antes. Corregido añadiendo la eliminación explícita del documento antes de la del espacio en el flujo de teardown de los scripts. Resultado: **33/33 PASS**. | Resuelta |
