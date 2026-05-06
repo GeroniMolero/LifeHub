@@ -1,7 +1,4 @@
 <div class="profile-container">
-  <div *ngIf="success" class="alert alert-success">{{ success }}</div>
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
-
   <div *ngIf="activeTab === 'view' && currentUser" class="profile-card profile-view-card">
     <div class="profile-view-banner">
       <ng-container *ngIf="currentUser.profilePictureUrl; else viewInitialsAvatar">
