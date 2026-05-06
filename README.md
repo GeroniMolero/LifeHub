@@ -18,13 +18,14 @@
 # <img width="718" height="171" alt="image" src="https://github.com/user-attachments/assets/edf777e1-fb8d-414b-8d3b-5f3651761ca0" />
 
 
-### Gestión de Amigos
+### Social
 
 # <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/c68f5efc-3d26-4210-897a-6cd932f3d1a8" />
 
-- Solicitudes de amistad
-- Aceptar/rechazar solicitudes
-- Lista de amigos
+- Panel de contactos con búsqueda de usuarios y solicitudes de amistad
+- Gestión de amigos (enviar/aceptar/rechazar/eliminar) desde el perfil público
+- Conversación directa con cualquier amigo (chat en tiempo real con SignalR)
+- Feed de actividad de amigos (en desarrollo)
 
 
 ### Espacios creativos
@@ -69,10 +70,10 @@
 - Metadatos de canciones (artista, álbum, duración)
 - Gestión de biblioteca local
 
-### Chat en Tiempo Real (pendiente)
-- Mensajería instantánea con SignalR
-- Notificaciones de mensajes leídos
-- Conversaciones uno a uno
+### Chat en Tiempo Real
+- Conversaciones uno a uno accesibles desde el módulo Social
+- Mensajería instantánea con SignalR (WebSockets)
+- Notificaciones de mensajes leídos (en desarrollo)
 
 ### Recomendaciones (pendiente)
 - Recomendar películas, series y libros
