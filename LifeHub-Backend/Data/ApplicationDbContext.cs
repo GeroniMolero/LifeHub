@@ -32,7 +32,7 @@ namespace LifeHub.Data
             modelBuilder.Entity<ApplicationUser>()
                 .Property(u => u.FullName).HasMaxLength(100);
             modelBuilder.Entity<ApplicationUser>()
-                .Property(u => u.ProfilePictureUrl).HasMaxLength(500);
+                .Property(u => u.ProfilePictureUrl).HasMaxLength(2000);
             modelBuilder.Entity<ApplicationUser>()
                 .Property(u => u.Bio).HasMaxLength(2000);
 

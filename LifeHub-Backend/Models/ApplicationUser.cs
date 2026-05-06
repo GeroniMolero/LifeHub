@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 namespace LifeHub.Models
@@ -5,6 +6,7 @@ namespace LifeHub.Models
     public class ApplicationUser : IdentityUser
     {
         public string? FullName { get; set; }
+        [MaxLength(2000)]
         public string? ProfilePictureUrl { get; set; }
         public string? Bio { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
