@@ -1,0 +1,398 @@
+@use '../../../styles/design-tokens' as *;
+
+.social-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: $space-4;
+  height: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+// ─── Panel izquierdo ──────────────────────────────────────────────────────────
+
+.contacts-card {
+  background: $color-white;
+  border: 1px solid $color-border-light;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-4;
+  border-bottom: 1px solid $color-border-light;
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    color: $color-slate-900;
+    font-size: 1rem;
+    font-weight: $font-weight-semibold;
+  }
+
+  small { color: $color-slate-500; font-size: $font-size-sm; }
+}
+
+.pending-badge {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+// ─── Búsqueda ─────────────────────────────────────────────────────────────────
+
+.friends-search {
+  padding: $space-2 $space-3;
+  border-bottom: 1px solid $color-border-light;
+  flex-shrink: 0;
+}
+
+.friends-search-input {
+  width: 100%;
+  padding: $space-2 $space-3;
+  background: $color-brand-050;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-lg;
+  color: $color-slate-900;
+  font-size: $font-size-sm;
+  font-family: $font-family-base;
+  box-sizing: border-box;
+  transition: border-color $transition-fast;
+
+  &::placeholder { color: $color-slate-500; }
+  &:focus { outline: none; border-color: $color-brand-700; background: $color-white; }
+}
+
+// ─── Lista ────────────────────────────────────────────────────────────────────
+
+.contacts-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.section-label {
+  padding: $space-2 $space-3 $space-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $color-slate-500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.friend-row {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-2 $space-3;
+  cursor: pointer;
+  transition: background $transition-fast;
+  border-left: 3px solid transparent;
+
+  &:hover { background: $color-brand-050; }
+
+  &.friend-row--active {
+    background: rgba(31, 122, 140, 0.08);
+    border-left-color: $color-brand-700;
+  }
+}
+
+.friend-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  strong {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-slate-900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  small {
+    font-size: $font-size-xs;
+    color: $color-slate-500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.friend-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+
+.contact-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: $border-radius-full;
+  background: linear-gradient(135deg, $color-brand-700 0%, $color-brand-300 100%);
+  color: $color-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+
+  &.contact-avatar--img {
+    object-fit: cover;
+    background: none;
+  }
+}
+
+.avatar-link {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: $border-radius-full;
+  display: block;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: scale(1.08);
+  }
+}
+
+// ─── Botones pequeños ─────────────────────────────────────────────────────────
+
+.btn-xs {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: $border-radius-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border: none;
+  line-height: 1;
+  transition: background $transition-fast, opacity $transition-fast;
+  white-space: nowrap;
+
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.btn-primary-xs  { background: $color-brand-700; color: $color-white; &:not(:disabled):hover { background: $color-primary-dark; } }
+.btn-secondary-xs { background: $color-border; color: $color-slate-500; }
+.btn-success-xs  { background: #16a34a; color: $color-white; }
+.btn-ghost-xs    { background: none; color: $color-slate-500; border: 1px solid transparent; padding: 0.25rem;
+                   &:hover { background: $color-brand-050; color: $color-brand-700; } }
+.btn-danger-xs   { background: none; color: #ef4444; border: 1px solid transparent; padding: 0.25rem;
+                   &:hover { background: #fef2f2; border-color: #fca5a5; } }
+
+// ─── Panel derecho: feed ──────────────────────────────────────────────────────
+
+.feed-card {
+  background: $color-white;
+  border: 1px solid $color-border-light;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.feed-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  padding: $space-6;
+  color: $color-slate-500;
+
+  svg { opacity: 0.35; color: $color-brand-700; }
+
+  p { font-size: 0.9375rem; margin: 0; font-weight: $font-weight-medium; color: $color-slate-700; }
+
+  small { font-size: $font-size-sm; text-align: center; max-width: 280px; line-height: $line-height-relaxed; }
+}
+
+// ─── Panel derecho: conversación ──────────────────────────────────────────────
+
+.conversation-card {
+  background: $color-white;
+  border: 1px solid $color-border-light;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.conv-header {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-4;
+  border-bottom: 1px solid $color-border-light;
+  flex-shrink: 0;
+
+  div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  strong { color: $color-slate-900; font-size: 0.9375rem; font-weight: $font-weight-semibold; }
+  small  { color: $color-slate-500; font-size: $font-size-xs; }
+}
+
+.close-conv-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: none;
+  border-radius: $border-radius-md;
+  color: $color-slate-500;
+  cursor: pointer;
+  transition: background $transition-fast, color $transition-fast;
+
+  &:hover { background: $color-brand-050; color: $color-slate-900; }
+}
+
+// ─── Mensajes ─────────────────────────────────────────────────────────────────
+
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: $space-4;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.message {
+  display: flex;
+
+  &.message--sent {
+    justify-content: flex-end;
+
+    .message-bubble {
+      background: $color-brand-700;
+      border-radius: $border-radius-xl $border-radius-xl $border-radius-sm $border-radius-xl;
+    }
+
+    .message-text { color: $color-white; }
+    .message-time { color: rgba(255, 255, 255, 0.65); text-align: right; }
+  }
+
+  &.message--received {
+    justify-content: flex-start;
+
+    .message-bubble {
+      background: $color-brand-100;
+      border-radius: $border-radius-xl $border-radius-xl $border-radius-xl $border-radius-sm;
+    }
+
+    .message-text { color: $color-slate-900; }
+    .message-time { color: $color-slate-500; }
+  }
+
+  &.message--pending { opacity: 0.55; }
+}
+
+.message-bubble {
+  max-width: 68%;
+  padding: $space-2 $space-3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.message-text {
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.message-time { font-size: $font-size-xs; }
+
+// ─── Input ────────────────────────────────────────────────────────────────────
+
+.input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  border-top: 1px solid $color-border-light;
+  flex-shrink: 0;
+}
+
+.message-input {
+  flex: 1;
+  padding: $space-2 $space-3;
+  background: $color-brand-050;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-lg;
+  color: $color-slate-900;
+  font-size: $font-size-sm;
+  font-family: $font-family-base;
+  line-height: $line-height-normal;
+  resize: none;
+  max-height: 120px;
+  overflow-y: auto;
+  transition: border-color $transition-fast;
+
+  &::placeholder { color: $color-slate-500; }
+  &:focus { outline: none; border-color: $color-brand-700; background: $color-white; }
+}
+
+.send-btn {
+  padding: $space-2 $space-4;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  background: $color-brand-700;
+  color: $color-white;
+  transition: background $transition-fast;
+
+  &:hover:not(:disabled) { background: $color-primary-dark; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+// ─── Utilidades ───────────────────────────────────────────────────────────────
+
+.muted    { color: $color-slate-500; font-size: $font-size-sm; }
+.centered { text-align: center; padding: $space-4; margin: 0; }
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+
+@media (max-width: $breakpoint-md) {
+  .social-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .contacts-card {
+    max-height: 320px;
+  }
+}

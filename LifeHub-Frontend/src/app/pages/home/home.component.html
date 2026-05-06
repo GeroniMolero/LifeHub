@@ -66,10 +66,12 @@
       <article class="dashboard-card social-card">
         <div class="card-head">
           <h3>Social</h3>
-          <small>Amigos y nuevas conexiones</small>
+          <a routerLink="/social" class="btn-link">Ir a social</a>
         </div>
 
-        <section class="social-section" *ngIf="pendingIncomingRequests.length > 0">
+        <p *ngIf="loadingFriends" class="muted">Cargando...</p>
+
+        <section class="social-section" *ngIf="!loadingFriends && pendingIncomingRequests.length > 0">
           <div class="pending-compact">
             <div class="pending-compact-head">
               <h4>Solicitudes pendientes</h4>
@@ -82,112 +84,21 @@
                 <small>{{ friendEmail(friendship) }}</small>
               </div>
               <div class="friend-actions">
-                <button
-                  type="button"
-                  class="btn-primary"
-                  (click)="acceptFriendRequest(friendship.id)">
+                <button type="button" class="btn-primary" (click)="acceptFriendRequest(friendship.id)">
                   Aceptar
                 </button>
               </div>
             </article>
 
             <p class="muted" *ngIf="pendingIncomingRequests.length > 2">
-              +{{ pendingIncomingRequests.length - 2 }} solicitudes más
+              +{{ pendingIncomingRequests.length - 2 }} solicitudes más en Social
             </p>
           </div>
         </section>
 
-        <section class="social-section">
-          <div class="social-subhead">
-            <h4>Amigos</h4>
-            <small>{{ acceptedFriendsCount }} conexiones</small>
-          </div>
-
-          <p *ngIf="loadingFriends" class="muted">Cargando amistades...</p>
-          <p *ngIf="friendsError" class="error">{{ friendsError }}</p>
-
-          <div class="friend-list" *ngIf="!loadingFriends && acceptedFriends.length > 0">
-            <article class="friend-item" *ngFor="let friendship of acceptedFriends">
-              <div>
-                <strong>{{ friendDisplayName(friendship) }}</strong>
-                <small>{{ friendEmail(friendship) }}</small>
-              </div>
-              <div class="friend-actions">
-                <a class="btn-link" [routerLink]="friendProfileLink(friendship)">Visitar perfil</a>
-                <button
-                  type="button"
-                  class="btn-danger"
-                  (click)="removeFriend(friendship.id)">
-                  Eliminar amigo
-                </button>
-              </div>
-            </article>
-          </div>
-
-          <p class="muted" *ngIf="!loadingFriends && acceptedFriends.length === 0">
-            No tienes amigos aceptados todavía.
-          </p>
-        </section>
-
-        <section class="social-section search-section">
-          <div class="social-subhead">
-            <h4>Buscar usuarios</h4>
-            <small>Envía solicitud y visita perfiles</small>
-          </div>
-
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Buscar por nombre o email"
-            [value]="searchQuery"
-            (input)="onSearchInput($any($event.target).value)" />
-
-          <p *ngIf="searchingUsers" class="muted">Buscando...</p>
-          <p *ngIf="searchError" class="error">{{ searchError }}</p>
-
-          <div class="user-results" *ngIf="searchResults.length > 0">
-            <article class="user-item" *ngFor="let user of searchResults">
-              <div>
-                <strong>{{ user.fullName || user.email }}</strong>
-                <small>{{ user.email }}</small>
-              </div>
-
-              <div class="user-actions">
-                <a class="btn-link" [routerLink]="userProfileLink(user)">Visitar perfil</a>
-
-                <button
-                  type="button"
-                  class="btn-primary"
-                  *ngIf="friendshipState(user.id) === 'none'"
-                  (click)="sendFriendRequest(user)">
-                  Enviar solicitud
-                </button>
-
-                <button
-                  type="button"
-                  class="btn-primary"
-                  *ngIf="friendshipState(user.id) === 'pending' && canAcceptRequestFrom(user.id)"
-                  (click)="acceptRequestFromUser(user)">
-                  Aceptar solicitud
-                </button>
-
-                <button
-                  type="button"
-                  class="btn-secondary"
-                  *ngIf="friendshipState(user.id) === 'pending' && !canAcceptRequestFrom(user.id)"
-                  disabled>
-                  Solicitud pendiente
-                </button>
-
-                <button type="button" class="btn-success" *ngIf="friendshipState(user.id) === 'accepted'" disabled>
-                  Ya es amigo
-                </button>
-              </div>
-            </article>
-          </div>
-
-          <p class="muted" *ngIf="!searchingUsers && searchQuery.trim().length >= 2 && searchResults.length === 0">Sin resultados.</p>
-        </section>
+        <p class="muted centered" *ngIf="!loadingFriends && pendingIncomingRequests.length === 0">
+          No tienes solicitudes pendientes.
+        </p>
       </article>
     </div>
   </section>
