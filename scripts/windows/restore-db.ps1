@@ -1,7 +1,6 @@
 Param(
     [Parameter(Mandatory=$true)]
-    [string]$BackupFile,
-    [string]$Container = "lifehub-sql-dev"
+    [string]$BackupFile
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,18 +17,35 @@ if (Test-Path $EnvFile) {
     }
 }
 
-$Password = $env:DB_PASSWORD
-if (-not $Password) { throw "DB_PASSWORD no encontrado. Comprueba que existe el archivo .env" }
+# Validate required variables
+$Required = @("DB_PASSWORD", "DB_NAME", "DB_USER", "DB_HOST", "SQL_CONTAINER", "SQLCMD_PATH", "BACKEND_CONTAINER")
+$Missing = $Required | Where-Object { -not [System.Environment]::GetEnvironmentVariable($_) }
+if ($Missing) {
+    throw "Las siguientes variables no están definidas en .env: $($Missing -join ', ')"
+}
+
+$Password         = $env:DB_PASSWORD
+$Database         = $env:DB_NAME
+$DbUser           = $env:DB_USER
+$DbHost           = $env:DB_HOST
+$Container        = $env:SQL_CONTAINER
+$SqlcmdPath       = $env:SQLCMD_PATH
+$BackendContainer = $env:BACKEND_CONTAINER
+
+Write-Host "Contenedor: $Container" -ForegroundColor Cyan
 
 if (-not (Test-Path $BackupFile)) { throw "Archivo de backup no encontrado: $BackupFile" }
 
-$Database      = "LifeHubDB"
 $FileName      = Split-Path $BackupFile -Leaf
 $ContainerPath = "/var/opt/mssql/backup/$FileName"
 
 Write-Host "Copiando backup al contenedor..." -ForegroundColor Yellow
 docker exec $Container mkdir -p /var/opt/mssql/backup
 docker cp $BackupFile "${Container}:${ContainerPath}"
+
+if ($LASTEXITCODE -ne 0) {
+    throw "No se pudo copiar el archivo de backup al contenedor."
+}
 
 Write-Host "Ejecutando RESTORE DATABASE..." -ForegroundColor Yellow
 
@@ -39,7 +55,7 @@ RESTORE DATABASE [$Database] FROM DISK = N'$ContainerPath' WITH REPLACE, RECOVER
 ALTER DATABASE [$Database] SET MULTI_USER;
 "@
 
-$output = docker exec -e "SQLCMDPASSWORD=$Password" $Container /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -Q "$RestoreSQL" 2>&1
+$output = docker exec -e "SQLCMDPASSWORD=$Password" $Container $SqlcmdPath -S $DbHost -U $DbUser -Q "$RestoreSQL" 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host $output -ForegroundColor Red
     throw "La restauración falló. Revisa los mensajes anteriores."
@@ -49,4 +65,4 @@ Remove-Variable Password -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "Base de datos restaurada correctamente desde: $BackupFile" -ForegroundColor Green
-Write-Host "Reinicia el backend para que reconecte: docker restart lifehub-backend-dev" -ForegroundColor Yellow
+Write-Host "Reinicia el backend: docker restart $BackendContainer" -ForegroundColor Yellow

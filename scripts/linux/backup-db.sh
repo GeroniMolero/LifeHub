@@ -3,10 +3,8 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BACKUP_DIR="${1:-$PROJECT_ROOT/backups}"
-CONTAINER="lifehub-sql-dev"
-DATABASE="LifeHubDB"
 
-# Load .env with proper variable handling
+# Load .env
 if [ -f "$PROJECT_ROOT/.env" ]; then
     set -a
     # shellcheck source=/dev/null
@@ -14,49 +12,58 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
     set +a
 fi
 
-if [ -z "$DB_PASSWORD" ]; then
-    echo "Error: DB_PASSWORD no encontrado. Comprueba que existe el archivo .env"
+# Validate required variables
+MISSING=()
+[ -z "$DB_PASSWORD" ]        && MISSING+=("DB_PASSWORD")
+[ -z "$DB_NAME" ]            && MISSING+=("DB_NAME")
+[ -z "$DB_USER" ]            && MISSING+=("DB_USER")
+[ -z "$DB_HOST" ]            && MISSING+=("DB_HOST")
+[ -z "$SQL_CONTAINER" ]      && MISSING+=("SQL_CONTAINER")
+[ -z "$SQLCMD_PATH" ]        && MISSING+=("SQLCMD_PATH")
+
+if [ ${#MISSING[@]} -gt 0 ]; then
+    echo "Error: las siguientes variables no están definidas en .env:"
+    for v in "${MISSING[@]}"; do echo "  - $v"; done
     exit 1
 fi
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_FILE="LifeHub_${TIMESTAMP}.bak"
+BACKUP_FILE="${DB_NAME}_${TIMESTAMP}.bak"
 CONTAINER_PATH="/var/opt/mssql/backup/${BACKUP_FILE}"
 
 mkdir -p "$BACKUP_DIR"
 
+echo "Contenedor: $SQL_CONTAINER"
 echo "Creando directorio de backup en el contenedor..."
 if [ -n "${MSYSTEM:-}" ]; then
-    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec "$SQL_CONTAINER" mkdir -p /var/opt/mssql/backup
 else
-    docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
+    docker exec "$SQL_CONTAINER" mkdir -p /var/opt/mssql/backup
 fi
 
 echo "Ejecutando BACKUP DATABASE..."
 
-BACKUP_SQL="BACKUP DATABASE [$DATABASE] TO DISK = N'$CONTAINER_PATH' WITH FORMAT, INIT, COMPRESSION, STATS = 10"
+BACKUP_SQL="BACKUP DATABASE [$DB_NAME] TO DISK = N'$CONTAINER_PATH' WITH FORMAT, INIT, COMPRESSION, STATS = 10"
 if [ -n "${MSYSTEM:-}" ]; then
-    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
-        -S localhost -U sa \
-        -Q "$BACKUP_SQL"
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$SQL_CONTAINER" "$SQLCMD_PATH" \
+        -S "$DB_HOST" -U "$DB_USER" -Q "$BACKUP_SQL"
 else
-    docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$CONTAINER" /opt/mssql-tools/bin/sqlcmd \
-        -S localhost -U sa \
-        -Q "$BACKUP_SQL"
+    docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$SQL_CONTAINER" "$SQLCMD_PATH" \
+        -S "$DB_HOST" -U "$DB_USER" -Q "$BACKUP_SQL"
 fi
 
 if [ $? -ne 0 ]; then
-    echo "Error: el backup falló. Revisa que el contenedor $CONTAINER está en ejecución."
+    echo "Error: el backup falló. Revisa que el contenedor $SQL_CONTAINER está en ejecución."
     exit 1
 fi
 
 echo "Copiando backup al host..."
 if command -v cygpath >/dev/null 2>&1; then
-    docker cp "${CONTAINER}:${CONTAINER_PATH}" "$(cygpath -w "${BACKUP_DIR}/${BACKUP_FILE}")"
+    docker cp "${SQL_CONTAINER}:${CONTAINER_PATH}" "$(cygpath -w "${BACKUP_DIR}/${BACKUP_FILE}")"
 elif [ -n "${MSYSTEM:-}" ]; then
-    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker cp "${CONTAINER}:${CONTAINER_PATH}" "${BACKUP_DIR}/${BACKUP_FILE}"
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker cp "${SQL_CONTAINER}:${CONTAINER_PATH}" "${BACKUP_DIR}/${BACKUP_FILE}"
 else
-    docker cp "${CONTAINER}:${CONTAINER_PATH}" "${BACKUP_DIR}/${BACKUP_FILE}"
+    docker cp "${SQL_CONTAINER}:${CONTAINER_PATH}" "${BACKUP_DIR}/${BACKUP_FILE}"
 fi
 
 if [ $? -ne 0 ]; then
@@ -64,7 +71,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Clean up sensitive data from memory
 unset DB_PASSWORD
 
 echo ""
