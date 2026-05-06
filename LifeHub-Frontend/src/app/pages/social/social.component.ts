@@ -31,6 +31,7 @@ export class SocialComponent implements OnInit {
   currentUserId = '';
   loadingMessages = false;
   sendingMessage = false;
+  unreadPerFriend: Record<string, number> = {};
 
   // Friends state
   friendships: Friendship[] = [];
@@ -70,6 +71,10 @@ export class SocialComponent implements OnInit {
           }
         } else {
           this.chatService.incrementUnread();
+          this.unreadPerFriend = {
+            ...this.unreadPerFriend,
+            [msg.senderId]: (this.unreadPerFriend[msg.senderId] ?? 0) + 1
+          };
         }
       });
 
@@ -81,6 +86,7 @@ export class SocialComponent implements OnInit {
       });
 
     this.loadFriendships();
+    this.loadUnreadPerFriend();
   }
 
   // ── Getters ────────────────────────────────────────────────────────────────
@@ -108,6 +114,7 @@ export class SocialComponent implements OnInit {
   selectFriend(friend: User): void {
     this.selectedFriend = friend;
     this.messages = [];
+    this.unreadPerFriend = { ...this.unreadPerFriend, [friend.id]: 0 };
     this.loadConversation(friend.id);
   }
 
@@ -230,6 +237,18 @@ export class SocialComponent implements OnInit {
     return this.friendFromFriendship(friendship)?.id === this.selectedFriend.id;
   }
 
+  // ── Unread helpers ────────────────────────────────────────────────────────
+
+  hasUnread(friendship: Friendship): boolean {
+    const user = this.friendFromFriendship(friendship);
+    return !!user && (this.unreadPerFriend[user.id] ?? 0) > 0;
+  }
+
+  unreadCountForFriend(friendship: Friendship): number {
+    const user = this.friendFromFriendship(friendship);
+    return user ? (this.unreadPerFriend[user.id] ?? 0) : 0;
+  }
+
   // ── Display helpers ───────────────────────────────────────────────────────
 
   initial(user: User): string {
@@ -320,6 +339,13 @@ export class SocialComponent implements OnInit {
   private friendFromFriendship(friendship: Friendship): User | undefined {
     if (!this.currentUserId) return friendship.receiver || friendship.requester;
     return friendship.requesterId === this.currentUserId ? friendship.receiver : friendship.requester;
+  }
+
+  private loadUnreadPerFriend(): void {
+    this.chatService.getUnreadPerSender().subscribe({
+      next: counts => { this.unreadPerFriend = counts; },
+      error: () => {}
+    });
   }
 
   private friendshipWithUser(userId: string): Friendship | undefined {

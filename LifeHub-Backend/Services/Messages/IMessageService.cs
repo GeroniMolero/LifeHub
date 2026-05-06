@@ -8,5 +8,6 @@ namespace LifeHub.Services.Messages
         Task<ServiceResult<MessageDto>> SendMessageAsync(string userId, CreateMessageDto dto);
         Task<ServiceResult<MessageDto>> MarkAsReadAsync(int id, string userId);
         Task<ServiceResult<int>> GetUnreadCountAsync(string userId);
+        Task<ServiceResult<Dictionary<string, int>>> GetUnreadCountPerSenderAsync(string userId);
     }
 }

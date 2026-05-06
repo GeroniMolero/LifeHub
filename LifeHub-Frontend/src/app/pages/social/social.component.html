@@ -78,6 +78,7 @@
         <div
           class="friend-row"
           [class.friend-row--active]="isFriendSelected(f)"
+          [class.friend-row--unread]="hasUnread(f)"
           *ngFor="let f of acceptedFriends"
           (click)="toggleFriend(f)"
         >
@@ -89,6 +90,7 @@
             <strong>{{ friendDisplayName(f) }}</strong>
             <small>{{ friendEmail(f) }}</small>
           </div>
+          <span class="unread-badge" *ngIf="hasUnread(f)">{{ unreadCountForFriend(f) }}</span>
         </div>
 
       </ng-container>
