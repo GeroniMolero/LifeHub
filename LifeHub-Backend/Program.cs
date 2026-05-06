@@ -130,15 +130,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
-        // SignalR envía el token como query param porque WebSockets no admite cabeceras
+        // SignalR usa cookie HttpOnly para autenticar WebSockets (más seguro que query param)
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
-                var accessToken = context.Request.Query["access_token"];
+                var cookieToken = context.Request.Cookies["signalr_token"];
                 var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
-                    context.Token = accessToken;
+                if (!string.IsNullOrEmpty(cookieToken) && path.StartsWithSegments("/hubs"))
+                    context.Token = cookieToken;
                 return Task.CompletedTask;
             }
         };
