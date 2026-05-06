@@ -193,7 +193,17 @@
 
     <div class="form-field">
       <label for="doc-title">Título</label>
-      <input id="doc-title" type="text" formControlName="title" placeholder="Título del documento" />
+      <input
+        id="doc-title"
+        type="text"
+        formControlName="title"
+        placeholder="Título del documento"
+        [class.is-invalid]="submitted && createForm.get('title')?.errors"
+      />
+      <div *ngIf="submitted && createForm.get('title')?.errors" class="error-message">
+        <span *ngIf="createForm.get('title')?.errors?.['required']">El título es requerido</span>
+        <span *ngIf="createForm.get('title')?.errors?.['maxlength']">Máximo 200 caracteres</span>
+      </div>
     </div>
 
     <div class="form-field">
