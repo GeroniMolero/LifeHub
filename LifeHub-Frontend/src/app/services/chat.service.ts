@@ -70,6 +70,10 @@ export class ChatService implements OnDestroy {
     return this.http.get<number>(`${API_BASE_URL}/messages/unread`);
   }
 
+  getUnreadPerSender(): Observable<Record<string, number>> {
+    return this.http.get<Record<string, number>>(`${API_BASE_URL}/messages/unread-per-sender`);
+  }
+
   refreshUnreadCount(): void {
     this.getUnreadCount().subscribe({
       next: count => this.unreadCountSubject.next(count),

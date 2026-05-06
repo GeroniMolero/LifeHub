@@ -61,5 +61,15 @@ namespace LifeHub.Controllers
 
             return Ok(new { unreadCount = result.Value });
         }
+
+        [HttpGet("unread-per-sender")]
+        public async Task<IActionResult> GetUnreadPerSender()
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null) return authError;
+
+            var result = await _messageService.GetUnreadCountPerSenderAsync(userId);
+            return ToActionResult(result);
+        }
     }
 }
