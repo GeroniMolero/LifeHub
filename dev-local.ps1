@@ -18,13 +18,25 @@ function Test-PortListening {
 
 Write-Host "Starting LifeHub in local frontend mode..." -ForegroundColor Cyan
 
+# Verify Node.js and npm are available
+$null = node --version 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Node.js is not installed or not available in PATH." -ForegroundColor Red
+    Write-Host "Install Node.js 20 LTS from https://nodejs.org/" -ForegroundColor Red
+    exit 1
+}
+
+$nodeVersion = node --version
+$npmVersion = npm --version
+Write-Host "Node.js $nodeVersion / npm $npmVersion detected." -ForegroundColor Green
+
 # 1) Backend + DB in Docker (detached)
 docker compose -f docker-compose.dev.yml up -d
 
 # 2) Frontend deps (optional skip)
 if (-not $SkipInstall) {
     Write-Host "Installing frontend dependencies (npm ci)..." -ForegroundColor Yellow
-    npm --prefix LifeHub-Frontend ci --legacy-peer-deps
+    npm --prefix LifeHub-Frontend ci
 }
 
 # 3) Run Angular dev server in a separate process
@@ -36,7 +48,7 @@ $cmdArgs = '/c start "LifeHub Frontend" cmd /k "cd /d ""' + $frontendPath + '"" 
 
 Start-Process -FilePath "cmd.exe" -ArgumentList $cmdArgs | Out-Null
 
-$maxWaitSeconds = 30
+$maxWaitSeconds = 90
 $isUp = $false
 for ($i = 0; $i -lt $maxWaitSeconds; $i++) {
     Start-Sleep -Seconds 1

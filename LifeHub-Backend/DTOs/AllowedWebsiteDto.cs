@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LifeHub.DTOs
 {
     public class AllowedWebsiteDto
@@ -11,6 +13,9 @@ namespace LifeHub.DTOs
 
     public class CreateAllowedWebsiteDto
     {
+        [Required]
+        [MinLength(3)]
+        [MaxLength(200)]
         public string Domain { get; set; } = null!;
         public bool IsActive { get; set; } = true;
     }

@@ -30,8 +30,7 @@ namespace LifeHub.Utilidades
                 .ReverseMap()
                 .ForMember(d => d.Type, o => o.MapFrom(s => (RecommendationType)s.Type));
 
-            CreateMap<CreateRecommendationDto, Recommendation>();
-            CreateMap<UpdateRecommendationDto, Recommendation>();
+            CreateMap<RecommendationFormDto, Recommendation>();
 
             // Document mappings
             CreateMap<Document, DocumentDto>()

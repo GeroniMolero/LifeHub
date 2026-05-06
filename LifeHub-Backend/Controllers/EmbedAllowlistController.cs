@@ -1,8 +1,7 @@
-using LifeHub.Data;
+using LifeHub.Services.AllowedWebsites;
 using LifeHub.Utilidades;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LifeHub.Controllers
 {
@@ -11,23 +10,18 @@ namespace LifeHub.Controllers
     [Authorize]
     public class EmbedAllowlistController : ApiControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAllowedWebsiteService _allowedWebsiteService;
 
-        public EmbedAllowlistController(ApplicationDbContext context)
+        public EmbedAllowlistController(IAllowedWebsiteService allowedWebsiteService)
         {
-            _context = context;
+            _allowedWebsiteService = allowedWebsiteService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetActiveDomains()
         {
-            var domains = await _context.AllowedWebsites
-                .Where(w => w.IsActive)
-                .OrderBy(w => w.Domain)
-                .Select(w => w.Domain)
-                .ToListAsync();
-
-            return Ok(domains);
+            var result = await _allowedWebsiteService.GetActiveDomainsAsync();
+            return ToActionResult(result);
         }
     }
 }

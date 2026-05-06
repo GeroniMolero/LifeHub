@@ -28,6 +28,14 @@ namespace LifeHub.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // ============ APPLICATION USER ============
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(u => u.FullName).HasMaxLength(100);
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(u => u.ProfilePictureUrl).HasMaxLength(500);
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(u => u.Bio).HasMaxLength(2000);
+
             // ============ FRIENDSHIPS ============
             modelBuilder.Entity<Friendship>()
                 .HasOne(f => f.Requester)
@@ -47,6 +55,8 @@ namespace LifeHub.Data
 
             // ============ MESSAGES ============
             modelBuilder.Entity<Message>()
+                .Property(m => m.Content).HasMaxLength(5000);
+            modelBuilder.Entity<Message>()
                 .HasOne(m => m.Sender)
                 .WithMany(u => u.SentMessages)
                 .HasForeignKey(m => m.SenderId)
@@ -63,12 +73,26 @@ namespace LifeHub.Data
 
             // ============ RECOMMENDATIONS ============
             modelBuilder.Entity<Recommendation>()
+                .Property(r => r.Title).HasMaxLength(200);
+            modelBuilder.Entity<Recommendation>()
+                .Property(r => r.Description).HasMaxLength(2000);
+            modelBuilder.Entity<Recommendation>()
+                .Property(r => r.Genre).HasMaxLength(100);
+            modelBuilder.Entity<Recommendation>()
+                .Property(r => r.Author).HasMaxLength(200);
+            modelBuilder.Entity<Recommendation>()
+                .Property(r => r.ExternalLink).HasMaxLength(500);
+            modelBuilder.Entity<Recommendation>()
+                .Property(r => r.CoverImageUrl).HasMaxLength(500);
+            modelBuilder.Entity<Recommendation>()
                 .HasOne(r => r.User)
                 .WithMany(u => u.Recommendations)
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ============ RECOMMENDATION RATINGS ============
+            modelBuilder.Entity<RecommendationRating>()
+                .Property(rr => rr.Comment).HasMaxLength(1000);
             modelBuilder.Entity<RecommendationRating>()
                 .HasOne(rr => rr.Recommendation)
                 .WithMany(r => r.Ratings)
@@ -86,6 +110,10 @@ namespace LifeHub.Data
                 .IsUnique();
 
             // ============ DOCUMENTS ============
+            modelBuilder.Entity<Document>()
+                .Property(d => d.Title).HasMaxLength(200);
+            modelBuilder.Entity<Document>()
+                .Property(d => d.Description).HasMaxLength(2000);
             modelBuilder.Entity<Document>()
                 .HasOne(d => d.User)
                 .WithMany(u => u.Documents)
@@ -106,6 +134,10 @@ namespace LifeHub.Data
 
             // ============ CREATIVE SPACES ============
             modelBuilder.Entity<CreativeSpace>()
+                .Property(cs => cs.Name).HasMaxLength(200);
+            modelBuilder.Entity<CreativeSpace>()
+                .Property(cs => cs.Description).HasMaxLength(2000);
+            modelBuilder.Entity<CreativeSpace>()
                 .HasOne(cs => cs.Owner)
                 .WithMany(u => u.OwnedCreativeSpaces)
                 .HasForeignKey(cs => cs.OwnerId)
@@ -115,6 +147,10 @@ namespace LifeHub.Data
                 .HasIndex(cs => new { cs.OwnerId, cs.Name });
 
             // ============ DOCUMENT VERSIONS ============
+            modelBuilder.Entity<DocumentVersion>()
+                .Property(v => v.Title).HasMaxLength(200);
+            modelBuilder.Entity<DocumentVersion>()
+                .Property(v => v.Description).HasMaxLength(2000);
             modelBuilder.Entity<DocumentVersion>()
                 .HasOne(v => v.Document)
                 .WithMany(d => d.Versions)
@@ -167,6 +203,16 @@ namespace LifeHub.Data
 
             // ============ ACTIVITY LOGS ============
             modelBuilder.Entity<ActivityLog>()
+                .Property(l => l.Action).HasMaxLength(100);
+            modelBuilder.Entity<ActivityLog>()
+                .Property(l => l.EntityType).HasMaxLength(100);
+            modelBuilder.Entity<ActivityLog>()
+                .Property(l => l.EntityId).HasMaxLength(100);
+            modelBuilder.Entity<ActivityLog>()
+                .Property(l => l.Details).HasMaxLength(1000);
+            modelBuilder.Entity<ActivityLog>()
+                .Property(l => l.IpAddress).HasMaxLength(50);
+            modelBuilder.Entity<ActivityLog>()
                 .HasOne(l => l.User)
                 .WithMany(u => u.ActivityLogs)
                 .HasForeignKey(l => l.UserId)
@@ -177,12 +223,26 @@ namespace LifeHub.Data
 
             // ============ MUSIC FILES ============
             modelBuilder.Entity<MusicFile>()
+                .Property(m => m.FileName).HasMaxLength(300);
+            modelBuilder.Entity<MusicFile>()
+                .Property(m => m.Title).HasMaxLength(200);
+            modelBuilder.Entity<MusicFile>()
+                .Property(m => m.Artist).HasMaxLength(200);
+            modelBuilder.Entity<MusicFile>()
+                .Property(m => m.Album).HasMaxLength(200);
+            modelBuilder.Entity<MusicFile>()
+                .Property(m => m.Genre).HasMaxLength(100);
+            modelBuilder.Entity<MusicFile>()
+                .Property(m => m.LocalPath).HasMaxLength(500);
+            modelBuilder.Entity<MusicFile>()
                 .HasOne(m => m.User)
                 .WithMany(u => u.MusicFiles)
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ============ ALLOWED WEBSITES ============
+            modelBuilder.Entity<AllowedWebsite>()
+                .Property(w => w.Domain).HasMaxLength(200);
             modelBuilder.Entity<AllowedWebsite>()
                 .HasIndex(w => w.Domain)
                 .IsUnique();

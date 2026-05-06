@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LifeHub.DTOs
 {
     public class AuthResponseDto
@@ -17,5 +19,29 @@ namespace LifeHub.DTOs
         public string? Bio { get; set; }
         public List<string> Roles { get; set; } = new();
         public List<string> Claims { get; set; } = new();
+    }
+
+    public class UpdateProfileDto
+    {
+        [MaxLength(100)]
+        public string? FullName { get; set; }
+
+        [MaxLength(2000)]
+        public string? Bio { get; set; }
+
+        [MaxLength(500)]
+        [Url]
+        public string? ProfilePictureUrl { get; set; }
+    }
+
+    public class ChangePasswordDto
+    {
+        [Required]
+        public string CurrentPassword { get; set; } = null!;
+
+        [Required]
+        [MinLength(6)]
+        [MaxLength(128)]
+        public string NewPassword { get; set; } = null!;
     }
 }

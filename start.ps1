@@ -14,6 +14,14 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Docker detected." -ForegroundColor Green
+
+# Verify Docker daemon is running
+$null = docker info 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Docker is installed but not running. Please start Docker Desktop." -ForegroundColor Red
+    exit 1
+}
+
 Write-Host ""
 
 $mode = ""

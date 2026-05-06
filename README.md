@@ -88,6 +88,10 @@
 - SignalR para chat en tiempo real
 - JWT para autenticación
 - AutoMapper para mapeo de DTOs
+- **SpaceAccessPolicy**: política centralizada de acceso a espacios y documentos
+- **IHtmlSanitizer / HtmlSanitizer**: sanitización de HTML inyectable (sin dependencias externas)
+- **BusinessRules**: constantes de negocio centralizadas (p.ej. límite de versiones)
+- Data Annotations en todos los DTOs de entrada + restricciones `HasMaxLength` en EF Core
 
 ### Frontend (Angular 19)
 - Standalone Components
@@ -105,10 +109,10 @@
 
 ## Requisitos
 
-- **.NET 8 SDK** o superior
-- **Node.js 20+** y npm
-- **SQL Server 2019+** (o LocalDB)
-- **Visual Studio Code** o **Visual Studio 2022**
+- **Docker Desktop** (recomendado — gestiona backend y base de datos sin instalación local)
+- **Node.js 20+ LTS** y npm (para el frontend local)
+- **.NET 8 SDK** — solo si desarrollas el backend fuera de Docker
+- **Visual Studio Code** o **Visual Studio 2022** (opcional)
 
 ## Inicio Rápido
 
@@ -136,7 +140,7 @@ Para detener todo:
 En Linux el frontend se levanta manualmente en una segunda terminal:
 ```bash
 cd LifeHub-Frontend
-npm ci --legacy-peer-deps
+npm ci
 npm start
 ```
 
@@ -150,7 +154,7 @@ docker compose -f docker-compose.dev.yml up -d mssql backend
 **Terminal 2 - Frontend Local:**
 ```powershell
 cd LifeHub-Frontend
-npm ci --legacy-peer-deps
+npm ci
 npm start
 ```
 
@@ -169,6 +173,7 @@ Flujo recomendado para un clon nuevo del repositorio:
 ```powershell
 git clone <repo>
 cd LifeHub
+copy .env.example .env        # Edita .env con tus valores reales (DB_PASSWORD, JWT_KEY, etc.)
 .\start.ps1 local
 ```
 
@@ -270,6 +275,7 @@ LifeHub/
 │   ├── DTOs/                 # Data Transfer Objects
 │   ├── Services/             # Lógica de negocio
 │   ├── Data/                 # DbContext y Migrations
+│   ├── Utilidades/           # Patrones transversales (SpaceAccessPolicy, IHtmlSanitizer, BusinessRules)
 │   └── Hubs/                 # SignalR Hubs
 ├── LifeHub-Frontend/         # Aplicación Angular
 │   ├── src/
@@ -295,14 +301,18 @@ LifeHub/
 │       ├── restore-db.sh
 │       ├── run-tests.sh
 │       └── run-tests-interactive.sh
-└── docker-compose.yml        # Orquestación Docker
+├── docker-compose.dev.yml    # Stack de desarrollo (backend watch + SQL Edge)
+├── docker-compose.yml        # Stack de producción
+└── .env.example              # Plantilla de variables de entorno
 ```
 
 ## Seguridad
 
 - Autenticación basada en JWT
 - Hash de contraseñas con Identity
-- Validación en servidor y cliente
+- Validación en servidor (Data Annotations en DTOs) y cliente (Angular Reactive Forms)
+- Restricciones de longitud en base de datos (EF Core `HasMaxLength`)
+- Sanitización XSS en backend: `IHtmlSanitizer` elimina `<script>`, atributos `on*=` y URIs `javascript:` antes de persistir
 - Protección de rutas con Guards
 - No almacenamiento de contenido protegido por derechos de autor
 

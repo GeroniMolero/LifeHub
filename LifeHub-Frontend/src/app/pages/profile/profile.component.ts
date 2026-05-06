@@ -23,6 +23,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   loading = false;
   success = '';
   error = '';
+  submittedProfile = false;
+  submittedPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -53,6 +55,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   onProfileSubmit(): void {
+    this.submittedProfile = true;
     if (this.profileForm.invalid) return;
 
     this.loading = true;
@@ -84,6 +87,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   onPasswordSubmit(): void {
+    this.submittedPassword = true;
     if (this.passwordForm.invalid) return;
 
     const newPassword = this.passwordForm.get('newPassword')?.value;

@@ -2,6 +2,16 @@ using Microsoft.EntityFrameworkCore;
 using LifeHub.Data;
 using AutoMapper;
 using LifeHub.Utilidades;
+using LifeHub.Services.Documents;
+using LifeHub.Services.CreativeSpaces;
+using LifeHub.Services.DocumentVersions;
+using LifeHub.Services.DocumentPublications;
+using LifeHub.Services.Recommendations;
+using LifeHub.Services.Friendships;
+using LifeHub.Services.MusicFiles;
+using LifeHub.Services.Messages;
+using LifeHub.Services.Users;
+using LifeHub.Services.AllowedWebsites;
 using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -20,7 +30,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // =============================
 // AUTOMAPPER
 // =============================
-builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AutoMapperProfiles>());
 
 // =============================
 // CONTROLLERS
@@ -28,6 +38,21 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddSingleton<IHtmlSanitizer, HtmlSanitizer>();
+
+// =============================
+// SERVICES (CAPA DE NEGOCIO)
+// =============================
+builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddScoped<ICreativeSpaceService, CreativeSpaceService>();
+builder.Services.AddScoped<IDocumentVersionService, DocumentVersionService>();
+builder.Services.AddScoped<IDocumentPublicationService, DocumentPublicationService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<IFriendshipService, FriendshipService>();
+builder.Services.AddScoped<IMusicFileService, MusicFileService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAllowedWebsiteService, AllowedWebsiteService>();
 
 // =============================
 // SWAGGER + AUTH JWT

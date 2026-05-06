@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace LifeHub.DTOs
 {
     public class MessageDto
@@ -12,7 +14,12 @@ namespace LifeHub.DTOs
 
     public class CreateMessageDto
     {
+        [Required]
         public string ReceiverId { get; set; } = null!;
+
+        [Required]
+        [MinLength(1)]
+        [MaxLength(5000)]
         public string Content { get; set; } = null!;
     }
 }
