@@ -39,7 +39,10 @@ namespace LifeHub.DTOs
     {
         [Required]
         [MinLength(1)]
+        [MaxLength(200)]
         public string Name { get; set; } = null!;
+
+        [MaxLength(2000)]
         public string Description { get; set; } = string.Empty;
         public int Privacy { get; set; } = 0;
         public bool IsFavorite { get; set; } = false;
@@ -48,7 +51,12 @@ namespace LifeHub.DTOs
 
     public class UpdateCreativeSpaceDto
     {
+        [Required]
+        [MinLength(1)]
+        [MaxLength(200)]
         public string Name { get; set; } = null!;
+
+        [MaxLength(2000)]
         public string Description { get; set; } = string.Empty;
         public int Privacy { get; set; }
         public bool IsFavorite { get; set; }
@@ -57,6 +65,7 @@ namespace LifeHub.DTOs
 
     public class ShareCreativeSpaceDto
     {
+        [Required]
         public string UserId { get; set; } = null!;
         public int PermissionLevel { get; set; } = 0;
     }
