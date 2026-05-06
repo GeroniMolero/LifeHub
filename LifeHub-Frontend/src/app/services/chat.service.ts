@@ -29,7 +29,7 @@ export class ChatService implements OnDestroy {
 
     this.hub = new signalR.HubConnectionBuilder()
       .withUrl(`${HUB_BASE_URL}/hubs/chat`, {
-        accessTokenFactory: () => this.authService.getToken() ?? ''
+        withCredentials: true
       })
       .withAutomaticReconnect()
       .build();

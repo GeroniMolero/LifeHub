@@ -76,6 +76,15 @@ namespace LifeHub.Controllers
             var userClaims = await _userManager.GetClaimsAsync(user);
             var token = GenerateJwtToken(user);
 
+            var expiresMinutes = int.Parse(_configuration["Jwt:ExpiresInMinutes"]!);
+            Response.Cookies.Append("signalr_token", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure   = true,
+                SameSite = SameSiteMode.Strict,
+                Expires  = DateTimeOffset.UtcNow.AddMinutes(expiresMinutes)
+            });
+
             var response = new AuthResponseDto
             {
                 Success = true,
@@ -94,6 +103,13 @@ namespace LifeHub.Controllers
             };
 
             return Ok(response);
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("signalr_token");
+            return NoContent();
         }
 
         private string GenerateJwtToken(ApplicationUser user)
