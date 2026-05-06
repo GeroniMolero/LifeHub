@@ -2,27 +2,43 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-BACKUP_DIR="${1:-$PROJECT_ROOT/backups}"
 
-# Load .env
-if [ -f "$PROJECT_ROOT/.env" ]; then
-    set -a
-    # shellcheck source=/dev/null
-    source "$PROJECT_ROOT/.env"
-    set +a
+# Parse arguments: [-e envfile] [backup-dir]
+ENV_FILE=""
+BACKUP_DIR=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -e|--env) ENV_FILE="$2"; shift 2 ;;
+        *)        BACKUP_DIR="$1"; shift ;;
+    esac
+done
+
+if [ -z "$ENV_FILE" ];   then ENV_FILE="$PROJECT_ROOT/.env"; fi
+if [ -z "$BACKUP_DIR" ]; then BACKUP_DIR="$PROJECT_ROOT/backups"; fi
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: archivo de entorno no encontrado: $ENV_FILE"
+    exit 1
 fi
+echo "Usando entorno: $ENV_FILE"
+
+# Load env file
+set -a
+# shellcheck source=/dev/null
+source "$ENV_FILE"
+set +a
 
 # Validate required variables
 MISSING=()
-[ -z "$DB_PASSWORD" ]        && MISSING+=("DB_PASSWORD")
-[ -z "$DB_NAME" ]            && MISSING+=("DB_NAME")
-[ -z "$DB_USER" ]            && MISSING+=("DB_USER")
-[ -z "$DB_HOST" ]            && MISSING+=("DB_HOST")
-[ -z "$SQL_CONTAINER" ]      && MISSING+=("SQL_CONTAINER")
-[ -z "$SQLCMD_PATH" ]        && MISSING+=("SQLCMD_PATH")
+[ -z "$DB_PASSWORD" ]   && MISSING+=("DB_PASSWORD")
+[ -z "$DB_NAME" ]       && MISSING+=("DB_NAME")
+[ -z "$DB_USER" ]       && MISSING+=("DB_USER")
+[ -z "$DB_HOST" ]       && MISSING+=("DB_HOST")
+[ -z "$SQL_CONTAINER" ] && MISSING+=("SQL_CONTAINER")
+[ -z "$SQLCMD_PATH" ]   && MISSING+=("SQLCMD_PATH")
 
 if [ ${#MISSING[@]} -gt 0 ]; then
-    echo "Error: las siguientes variables no están definidas en .env:"
+    echo "Error: las siguientes variables no están definidas en $ENV_FILE:"
     for v in "${MISSING[@]}"; do echo "  - $v"; done
     exit 1
 fi
@@ -43,13 +59,14 @@ fi
 
 echo "Ejecutando BACKUP DATABASE..."
 
-BACKUP_SQL="BACKUP DATABASE [$DB_NAME] TO DISK = N'$CONTAINER_PATH' WITH FORMAT, INIT, COMPRESSION, STATS = 10"
+BACKUP_SQL="BACKUP DATABASE [$DB_NAME] TO DISK = N'$CONTAINER_PATH' WITH FORMAT, INIT, STATS = 10"
+# shellcheck disable=SC2086
 if [ -n "${MSYSTEM:-}" ]; then
     MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$SQL_CONTAINER" "$SQLCMD_PATH" \
-        -S "$DB_HOST" -U "$DB_USER" -Q "$BACKUP_SQL"
+        $SQLCMD_OPTS -S "$DB_HOST" -U "$DB_USER" -Q "$BACKUP_SQL"
 else
     docker exec -e SQLCMDPASSWORD="$DB_PASSWORD" "$SQL_CONTAINER" "$SQLCMD_PATH" \
-        -S "$DB_HOST" -U "$DB_USER" -Q "$BACKUP_SQL"
+        $SQLCMD_OPTS -S "$DB_HOST" -U "$DB_USER" -Q "$BACKUP_SQL"
 fi
 
 if [ $? -ne 0 ]; then
