@@ -43,7 +43,7 @@ namespace LifeHub.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateRecommendation([FromBody] CreateRecommendationDto dto)
+        public async Task<IActionResult> CreateRecommendation([FromBody] RecommendationFormDto dto)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
             if (authError != null) return authError;
@@ -55,7 +55,7 @@ namespace LifeHub.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRecommendation(int id, [FromBody] UpdateRecommendationDto dto)
+        public async Task<IActionResult> UpdateRecommendation(int id, [FromBody] RecommendationFormDto dto)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
             if (authError != null) return authError;

@@ -1,8 +1,8 @@
-using System.Text.RegularExpressions;
 using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeHub.Services.Documents
@@ -11,11 +11,13 @@ namespace LifeHub.Services.Documents
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IHtmlSanitizer _htmlSanitizer;
 
-        public DocumentService(ApplicationDbContext context, IMapper mapper)
+        public DocumentService(ApplicationDbContext context, IMapper mapper, IHtmlSanitizer htmlSanitizer)
         {
             _context = context;
             _mapper = mapper;
+            _htmlSanitizer = htmlSanitizer;
         }
 
         public async Task<ServiceResult<List<DocumentDto>>> GetDocumentsAsync(string userId, bool canViewAll)
@@ -70,7 +72,7 @@ namespace LifeHub.Services.Documents
             if (!userExists)
                 return ServiceResult<DocumentDto>.Unauthorized("Sesión inválida. Inicia sesión de nuevo.");
 
-            dto.Content = SanitizeHtml(dto.Content);
+            dto.Content = _htmlSanitizer.Sanitize(dto.Content);
 
             var document = _mapper.Map<Document>(dto);
             document.UserId = userId;
@@ -102,13 +104,12 @@ namespace LifeHub.Services.Documents
             if (!isOwner && !isSpaceEditor)
                 return ServiceResult<DocumentDto>.Forbidden("No tienes permiso para editar este documento.");
 
-            const int MaxVersions = 30;
             var versionCount = await _context.DocumentVersions.CountAsync(v => v.DocumentId == id);
-            if (versionCount >= MaxVersions)
+            if (versionCount >= BusinessRules.MaxDocumentVersions)
                 return ServiceResult<DocumentDto>.BadRequest(
-                    $"Este documento ha alcanzado el límite de {MaxVersions} versiones. Elimina alguna versión antes de guardar.");
+                    $"Este documento ha alcanzado el límite de {BusinessRules.MaxDocumentVersions} versiones. Elimina alguna versión antes de guardar.");
 
-            dto.Content = SanitizeHtml(dto.Content);
+            dto.Content = _htmlSanitizer.Sanitize(dto.Content);
 
             _mapper.Map(dto, document);
             document.UpdatedAt = DateTime.UtcNow;
@@ -154,26 +155,5 @@ namespace LifeHub.Services.Documents
             return ServiceResult<bool>.Ok(true);
         }
 
-        private static string SanitizeHtml(string content)
-        {
-            if (string.IsNullOrEmpty(content)) return content;
-
-            content = Regex.Replace(content,
-                @"<script\b[^<]*(?:(?!</script>)<[^<]*)*</script>",
-                string.Empty,
-                RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-            content = Regex.Replace(content,
-                @"\son\w+\s*=\s*(""[^""]*""|'[^']*'|[^\s>]*)",
-                string.Empty,
-                RegexOptions.IgnoreCase);
-
-            content = Regex.Replace(content,
-                @"href\s*=\s*(""javascript:[^""]*""|'javascript:[^']*')",
-                string.Empty,
-                RegexOptions.IgnoreCase);
-
-            return content;
-        }
     }
 }

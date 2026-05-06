@@ -50,7 +50,7 @@ namespace LifeHub.Services.Recommendations
             return ServiceResult<List<RecommendationDto>>.Ok(_mapper.Map<List<RecommendationDto>>(recommendations));
         }
 
-        public async Task<ServiceResult<RecommendationDto>> CreateRecommendationAsync(string userId, CreateRecommendationDto dto)
+        public async Task<ServiceResult<RecommendationDto>> CreateRecommendationAsync(string userId, RecommendationFormDto dto)
         {
             var userExists = await _context.Users.AnyAsync(u => u.Id == userId);
             if (!userExists)
@@ -65,7 +65,7 @@ namespace LifeHub.Services.Recommendations
             return ServiceResult<RecommendationDto>.Ok(_mapper.Map<RecommendationDto>(recommendation));
         }
 
-        public async Task<ServiceResult<RecommendationDto>> UpdateRecommendationAsync(int id, string userId, UpdateRecommendationDto dto)
+        public async Task<ServiceResult<RecommendationDto>> UpdateRecommendationAsync(int id, string userId, RecommendationFormDto dto)
         {
             var recommendation = await _context.Recommendations.FindAsync(id);
 

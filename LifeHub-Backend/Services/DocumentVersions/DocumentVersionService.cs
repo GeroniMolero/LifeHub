@@ -30,7 +30,7 @@ namespace LifeHub.Services.DocumentVersions
             if (document == null)
                 return ServiceResult<List<DocumentVersionDto>>.NotFound("Documento no encontrado.");
 
-            if (!CanAccessDocument(document, userId))
+            if (!SpaceAccessPolicy.CanAccessDocument(document, userId))
                 return ServiceResult<List<DocumentVersionDto>>.Forbidden("No tienes permisos para ver las versiones de este documento.");
 
             var versions = await _context.DocumentVersions
@@ -52,13 +52,12 @@ namespace LifeHub.Services.DocumentVersions
             if (document == null)
                 return ServiceResult<DocumentVersionDto>.NotFound("Documento no encontrado.");
 
-            if (!CanEditDocument(document, userId))
+            if (!SpaceAccessPolicy.CanEditDocument(document, userId))
                 return ServiceResult<DocumentVersionDto>.Forbidden("No tienes permisos para crear versiones de este documento.");
 
-            const int MaxVersions = 30;
             var versionCount = await _context.DocumentVersions.CountAsync(v => v.DocumentId == documentId);
-            if (versionCount >= MaxVersions)
-                return ServiceResult<DocumentVersionDto>.BadRequest($"Este documento ha alcanzado el límite de {MaxVersions} versiones. Elimina alguna versión antes de crear una nueva.");
+            if (versionCount >= BusinessRules.MaxDocumentVersions)
+                return ServiceResult<DocumentVersionDto>.BadRequest($"Este documento ha alcanzado el límite de {BusinessRules.MaxDocumentVersions} versiones. Elimina alguna versión antes de crear una nueva.");
 
             var lastVersion = await _context.DocumentVersions
                 .Where(v => v.DocumentId == documentId)
@@ -97,7 +96,7 @@ namespace LifeHub.Services.DocumentVersions
             if (version == null)
                 return ServiceResult<RestoreVersionResultDto>.NotFound("Versión de documento no encontrada.");
 
-            if (!CanEditDocument(version.Document, userId))
+            if (!SpaceAccessPolicy.CanEditDocument(version.Document, userId))
                 return ServiceResult<RestoreVersionResultDto>.Forbidden("No tienes permisos para restaurar esta versión.");
 
             version.Document.Title = version.Title;
@@ -137,21 +136,5 @@ namespace LifeHub.Services.DocumentVersions
             return ServiceResult<bool>.Ok(true);
         }
 
-        private static bool CanAccessDocument(Document document, string userId)
-        {
-            if (document.UserId == userId) return true;
-            var space = document.CreativeSpace;
-            if (space == null) return false;
-            return space.OwnerId == userId || space.Permissions.Any(p => p.UserId == userId);
-        }
-
-        private static bool CanEditDocument(Document document, string userId)
-        {
-            if (document.UserId == userId) return true;
-            var space = document.CreativeSpace;
-            if (space == null) return false;
-            if (space.OwnerId == userId) return true;
-            return space.Permissions.Any(p => p.UserId == userId && p.PermissionLevel == SpacePermissionLevel.Editor);
-        }
     }
 }

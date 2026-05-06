@@ -40,8 +40,7 @@ namespace LifeHub.Services.CreativeSpaces
             if (space == null)
                 return ServiceResult<CreativeSpaceDto>.NotFound("Espacio creativo no encontrado.");
 
-            var canAccess = space.OwnerId == userId || space.Permissions.Any(p => p.UserId == userId);
-            if (!canAccess)
+            if (!SpaceAccessPolicy.CanAccess(space, userId))
                 return ServiceResult<CreativeSpaceDto>.Forbidden("No tienes permisos para acceder a este espacio creativo.");
 
             return ServiceResult<CreativeSpaceDto>.Ok(_mapper.Map<CreativeSpaceDto>(space));
@@ -208,8 +207,7 @@ namespace LifeHub.Services.CreativeSpaces
             if (space == null)
                 return ServiceResult<List<SpaceMediaReferenceDto>>.NotFound("Espacio creativo no encontrado.");
 
-            var canAccess = space.OwnerId == userId || space.Permissions.Any(p => p.UserId == userId);
-            if (!canAccess)
+            if (!SpaceAccessPolicy.CanAccess(space, userId))
                 return ServiceResult<List<SpaceMediaReferenceDto>>.Forbidden("No tienes permisos para acceder a este espacio creativo.");
 
             return ServiceResult<List<SpaceMediaReferenceDto>>.Ok(DeserializeMediaReferences(space.MediaReferencesJson));
@@ -224,9 +222,7 @@ namespace LifeHub.Services.CreativeSpaces
             if (space == null)
                 return ServiceResult<SpaceMediaReferenceDto>.NotFound("Espacio creativo no encontrado.");
 
-            var canEdit = space.OwnerId == userId ||
-                space.Permissions.Any(p => p.UserId == userId && p.PermissionLevel == SpacePermissionLevel.Editor);
-            if (!canEdit)
+            if (!SpaceAccessPolicy.CanEdit(space, userId))
                 return ServiceResult<SpaceMediaReferenceDto>.Forbidden("No tienes permisos de edición para este espacio creativo.");
 
             if (string.IsNullOrWhiteSpace(dto.EmbedUrl) || !IsHttpUrl(dto.EmbedUrl))
@@ -276,9 +272,7 @@ namespace LifeHub.Services.CreativeSpaces
             if (space == null)
                 return ServiceResult<bool>.NotFound("Espacio creativo no encontrado.");
 
-            var canEdit = space.OwnerId == userId ||
-                space.Permissions.Any(p => p.UserId == userId && p.PermissionLevel == SpacePermissionLevel.Editor);
-            if (!canEdit)
+            if (!SpaceAccessPolicy.CanEdit(space, userId))
                 return ServiceResult<bool>.Forbidden("No tienes permisos de edición para este espacio creativo.");
 
             var references = DeserializeMediaReferences(space.MediaReferencesJson);

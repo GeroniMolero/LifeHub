@@ -38,6 +38,7 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
+builder.Services.AddSingleton<IHtmlSanitizer, HtmlSanitizer>();
 
 // =============================
 // SERVICES (CAPA DE NEGOCIO)
