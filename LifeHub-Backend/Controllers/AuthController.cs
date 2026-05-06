@@ -17,15 +17,18 @@ namespace LifeHub.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
         public AuthController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IWebHostEnvironment env)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _env = env;
         }
 
         [HttpPost("register")]
@@ -80,7 +83,7 @@ namespace LifeHub.Controllers
             Response.Cookies.Append("signalr_token", token, new CookieOptions
             {
                 HttpOnly = true,
-                Secure   = true,
+                Secure   = !_env.IsDevelopment(),
                 SameSite = SameSiteMode.Strict,
                 Expires  = DateTimeOffset.UtcNow.AddMinutes(expiresMinutes)
             });
