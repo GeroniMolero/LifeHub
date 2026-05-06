@@ -51,7 +51,11 @@
             },
             "development": {
               "optimization": false,
-              "sourceMap": true
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "vendor": false
+              }
             }
           },
           "defaultConfiguration": "production"
