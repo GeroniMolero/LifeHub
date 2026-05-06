@@ -41,4 +41,10 @@ namespace LifeHub.DTOs
         public string? ExternalLink { get; set; }
         public string? CoverImageUrl { get; set; }
     }
+
+    public class RecommendationRatingCreateDto
+    {
+        public int Rating { get; set; }
+        public string? Comment { get; set; }
+    }
 }

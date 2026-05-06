@@ -18,4 +18,17 @@ namespace LifeHub.DTOs
         public List<string> Roles { get; set; } = new();
         public List<string> Claims { get; set; } = new();
     }
+
+    public class UpdateProfileDto
+    {
+        public string? FullName { get; set; }
+        public string? Bio { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+    }
+
+    public class ChangePasswordDto
+    {
+        public string CurrentPassword { get; set; } = null!;
+        public string NewPassword { get; set; } = null!;
+    }
 }
