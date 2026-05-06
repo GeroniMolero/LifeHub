@@ -88,6 +88,10 @@
 - SignalR para chat en tiempo real
 - JWT para autenticación
 - AutoMapper para mapeo de DTOs
+- **SpaceAccessPolicy**: política centralizada de acceso a espacios y documentos
+- **IHtmlSanitizer / HtmlSanitizer**: sanitización de HTML inyectable (sin dependencias externas)
+- **BusinessRules**: constantes de negocio centralizadas (p.ej. límite de versiones)
+- Data Annotations en todos los DTOs de entrada + restricciones `HasMaxLength` en EF Core
 
 ### Frontend (Angular 19)
 - Standalone Components
@@ -136,7 +140,7 @@ Para detener todo:
 En Linux el frontend se levanta manualmente en una segunda terminal:
 ```bash
 cd LifeHub-Frontend
-npm ci --legacy-peer-deps
+npm ci
 npm start
 ```
 
@@ -150,7 +154,7 @@ docker compose -f docker-compose.dev.yml up -d mssql backend
 **Terminal 2 - Frontend Local:**
 ```powershell
 cd LifeHub-Frontend
-npm ci --legacy-peer-deps
+npm ci
 npm start
 ```
 
@@ -270,6 +274,7 @@ LifeHub/
 │   ├── DTOs/                 # Data Transfer Objects
 │   ├── Services/             # Lógica de negocio
 │   ├── Data/                 # DbContext y Migrations
+│   ├── Utilidades/           # Patrones transversales (SpaceAccessPolicy, IHtmlSanitizer, BusinessRules)
 │   └── Hubs/                 # SignalR Hubs
 ├── LifeHub-Frontend/         # Aplicación Angular
 │   ├── src/
@@ -302,7 +307,9 @@ LifeHub/
 
 - Autenticación basada en JWT
 - Hash de contraseñas con Identity
-- Validación en servidor y cliente
+- Validación en servidor (Data Annotations en DTOs) y cliente (Angular Reactive Forms)
+- Restricciones de longitud en base de datos (EF Core `HasMaxLength`)
+- Sanitización XSS en backend: `IHtmlSanitizer` elimina `<script>`, atributos `on*=` y URIs `javascript:` antes de persistir
 - Protección de rutas con Guards
 - No almacenamiento de contenido protegido por derechos de autor
 
