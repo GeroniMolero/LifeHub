@@ -1,11 +1,8 @@
+using LifeHub.DTOs;
+using LifeHub.Services.Friendships;
+using LifeHub.Utilidades;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using LifeHub.Data;
-using LifeHub.DTOs;
-using LifeHub.Models;
-using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
@@ -14,127 +11,63 @@ namespace LifeHub.Controllers
     [Authorize]
     public class FriendshipsController : ApiControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
+        private readonly IFriendshipService _friendshipService;
 
-        public FriendshipsController(ApplicationDbContext context, IMapper mapper)
+        public FriendshipsController(IFriendshipService friendshipService)
         {
-            _context = context;
-            _mapper = mapper;
+            _friendshipService = friendshipService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetFriendships()
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var friendships = await _context.Friendships
-                .Where(f => f.RequesterId == userId || f.ReceiverId == userId)
-                .Include(f => f.Requester)
-                .Include(f => f.Receiver)
-                .ToListAsync();
-
-            return Ok(_mapper.Map<List<FriendshipDto>>(friendships));
+            var result = await _friendshipService.GetFriendshipsAsync(userId);
+            return ToActionResult(result);
         }
 
         [HttpGet("accepted")]
         public async Task<IActionResult> GetAcceptedFriends()
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var friends = await _context.Friendships
-                .Where(f => (f.RequesterId == userId || f.ReceiverId == userId) 
-                    && f.Status == FriendshipStatus.Accepted)
-                .Include(f => f.Requester)
-                .Include(f => f.Receiver)
-                .ToListAsync();
-
-            return Ok(_mapper.Map<List<FriendshipDto>>(friends));
+            var result = await _friendshipService.GetAcceptedFriendsAsync(userId);
+            return ToActionResult(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> SendFriendRequest([FromBody] CreateFriendshipDto dto)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var sessionError = await EnsureActiveSessionAsync(_context, userId);
-            if (sessionError != null)
-                return sessionError;
+            var result = await _friendshipService.SendFriendRequestAsync(userId, dto);
+            if (!result.IsSuccess) return ToActionResult(result);
 
-            if (userId == dto.ReceiverId)
-                return BadRequestError("No puedes enviarte una solicitud de amistad a ti mismo.");
-
-            var receiverExists = await _context.Users.AnyAsync(u => u.Id == dto.ReceiverId);
-            if (!receiverExists)
-                return BadRequestError("El usuario receptor no existe.");
-
-            var existingFriendship = await _context.Friendships
-                .FirstOrDefaultAsync(f => 
-                    (f.RequesterId == userId && f.ReceiverId == dto.ReceiverId) ||
-                    (f.RequesterId == dto.ReceiverId && f.ReceiverId == userId));
-
-            if (existingFriendship != null)
-                return BadRequestError("Ya existe una relación de amistad con este usuario.");
-
-            var friendship = new Friendship
-            {
-                RequesterId = userId,
-                ReceiverId = dto.ReceiverId,
-                Status = FriendshipStatus.Pending
-            };
-
-            _context.Friendships.Add(friendship);
-            await _context.SaveChangesAsync();
-
-            return Created("", _mapper.Map<FriendshipDto>(friendship));
+            return Created("", result.Value);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFriendship(int id, [FromBody] UpdateFriendshipDto dto)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var friendship = await _context.Friendships.FindAsync(id);
-
-            if (friendship == null)
-                return NotFoundError("Relación de amistad no encontrada.");
-
-            if (friendship.ReceiverId != userId)
-                return ForbiddenError("No tienes permisos para actualizar esta solicitud.");
-
-            friendship.Status = (FriendshipStatus)dto.Status;
-            friendship.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(_mapper.Map<FriendshipDto>(friendship));
+            var result = await _friendshipService.UpdateFriendshipAsync(id, userId, dto);
+            return ToActionResult(result);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFriendship(int id)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var friendship = await _context.Friendships.FindAsync(id);
-
-            if (friendship == null)
-                return NotFoundError("Relación de amistad no encontrada.");
-
-            if (friendship.RequesterId != userId && friendship.ReceiverId != userId)
-                return ForbiddenError("No tienes permisos para eliminar esta relación de amistad.");
-
-            _context.Friendships.Remove(friendship);
-            await _context.SaveChangesAsync();
+            var result = await _friendshipService.DeleteFriendshipAsync(id, userId);
+            if (!result.IsSuccess) return ToActionResult(result);
 
             return NoContent();
         }

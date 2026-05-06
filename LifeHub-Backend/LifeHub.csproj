@@ -7,9 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- AutoMapper -->
-    <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <!-- AutoMapper (v15.1.1 parchea GHSA-rvv3-g6hj-g44x DoS; DI integrado desde v13) -->
+    <PackageReference Include="AutoMapper" Version="15.1.1" />
     
     <!-- JWT Authentication -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />

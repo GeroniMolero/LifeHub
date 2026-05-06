@@ -40,7 +40,12 @@
           id="fullName"
           formControlName="fullName"
           placeholder="Tu nombre"
+          [class.is-invalid]="submittedProfile && profileForm.get('fullName')?.errors"
         />
+        <div *ngIf="submittedProfile && profileForm.get('fullName')?.errors" class="error-message">
+          <span *ngIf="profileForm.get('fullName')?.errors?.['required']">El nombre es requerido</span>
+          <span *ngIf="profileForm.get('fullName')?.errors?.['maxlength']">Máximo 100 caracteres</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -50,7 +55,11 @@
           formControlName="bio"
           placeholder="Cuéntanos sobre ti"
           rows="4"
+          [class.is-invalid]="submittedProfile && profileForm.get('bio')?.errors"
         ></textarea>
+        <div *ngIf="submittedProfile && profileForm.get('bio')?.errors" class="error-message">
+          <span *ngIf="profileForm.get('bio')?.errors?.['maxlength']">Máximo 2000 caracteres</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -60,7 +69,12 @@
           id="profilePictureUrl"
           formControlName="profilePictureUrl"
           placeholder="https://..."
+          [class.is-invalid]="submittedProfile && profileForm.get('profilePictureUrl')?.errors"
         />
+        <div *ngIf="submittedProfile && profileForm.get('profilePictureUrl')?.errors" class="error-message">
+          <span *ngIf="profileForm.get('profilePictureUrl')?.errors?.['url']">Debe ser una URL válida</span>
+          <span *ngIf="profileForm.get('profilePictureUrl')?.errors?.['maxlength']">Máximo 500 caracteres</span>
+        </div>
       </div>
 
       <div class="profile-picture-preview" *ngIf="profileForm.get('profilePictureUrl')?.value as profilePictureUrl">
@@ -85,7 +99,11 @@
           id="currentPassword"
           formControlName="currentPassword"
           placeholder="Tu contraseña actual"
+          [class.is-invalid]="submittedPassword && passwordForm.get('currentPassword')?.errors"
         />
+        <div *ngIf="submittedPassword && passwordForm.get('currentPassword')?.errors" class="error-message">
+          <span *ngIf="passwordForm.get('currentPassword')?.errors?.['required']">La contraseña actual es requerida</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -95,7 +113,12 @@
           id="newPassword"
           formControlName="newPassword"
           placeholder="Nueva contraseña (min 6 caracteres)"
+          [class.is-invalid]="submittedPassword && passwordForm.get('newPassword')?.errors"
         />
+        <div *ngIf="submittedPassword && passwordForm.get('newPassword')?.errors" class="error-message">
+          <span *ngIf="passwordForm.get('newPassword')?.errors?.['required']">La nueva contraseña es requerida</span>
+          <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">Mínimo 6 caracteres</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -105,7 +128,11 @@
           id="confirmPassword"
           formControlName="confirmPassword"
           placeholder="Confirma tu nueva contraseña"
+          [class.is-invalid]="submittedPassword && passwordForm.get('confirmPassword')?.errors"
         />
+        <div *ngIf="submittedPassword && passwordForm.get('confirmPassword')?.errors" class="error-message">
+          <span *ngIf="passwordForm.get('confirmPassword')?.errors?.['required']">Confirma tu nueva contraseña</span>
+        </div>
       </div>
 
       <button type="submit" class="btn-primary" [disabled]="loading">

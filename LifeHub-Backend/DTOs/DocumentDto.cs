@@ -22,7 +22,10 @@ namespace LifeHub.DTOs
     {
         [Required]
         [MinLength(1)]
+        [MaxLength(200)]
         public string Title { get; set; } = null!;
+
+        [MaxLength(2000)]
         public string Description { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public int Type { get; set; }
@@ -31,7 +34,12 @@ namespace LifeHub.DTOs
 
     public class UpdateDocumentDto
     {
+        [Required]
+        [MinLength(1)]
+        [MaxLength(200)]
         public string Title { get; set; } = null!;
+
+        [MaxLength(2000)]
         public string Description { get; set; } = null!;
         public string Content { get; set; } = null!;
         public int? CreativeSpaceId { get; set; }

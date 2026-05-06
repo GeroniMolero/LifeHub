@@ -1,11 +1,8 @@
+using LifeHub.DTOs;
+using LifeHub.Services.Messages;
+using LifeHub.Utilidades;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using LifeHub.Data;
-using LifeHub.DTOs;
-using LifeHub.Models;
-using LifeHub.Utilidades;
 
 namespace LifeHub.Controllers
 {
@@ -14,94 +11,55 @@ namespace LifeHub.Controllers
     [Authorize]
     public class MessagesController : ApiControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
+        private readonly IMessageService _messageService;
 
-        public MessagesController(ApplicationDbContext context, IMapper mapper)
+        public MessagesController(IMessageService messageService)
         {
-            _context = context;
-            _mapper = mapper;
+            _messageService = messageService;
         }
 
         [HttpGet("conversation/{otherUserId}")]
         public async Task<IActionResult> GetConversation(string otherUserId)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var messages = await _context.Messages
-                .Where(m => 
-                    (m.SenderId == userId && m.ReceiverId == otherUserId) ||
-                    (m.SenderId == otherUserId && m.ReceiverId == userId))
-                .OrderBy(m => m.SentAt)
-                .ToListAsync();
-
-            return Ok(_mapper.Map<List<MessageDto>>(messages));
+            var result = await _messageService.GetConversationAsync(userId, otherUserId);
+            return ToActionResult(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> SendMessage([FromBody] CreateMessageDto dto)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var sessionError = await EnsureActiveSessionAsync(_context, userId);
-            if (sessionError != null)
-                return sessionError;
+            var result = await _messageService.SendMessageAsync(userId, dto);
+            if (!result.IsSuccess) return ToActionResult(result);
 
-            var receiverExists = await _context.Users.AnyAsync(u => u.Id == dto.ReceiverId);
-            if (!receiverExists)
-                return BadRequestError("El usuario receptor no existe.");
-
-            var message = new Message
-            {
-                SenderId = userId,
-                ReceiverId = dto.ReceiverId,
-                Content = dto.Content,
-                SentAt = DateTime.UtcNow
-            };
-
-            _context.Messages.Add(message);
-            await _context.SaveChangesAsync();
-
-            return Created("", _mapper.Map<MessageDto>(message));
+            return Created("", result.Value);
         }
 
         [HttpPut("{id}/mark-read")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var message = await _context.Messages.FindAsync(id);
-            if (message == null)
-                return NotFoundError("Mensaje no encontrado.");
-
-            if (message.ReceiverId != userId)
-                return ForbiddenError("No tienes permisos para marcar este mensaje como leído.");
-
-            message.IsRead = true;
-            message.ReadAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-
-            return Ok(_mapper.Map<MessageDto>(message));
+            var result = await _messageService.MarkAsReadAsync(id, userId);
+            return ToActionResult(result);
         }
 
         [HttpGet("unread")]
         public async Task<IActionResult> GetUnreadMessages()
         {
             var authError = RequireAuthenticatedUserId(out var userId);
-            if (authError != null)
-                return authError;
+            if (authError != null) return authError;
 
-            var unreadCount = await _context.Messages
-                .Where(m => m.ReceiverId == userId && !m.IsRead)
-                .CountAsync();
+            var result = await _messageService.GetUnreadCountAsync(userId);
+            if (!result.IsSuccess) return ToActionResult(result);
 
-            return Ok(new { unreadCount });
+            return Ok(new { unreadCount = result.Value });
         }
     }
 }

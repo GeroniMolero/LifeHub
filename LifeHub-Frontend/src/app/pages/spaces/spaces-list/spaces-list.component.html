@@ -3,7 +3,11 @@
     <h2>Crear espacio</h2>
     <form [formGroup]="createForm" (ngSubmit)="createSpace()">
       <label>Nombre</label>
-      <input type="text" formControlName="name" />
+      <input type="text" formControlName="name" [class.is-invalid]="submittedCreate && createForm.get('name')?.errors" />
+      <div *ngIf="submittedCreate && createForm.get('name')?.errors" class="error-message">
+        <span *ngIf="createForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+        <span *ngIf="createForm.get('name')?.errors?.['maxlength']">Máximo 200 caracteres</span>
+      </div>
 
       <label>Descripción</label>
       <textarea rows="3" formControlName="description"></textarea>
@@ -83,7 +87,11 @@
 
       <form *ngIf="editingId === space.id" [formGroup]="editForm" (ngSubmit)="saveEdit(space.id)" class="edit-form">
         <label>Nombre</label>
-        <input type="text" formControlName="name" />
+        <input type="text" formControlName="name" [class.is-invalid]="submittedEdit && editForm.get('name')?.errors" />
+        <div *ngIf="submittedEdit && editForm.get('name')?.errors" class="error-message">
+          <span *ngIf="editForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+          <span *ngIf="editForm.get('name')?.errors?.['maxlength']">Máximo 200 caracteres</span>
+        </div>
 
         <label>Descripción</label>
         <textarea rows="3" formControlName="description"></textarea>

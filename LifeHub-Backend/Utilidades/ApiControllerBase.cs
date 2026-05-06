@@ -1,5 +1,6 @@
 using LifeHub.DTOs;
 using LifeHub.Data;
+using LifeHub.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,21 @@ namespace LifeHub.Utilidades
 {
     public abstract class ApiControllerBase : ControllerBase
     {
+        protected IActionResult ToActionResult<T>(ServiceResult<T> result)
+        {
+            if (result.IsSuccess) return Ok(result.Value);
+
+            return result.Status switch
+            {
+                ServiceResultStatus.NotFound    => NotFoundError(result.ErrorMessage!),
+                ServiceResultStatus.Forbidden   => ForbiddenError(result.ErrorMessage!),
+                ServiceResultStatus.BadRequest  => BadRequestError(result.ErrorMessage!),
+                ServiceResultStatus.Conflict    => ConflictError(result.ErrorMessage!),
+                ServiceResultStatus.Unauthorized => UnauthorizedError(result.ErrorMessage!),
+                _ => StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        }
+
         protected IActionResult? RequireAuthenticatedUserId(out string userId)
         {
             userId = User.GetUserId();

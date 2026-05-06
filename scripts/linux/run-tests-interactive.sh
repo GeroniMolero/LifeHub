@@ -37,33 +37,36 @@ echo "Modulos disponibles:"
 echo "  [1] AUTH             (8 tests)"
 echo "  [2] ESPACIOS         (5 tests)"
 echo "  [3] DOCUMENTOS       (9 tests)"
-echo "  [4] PANEL ADMIN      (6 tests)"
-echo "  [5] SEGURIDAD        (2 tests)"
+echo "  [4] COLABORACION     (3 tests)"
+echo "  [5] PANEL ADMIN      (6 tests)"
+echo "  [6] SEGURIDAD        (2 tests)"
 echo "  [A] TODOS"
 echo ""
 read -rp "Seleccion  (ej: 1 3  o  A para todos): " sel_input
 sel_upper=$(echo "$sel_input" | tr '[:lower:]' '[:upper:]')
 
-DO_AUTH=false; DO_SPACE=false; DO_DOC=false; DO_ADMIN=false; DO_SEC=false
+DO_AUTH=false; DO_SPACE=false; DO_DOC=false; DO_COL=false; DO_ADMIN=false; DO_SEC=false
 
 if [ -z "$sel_upper" ] || [ "$sel_upper" = "A" ]; then
-    DO_AUTH=true; DO_SPACE=true; DO_DOC=true; DO_ADMIN=true; DO_SEC=true
+    DO_AUTH=true; DO_SPACE=true; DO_DOC=true; DO_COL=true; DO_ADMIN=true; DO_SEC=true
 else
     echo "$sel_upper" | grep -q "1" && DO_AUTH=true
     echo "$sel_upper" | grep -q "2" && DO_SPACE=true
     echo "$sel_upper" | grep -q "3" && DO_DOC=true
-    echo "$sel_upper" | grep -q "4" && DO_ADMIN=true
-    echo "$sel_upper" | grep -q "5" && DO_SEC=true
+    echo "$sel_upper" | grep -q "4" && DO_COL=true
+    echo "$sel_upper" | grep -q "5" && DO_ADMIN=true
+    echo "$sel_upper" | grep -q "6" && DO_SEC=true
 fi
 
 NEEDS_USER=false; NEEDS_ADMIN=false
-($DO_SPACE || $DO_DOC || $DO_ADMIN || $DO_SEC) && NEEDS_USER=true
-$DO_ADMIN && NEEDS_ADMIN=true
+($DO_SPACE || $DO_DOC || $DO_COL || $DO_ADMIN || $DO_SEC) && NEEDS_USER=true
+($DO_COL || $DO_ADMIN) && NEEDS_ADMIN=true
 
 SELECTED=""
 $DO_AUTH  && SELECTED="${SELECTED:+$SELECTED, }AUTH"
 $DO_SPACE && SELECTED="${SELECTED:+$SELECTED, }ESPACIOS"
 $DO_DOC   && SELECTED="${SELECTED:+$SELECTED, }DOCUMENTOS"
+$DO_COL   && SELECTED="${SELECTED:+$SELECTED, }COLABORACION"
 $DO_ADMIN && SELECTED="${SELECTED:+$SELECTED, }ADMIN"
 $DO_SEC   && SELECTED="${SELECTED:+$SELECTED, }SEGURIDAD"
 
@@ -314,7 +317,78 @@ if $DO_DOC; then
     fi
 fi
 
-# ── BLOQUE 4: ADMIN ────────────────────────────────────────────────────────────
+# ── BLOQUE 4: COLABORACION ────────────────────────────────────────────────────
+
+if $DO_COL; then
+    section "COLABORACION EN ESPACIOS COMPARTIDOS"
+    if [ -z "$USER_TOKEN" ] || [ -z "$ADMIN_TOKEN" ]; then
+        skip_test "T-COL-01" "Editor puede editar documento ajeno" "AdminToken o UserToken no disponibles"
+        skip_test "T-COL-02" "Editor no puede borrar documento ajeno" "AdminToken o UserToken no disponibles"
+        skip_test "T-COL-03" "Viewer no puede editar documento ajeno" "AdminToken o UserToken no disponibles"
+    else
+        USER_ID=""
+        me_resp=$(curl -s -X GET "$BASE_URL/users/me" -H "Authorization: Bearer $USER_TOKEN" 2>/dev/null)
+        USER_ID=$(json_val "id" "$me_resp")
+
+        if [ -z "$USER_ID" ]; then
+            skip_test "T-COL-01" "Editor puede editar documento ajeno" "No se pudo obtener UserId"
+            skip_test "T-COL-02" "Editor no puede borrar documento ajeno" "No se pudo obtener UserId"
+            skip_test "T-COL-03" "Viewer no puede editar documento ajeno" "No se pudo obtener UserId"
+        else
+            COL_SPACE_ID=""; COL_DOC_ID=""
+            COL_TS=$(date +%Y%m%d_%H%M%S)
+            col_r=$(curl -s -X POST "$BASE_URL/creativespaces" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" \
+                -d "{\"name\":\"Col-Test-$COL_TS\",\"description\":\"temp\",\"privacy\":0}" 2>/dev/null)
+            COL_SPACE_ID=$(json_val "id" "$col_r")
+
+            if [ -n "$COL_SPACE_ID" ]; then
+                col_doc_r=$(curl -s -X POST "$BASE_URL/documents" \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: Bearer $ADMIN_TOKEN" \
+                    -d "{\"title\":\"Doc-Col-$COL_TS\",\"content\":\"contenido original\",\"description\":\"\",\"creativeSpaceId\":$COL_SPACE_ID}" 2>/dev/null)
+                COL_DOC_ID=$(json_val "id" "$col_doc_r")
+            fi
+
+            if [ -n "$COL_SPACE_ID" ] && [ -n "$COL_DOC_ID" ]; then
+                curl -s -X POST "$BASE_URL/creativespaces/$COL_SPACE_ID/permissions" \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: Bearer $ADMIN_TOKEN" \
+                    -d "{\"userId\":\"$USER_ID\",\"permissionLevel\":1}" > /dev/null 2>&1
+
+                invoke_api_test "T-COL-01" "Editor del espacio puede editar documento ajeno -> 200" \
+                    PUT "/documents/$COL_DOC_ID" \
+                    "{\"title\":\"Doc-Col-$COL_TS\",\"content\":\"editado por colaborador\",\"description\":\"\"}" \
+                    "$USER_TOKEN" "200" || true
+
+                invoke_api_test "T-COL-02" "Editor del espacio no puede borrar documento ajeno -> 403" \
+                    DELETE "/documents/$COL_DOC_ID" "" "$USER_TOKEN" "403" || true
+
+                curl -s -X POST "$BASE_URL/creativespaces/$COL_SPACE_ID/permissions" \
+                    -H "Content-Type: application/json" \
+                    -H "Authorization: Bearer $ADMIN_TOKEN" \
+                    -d "{\"userId\":\"$USER_ID\",\"permissionLevel\":0}" > /dev/null 2>&1
+
+                invoke_api_test "T-COL-03" "Viewer del espacio no puede editar documento ajeno -> 403" \
+                    PUT "/documents/$COL_DOC_ID" \
+                    "{\"title\":\"Doc-Col-$COL_TS\",\"content\":\"intento de edicion viewer\",\"description\":\"\"}" \
+                    "$USER_TOKEN" "403" || true
+            else
+                skip_test "T-COL-01" "Editor puede editar documento ajeno" "No se pudo crear espacio/documento temporal"
+                skip_test "T-COL-02" "Editor no puede borrar documento ajeno" "No se pudo crear espacio/documento temporal"
+                skip_test "T-COL-03" "Viewer no puede editar documento ajeno" "No se pudo crear espacio/documento temporal"
+            fi
+
+            [ -n "$COL_DOC_ID" ] && curl -s -X DELETE "$BASE_URL/documents/$COL_DOC_ID" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
+            [ -n "$COL_SPACE_ID" ] && curl -s -X DELETE "$BASE_URL/creativespaces/$COL_SPACE_ID" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
+        fi
+    fi
+fi
+
+# ── BLOQUE 5: ADMIN ────────────────────────────────────────────────────────────
 
 if $DO_ADMIN; then
     section "PANEL DE ADMINISTRACION"
@@ -344,7 +418,7 @@ if $DO_ADMIN; then
     fi
 fi
 
-# ── BLOQUE 5: SEGURIDAD ────────────────────────────────────────────────────────
+# ── BLOQUE 6: SEGURIDAD ────────────────────────────────────────────────────────
 
 if $DO_SEC; then
     section "SEGURIDAD"
@@ -391,7 +465,7 @@ echo "==========================================="
 
 OUTPUT_PATH="$OUTPUT_DIR/RESULTADO_PRUEBAS_$TIMESTAMP.md"
 FECHA_STR=$(date +"%Y-%m-%d %H:%M:%S")
-SECTIONS_ORDER=("AUTH" "ESPACIOS CREATIVOS" "DOCUMENTOS Y VERSIONES" "PANEL DE ADMINISTRACION" "SEGURIDAD")
+SECTIONS_ORDER=("AUTH" "ESPACIOS CREATIVOS" "DOCUMENTOS Y VERSIONES" "COLABORACION EN ESPACIOS COMPARTIDOS" "PANEL DE ADMINISTRACION" "SEGURIDAD")
 
 {
     echo "# Informe de Pruebas -- LifeHub (interactivo)"

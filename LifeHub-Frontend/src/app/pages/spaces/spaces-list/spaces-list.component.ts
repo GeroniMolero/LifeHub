@@ -48,6 +48,8 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   loading = false;
   error = '';
   showCreate = false;
+  submittedCreate = false;
+  submittedEdit = false;
   SpacePrivacy = SpacePrivacy;
   SpacePermissionLevel = SpacePermissionLevel;
 
@@ -150,6 +152,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   }
 
   createSpace(): void {
+    this.submittedCreate = true;
     if (this.createForm.invalid) return;
 
     this.loading = true;
@@ -158,6 +161,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
       next: (space) => {
         this.spaces = [space, ...this.spaces];
         this.showCreate = false;
+        this.submittedCreate = false;
         this.createForm.reset({
           name: '',
           description: '',
@@ -182,9 +186,11 @@ export class SpacesListComponent implements OnInit, OnDestroy {
 
   cancelEdit(): void {
     this.editingId = null;
+    this.submittedEdit = false;
   }
 
   saveEdit(spaceId: number): void {
+    this.submittedEdit = true;
     if (this.editForm.invalid) return;
 
     this.loading = true;
@@ -193,6 +199,7 @@ export class SpacesListComponent implements OnInit, OnDestroy {
       next: (updated) => {
         this.spaces = this.spaces.map(space => space.id === spaceId ? updated : space);
         this.editingId = null;
+        this.submittedEdit = false;
         this.loading = false;
       },
       error: () => {

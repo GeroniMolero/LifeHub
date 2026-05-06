@@ -1,11 +1,8 @@
-using AutoMapper;
-using LifeHub.Data;
 using LifeHub.DTOs;
-using LifeHub.Models;
+using LifeHub.Services.AllowedWebsites;
 using LifeHub.Utilidades;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LifeHub.Controllers
 {
@@ -14,76 +11,43 @@ namespace LifeHub.Controllers
     [Authorize(Roles = "Admin")]
     public class AllowedWebsitesController : ApiControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
+        private readonly IAllowedWebsiteService _allowedWebsiteService;
 
-        public AllowedWebsitesController(ApplicationDbContext context, IMapper mapper)
+        public AllowedWebsitesController(IAllowedWebsiteService allowedWebsiteService)
         {
-            _context = context;
-            _mapper = mapper;
+            _allowedWebsiteService = allowedWebsiteService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllowedWebsites()
         {
-            var websites = await _context.AllowedWebsites
-                .OrderBy(w => w.Domain)
-                .ToListAsync();
-
-            return Ok(_mapper.Map<List<AllowedWebsiteDto>>(websites));
+            var result = await _allowedWebsiteService.GetAllowedWebsitesAsync();
+            return ToActionResult(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateAllowedWebsite([FromBody] CreateAllowedWebsiteDto dto)
         {
-            var normalizedDomain = DomainHelper.NormalizeUserInputDomain(dto.Domain);
-            if (string.IsNullOrWhiteSpace(normalizedDomain))
-                return BadRequestError("Debes indicar un dominio válido.");
+            var result = await _allowedWebsiteService.CreateAllowedWebsiteAsync(dto);
+            if (!result.IsSuccess) return ToActionResult(result);
 
-            var exists = await _context.AllowedWebsites.AnyAsync(w => w.Domain == normalizedDomain);
-            if (exists)
-                return ConflictError("Ese dominio ya existe en la allowlist.");
-
-            var website = new AllowedWebsite
-            {
-                Domain = normalizedDomain,
-                IsActive = dto.IsActive,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            _context.AllowedWebsites.Add(website);
-            await _context.SaveChangesAsync();
-
-            return Created($"api/admin/allowed-websites/{website.Id}", _mapper.Map<AllowedWebsiteDto>(website));
+            return Created($"api/admin/allowed-websites/{result.Value!.Id}", result.Value);
         }
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateAllowedWebsite(int id, [FromBody] UpdateAllowedWebsiteDto dto)
         {
-            var website = await _context.AllowedWebsites.FirstOrDefaultAsync(w => w.Id == id);
-            if (website == null)
-                return NotFoundError("Dominio no encontrado.");
-
-            website.IsActive = dto.IsActive;
-            website.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-
-            return Ok(_mapper.Map<AllowedWebsiteDto>(website));
+            var result = await _allowedWebsiteService.UpdateAllowedWebsiteAsync(id, dto);
+            return ToActionResult(result);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteAllowedWebsite(int id)
         {
-            var website = await _context.AllowedWebsites.FirstOrDefaultAsync(w => w.Id == id);
-            if (website == null)
-                return NotFoundError("Dominio no encontrado.");
-
-            _context.AllowedWebsites.Remove(website);
-            await _context.SaveChangesAsync();
+            var result = await _allowedWebsiteService.DeleteAllowedWebsiteAsync(id);
+            if (!result.IsSuccess) return ToActionResult(result);
 
             return NoContent();
         }
-
     }
 }

@@ -30,6 +30,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   error = '';
   createError = '';
   showForm = false;
+  submitted = false;
   readonly DocumentType = DocumentType;
   readonly pageSizeOptions = [5, 10, 20, 50];
   pageSize = 10;
@@ -98,6 +99,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   }
 
   onCreate(): void {
+    this.submitted = true;
     if (this.createForm.invalid) return;
 
     this.loading = true;
@@ -156,6 +158,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   closeForm(): void {
     this.showForm = false;
     this.createError = '';
+    this.submitted = false;
   }
 
   getTypeText(type?: DocumentType | string | number): string {

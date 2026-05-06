@@ -18,4 +18,11 @@ namespace LifeHub.DTOs
     {
         public string? Note { get; set; }
     }
+
+    public class RestoreVersionResultDto
+    {
+        public string Message { get; set; } = null!;
+        public int DocumentId { get; set; }
+        public int RestoredVersion { get; set; }
+    }
 }

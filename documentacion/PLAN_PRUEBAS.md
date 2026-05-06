@@ -1,7 +1,7 @@
 ﻿# Plan de Pruebas — LifeHub
 
-**Fecha:** 04-05-2026 (última actualización)  
-**Versión del proyecto:** master (post-colaboración y versionado completo)  
+**Fecha:** 06-05-2026 (última actualización)  
+**Versión del proyecto:** master (post-patrones de diseño, validación coherente, scripts robustos)  
 **Entorno de pruebas:** Docker dev stack (lifehub-sql-dev + lifehub-backend-dev) + frontend local
 
 ---
@@ -135,7 +135,7 @@
 | CP-09 Backup y restauración | 3 | 3 | 0 | 0 |
 | **TOTAL** | **37** | **37** | **0** | **0** |
 
-### Pruebas automatizadas — suite `run-tests.ps1` (04-05-2026)
+### Pruebas automatizadas — suite `run-tests.ps1` (06-05-2026)
 
 | Bloque | Tests | OK | FAIL | SKIP |
 |--------|-------|----|------|------|
@@ -160,3 +160,4 @@
 | INC-05 | 02-05-2026 | Vulnerabilidad XSS en backend: los endpoints de creación y actualización de documentos almacenaban el contenido sin sanitizar. Un atacante con acceso directo a la API podía persistir payloads maliciosos independientemente de la validación del frontend. Corregido implementando `SanitizeHtml()` en `DocumentsController.cs` (elimina bloques `<script>`, atributos `on\w+=` y URIs `javascript:`). Test `T-DOC-04` corregido en los cuatro runners: ahora verifica que el payload XSS es eliminado por el backend (usa `NotContains` en lugar de `Contains`). | Resuelta |
 | INC-06 | 02-05-2026 | Inyección JSON en `run-tests-interactive.sh`: el script construía los cuerpos JSON interpolando directamente los valores del usuario sin escapar, por lo que un valor con `"` cerraba prematuramente la cadena y alteraba la estructura de la petición. Corregido implementando `json_escape()` que escapa `\`, `"`, tabuladores y saltos de línea antes de la interpolación. | Resuelta |
 | INC-07 | 04-05-2026 | Tests T-COL fallaban durante la limpieza: la restricción de FK impedía eliminar el espacio temporal si el documento creado en el test no se borraba antes. Corregido añadiendo la eliminación explícita del documento antes de la del espacio en el flujo de teardown de los scripts. Resultado: **33/33 PASS**. | Resuelta |
+| INC-08 | 06-05-2026 | Backend inaccesible al arrancar: la migración `AddColumnLengthConstraints` crasheaba en cada inicio con el error "Column name 'IsPublic' in table 'Documents' is specified more than once". Causa raíz: la migración había aplicado parcialmente `AddColumn IsPublic/PublishedAt` y creado las tablas `AllowedWebsites` y `DocumentPublications` en una ejecución anterior, pero la transacción no quedó registrada en `__EFMigrationsHistory` (Azure SQL Edge no revirtió el DDL en la excepción). Todos los tests fallaban con HTTP 0 (connection refused). Corregido haciendo idempotentes las cuatro operaciones problemáticas mediante SQL condicional (`IF COL_LENGTH IS NULL` / `IF NOT EXISTS`). Resultado: migración aplicada correctamente, **33/33 PASS**. | Resuelta |

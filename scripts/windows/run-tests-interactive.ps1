@@ -31,8 +31,9 @@ Write-Host "Modulos disponibles:" -ForegroundColor White
 Write-Host "  [1] AUTH             (8 tests)"
 Write-Host "  [2] ESPACIOS         (5 tests)"
 Write-Host "  [3] DOCUMENTOS       (9 tests)"
-Write-Host "  [4] PANEL ADMIN      (6 tests)"
-Write-Host "  [5] SEGURIDAD        (2 tests)"
+Write-Host "  [4] COLABORACION     (3 tests)"
+Write-Host "  [5] PANEL ADMIN      (6 tests)"
+Write-Host "  [6] SEGURIDAD        (2 tests)"
 Write-Host "  [A] TODOS"
 Write-Host ""
 $sel    = (Read-Host "Seleccion  (ej: 1 3  o  A para todos)").Trim().ToUpper()
@@ -41,16 +42,18 @@ $all    = ($sel -eq "" -or $sel -eq "A")
 $doAuth  = $all -or $parts -contains "1"
 $doSpace = $all -or $parts -contains "2"
 $doDoc   = $all -or $parts -contains "3"
-$doAdmin = $all -or $parts -contains "4"
-$doSec   = $all -or $parts -contains "5"
+$doCol   = $all -or $parts -contains "4"
+$doAdmin = $all -or $parts -contains "5"
+$doSec   = $all -or $parts -contains "6"
 
-$needsUser  = $doSpace -or $doDoc -or $doAdmin -or $doSec
-$needsAdmin = $doAdmin
+$needsUser  = $doSpace -or $doDoc -or $doCol -or $doAdmin -or $doSec
+$needsAdmin = $doCol -or $doAdmin
 
 $selectedNames = @()
 if ($doAuth)  { $selectedNames += "AUTH" }
 if ($doSpace) { $selectedNames += "ESPACIOS" }
 if ($doDoc)   { $selectedNames += "DOCUMENTOS" }
+if ($doCol)   { $selectedNames += "COLABORACION" }
 if ($doAdmin) { $selectedNames += "ADMIN" }
 if ($doSec)   { $selectedNames += "SEGURIDAD" }
 
@@ -313,7 +316,94 @@ if ($doDoc) {
     }
 }
 
-# ── BLOQUE 4: ADMIN ────────────────────────────────────────────────────────────
+# ── BLOQUE 4: COLABORACION ────────────────────────────────────────────────────
+
+if ($doCol) {
+    Section "COLABORACION EN ESPACIOS COMPARTIDOS"
+    if (-not ($script:AdminToken -and $script:UserToken)) {
+        Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "AdminToken o UserToken no disponibles"
+        Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "AdminToken o UserToken no disponibles"
+        Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "AdminToken o UserToken no disponibles"
+    } else {
+        $script:UserId = $null
+        try {
+            $meResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/users/me" `
+                -Headers @{ "Authorization"="Bearer $script:UserToken" } `
+                -UseBasicParsing -ErrorAction Stop
+            $script:UserId = ($meResp.Content | ConvertFrom-Json).id
+        } catch { }
+
+        if (-not $script:UserId) {
+            Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "No se pudo obtener UserId"
+            Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "No se pudo obtener UserId"
+            Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "No se pudo obtener UserId"
+        } else {
+            $script:ColSpaceId = $null; $script:ColDocId = $null
+            $colTs = Get-Date -Format "yyyyMMdd_HHmmss"
+            try {
+                $r = Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces" -UseBasicParsing -ErrorAction Stop `
+                    -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                    -Body (@{ name="Col-Test-$colTs"; description="temp"; privacy=0 } | ConvertTo-Json -Compress)
+                $script:ColSpaceId = ($r.Content | ConvertFrom-Json).id
+            } catch { }
+
+            if ($script:ColSpaceId) {
+                try {
+                    $r = Invoke-WebRequest -Method POST -Uri "$BaseUrl/documents" -UseBasicParsing -ErrorAction Stop `
+                        -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                        -Body (@{ title="Doc-Col-$colTs"; content="contenido original"; description=""; creativeSpaceId=$script:ColSpaceId } | ConvertTo-Json -Compress)
+                    $script:ColDocId = ($r.Content | ConvertFrom-Json).id
+                } catch { }
+            }
+
+            if ($script:ColSpaceId -and $script:ColDocId) {
+                try {
+                    Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces/$($script:ColSpaceId)/permissions" -UseBasicParsing -ErrorAction SilentlyContinue `
+                        -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                        -Body (@{ userId=$script:UserId; permissionLevel=1 } | ConvertTo-Json -Compress) | Out-Null
+                } catch { }
+
+                Invoke-ApiTest -Id "T-COL-01" -Description "Editor del espacio puede editar documento ajeno -> 200" `
+                    -Method PUT -Url "/documents/$($script:ColDocId)" -ExpectedStatus 200 -Token $script:UserToken `
+                    -Body @{ title="Doc-Col-$colTs"; content="editado por colaborador"; description="" }
+
+                Invoke-ApiTest -Id "T-COL-02" -Description "Editor del espacio no puede borrar documento ajeno -> 403" `
+                    -Method DELETE -Url "/documents/$($script:ColDocId)" -ExpectedStatus 403 -Token $script:UserToken
+
+                try {
+                    Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces/$($script:ColSpaceId)/permissions" -UseBasicParsing -ErrorAction SilentlyContinue `
+                        -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                        -Body (@{ userId=$script:UserId; permissionLevel=0 } | ConvertTo-Json -Compress) | Out-Null
+                } catch { }
+
+                Invoke-ApiTest -Id "T-COL-03" -Description "Viewer del espacio no puede editar documento ajeno -> 403" `
+                    -Method PUT -Url "/documents/$($script:ColDocId)" -ExpectedStatus 403 -Token $script:UserToken `
+                    -Body @{ title="Doc-Col-$colTs"; content="intento de edicion viewer"; description="" }
+            } else {
+                Skip-Test -Id "T-COL-01" -Description "Editor puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+                Skip-Test -Id "T-COL-02" -Description "Editor no puede borrar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+                Skip-Test -Id "T-COL-03" -Description "Viewer no puede editar documento ajeno" -Reason "No se pudo crear espacio/documento temporal"
+            }
+
+            if ($script:ColDocId) {
+                try {
+                    Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:ColDocId)" `
+                        -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+                        -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+                } catch { }
+            }
+            if ($script:ColSpaceId) {
+                try {
+                    Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/creativespaces/$($script:ColSpaceId)" `
+                        -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+                        -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+                } catch { }
+            }
+        }
+    }
+}
+
+# ── BLOQUE 5: ADMIN ────────────────────────────────────────────────────────────
 
 if ($doAdmin) {
     Section "PANEL DE ADMINISTRACION"
@@ -410,11 +500,12 @@ Write-Host "===========================================" -ForegroundColor White
 # ── INFORME MARKDOWN ───────────────────────────────────────────────────────────
 
 $groups = [ordered]@{
-    "Autenticacion"           = "T-AUTH"
-    "Espacios Creativos"      = "T-SPACE"
-    "Documentos y Versiones"  = "T-DOC"
-    "Panel de Administracion" = "T-ADMIN"
-    "Seguridad"               = "T-SEC"
+    "Autenticacion"                = "T-AUTH"
+    "Espacios Creativos"           = "T-SPACE"
+    "Documentos y Versiones"       = "T-DOC"
+    "Colaboracion en espacios"     = "T-COL"
+    "Panel de Administracion"      = "T-ADMIN"
+    "Seguridad"                    = "T-SEC"
 }
 $sb = [System.Text.StringBuilder]::new()
 [void]$sb.AppendLine("# Informe de Pruebas -- LifeHub (interactivo)")
