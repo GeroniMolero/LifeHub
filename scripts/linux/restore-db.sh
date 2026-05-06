@@ -38,7 +38,19 @@ if [ -n "${MSYSTEM:-}" ]; then
 else
     docker exec "$CONTAINER" mkdir -p /var/opt/mssql/backup
 fi
-docker cp "$BACKUP_FILE" "${CONTAINER}:${CONTAINER_PATH}"
+
+if command -v cygpath >/dev/null 2>&1; then
+    docker cp "$(cygpath -w "$BACKUP_FILE")" "${CONTAINER}:${CONTAINER_PATH}"
+elif [ -n "${MSYSTEM:-}" ]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker cp "$BACKUP_FILE" "${CONTAINER}:${CONTAINER_PATH}"
+else
+    docker cp "$BACKUP_FILE" "${CONTAINER}:${CONTAINER_PATH}"
+fi
+
+if [ $? -ne 0 ]; then
+    echo "Error: no se pudo copiar el archivo de backup al contenedor."
+    exit 1
+fi
 
 echo "Ejecutando RESTORE DATABASE..."
 

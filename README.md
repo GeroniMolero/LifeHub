@@ -109,10 +109,10 @@
 
 ## Requisitos
 
-- **.NET 8 SDK** o superior
-- **Node.js 20+** y npm
-- **SQL Server 2019+** (o LocalDB)
-- **Visual Studio Code** o **Visual Studio 2022**
+- **Docker Desktop** (recomendado — gestiona backend y base de datos sin instalación local)
+- **Node.js 20+ LTS** y npm (para el frontend local)
+- **.NET 8 SDK** — solo si desarrollas el backend fuera de Docker
+- **Visual Studio Code** o **Visual Studio 2022** (opcional)
 
 ## Inicio Rápido
 
@@ -173,6 +173,7 @@ Flujo recomendado para un clon nuevo del repositorio:
 ```powershell
 git clone <repo>
 cd LifeHub
+copy .env.example .env        # Edita .env con tus valores reales (DB_PASSWORD, JWT_KEY, etc.)
 .\start.ps1 local
 ```
 
@@ -300,7 +301,9 @@ LifeHub/
 │       ├── restore-db.sh
 │       ├── run-tests.sh
 │       └── run-tests-interactive.sh
-└── docker-compose.yml        # Orquestación Docker
+├── docker-compose.dev.yml    # Stack de desarrollo (backend watch + SQL Edge)
+├── docker-compose.yml        # Stack de producción
+└── .env.example              # Plantilla de variables de entorno
 ```
 
 ## Seguridad

@@ -51,7 +51,18 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Copiando backup al host..."
-docker cp "${CONTAINER}:${CONTAINER_PATH}" "${BACKUP_DIR}/${BACKUP_FILE}"
+if command -v cygpath >/dev/null 2>&1; then
+    docker cp "${CONTAINER}:${CONTAINER_PATH}" "$(cygpath -w "${BACKUP_DIR}/${BACKUP_FILE}")"
+elif [ -n "${MSYSTEM:-}" ]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" docker cp "${CONTAINER}:${CONTAINER_PATH}" "${BACKUP_DIR}/${BACKUP_FILE}"
+else
+    docker cp "${CONTAINER}:${CONTAINER_PATH}" "${BACKUP_DIR}/${BACKUP_FILE}"
+fi
+
+if [ $? -ne 0 ]; then
+    echo "Error: no se pudo copiar el backup al host."
+    exit 1
+fi
 
 # Clean up sensitive data from memory
 unset DB_PASSWORD
