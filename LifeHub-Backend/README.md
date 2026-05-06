@@ -9,7 +9,7 @@ Backend de LifeHub desarrollado con .NET 8 y ASP.NET Core Web API.
 
 ## Configuración
 
-1. Copia `.env.example` a `.env` en la raíz del repositorio y rellena los valores reales (`DB_PASSWORD`, `JWT_KEY`). Las credenciales se inyectan como variables de entorno y no deben escribirse en `appsettings.json`.
+1. Copia `.env.example` a `.env` (desarrollo) o `.env.production` (servidor de prod) en la raíz del repositorio y rellena los valores reales. Las credenciales se inyectan como variables de entorno y no deben escribirse en `appsettings.json`.
 
 2. Las migraciones de base de datos se aplican automáticamente al arrancar. No es necesario ejecutar `dotnet ef database update` manualmente.
 
@@ -117,6 +117,7 @@ Extiende `ClaimsPrincipal` con `GetUserId()` para extraer el identificador de us
 ### Autenticación
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/logout`
 
 ### Usuarios
 - `GET /api/users/{id}`

@@ -108,6 +108,28 @@
 - Spaces (módulo): `LifeHub-Frontend/src/app/pages/spaces/README.md`
 - Explicación de arrastre multimedia (funcional + técnica): `LifeHub-Frontend/docs/ARRASTRE_MULTIMEDIA.md`
 
+## Variables de entorno
+
+Copia la plantilla y rellena los valores reales antes de arrancar:
+
+```bash
+cp .env.example .env          # desarrollo local
+cp .env.example .env.production  # servidor de producción
+```
+
+`.env.example` contiene todas las variables con descripción. Los archivos `.env` y `.env.production` nunca se suben al repositorio.
+
+| Variable | Descripción |
+|----------|-------------|
+| `DB_PASSWORD` | Contraseña del usuario SA de SQL Server |
+| `JWT_KEY` | Clave secreta para firmar tokens JWT (mín. 32 chars) |
+| `DB_NAME` | Nombre de la base de datos (`LifeHubDB`) |
+| `SQL_CONTAINER` | Nombre del contenedor SQL (`lifehub-sql-dev` / `lifehub-sqlserver`) |
+| `SQLCMD_PATH` | Ruta a sqlcmd dentro del contenedor |
+| `SQLCMD_OPTS` | Opciones extra para sqlcmd (vacío en dev, `-C` en prod) |
+| `BACKEND_CONTAINER` | Nombre del contenedor backend |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Credenciales para los scripts de test |
+
 ## Requisitos
 
 - **Docker Desktop** (recomendado — gestiona backend y base de datos sin instalación local)
@@ -192,27 +214,38 @@ docker compose -f docker-compose.dev.yml down -v
 
 Esto borra solo datos locales de desarrollo en Docker (`sql_data`).
 
+
 ## Copias de seguridad
+
+Los scripts leen la configuración del `.env` por defecto. Usa `-EnvFile` / `-e` para apuntar a otro archivo (p. ej. `.env.production`).
 
 ### Windows
 ```powershell
-# Crear backup
+# Crear backup (dev)
 .\scripts\windows\backup-db.ps1
 
+# Crear backup (prod, en la misma máquina)
+.\scripts\windows\backup-db.ps1 -EnvFile .env.production
+
 # Restaurar
-.\scripts\windows\restore-db.ps1 -BackupFile .\backups\LifeHub_20260423_143000.bak
+.\scripts\windows\restore-db.ps1 -BackupFile .\backups\LifeHubDB_20260423_143000.bak
+.\scripts\windows\restore-db.ps1 -BackupFile .\backups\LifeHubDB_20260423_143000.bak -EnvFile .env.production
 ```
 
 ### Linux / macOS
 ```bash
-# Crear backup
+# Crear backup (dev)
 ./scripts/linux/backup-db.sh
 
+# Crear backup (prod)
+./scripts/linux/backup-db.sh -e .env.production
+
 # Restaurar
-./scripts/linux/restore-db.sh ./backups/LifeHub_20260423_143000.bak
+./scripts/linux/restore-db.sh ./backups/LifeHubDB_20260423_143000.bak
+./scripts/linux/restore-db.sh -e .env.production ./backups/LifeHubDB_20260423_143000.bak
 ```
 
-Los backups se guardan en la carpeta `backups/` con timestamp. Requiere el stack de desarrollo en marcha.
+Los backups se guardan en `backups/` con el formato `<DB_NAME>_<timestamp>.bak`.
 
 ## Pruebas
 
