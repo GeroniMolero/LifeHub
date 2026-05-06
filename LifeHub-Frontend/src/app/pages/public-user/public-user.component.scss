@@ -59,6 +59,33 @@
   }
 }
 
+.friendship-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &.btn-primary  { background: #1f7a8c; color: #fff; &:hover { background: #155f6e; } }
+  &.btn-danger   { background: none; color: #ef4444; border: 1px solid #fca5a5; &:hover { background: #fef2f2; } }
+}
+
+.friendship-status {
+  font-size: 0.875rem;
+
+  &--accepted { color: #16a34a; font-weight: 600; }
+}
+
 .muted {
   color: #64748b;
 }

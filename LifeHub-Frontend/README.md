@@ -20,10 +20,9 @@ Abre `http://localhost:4200/` en tu navegador.
 
 - **Autenticación**: Registro e inicio de sesión con JWT
 - **Perfil de Usuario**: Gestión de perfil y contraseña
-- **Sistema de Amigos**: Solicitudes de amistad y gestión de amigos
+- **Social**: Panel de contactos, gestión de amigos y chat en tiempo real con SignalR
 - **Espacios creativos**: CRUD de espacios con editor Markdown y recursos embebidos
 - **Documentos**: Crea, edita y descarga documentos en línea
-- **Chat en Tiempo Real**: En desarrollo (infraestructura backend lista, sin interfaz)
 - **Recomendaciones**: En desarrollo (API backend lista, sin interfaz)
 - **Música**: En desarrollo (API backend lista, sin interfaz)
 
@@ -54,7 +53,7 @@ src/
 - Angular 19
 - TypeScript 5.7
 - RxJS 7.8
-- @microsoft/signalr 8.0
+- @microsoft/signalr 10.0
 
 ## Compilación para Producción
 

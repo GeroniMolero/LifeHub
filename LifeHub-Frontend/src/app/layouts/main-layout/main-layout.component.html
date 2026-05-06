@@ -1,5 +1,5 @@
 <div class="layout-shell">
-  <app-layout-sidebar [isOpen]="isSidebarOpen" [currentUser]="currentUser" (closeSidebar)="closeSidebar()" (logout)="logout()"></app-layout-sidebar>
+  <app-layout-sidebar [isOpen]="isSidebarOpen" [currentUser]="currentUser" [chatUnreadCount]="chatUnreadCount" (closeSidebar)="closeSidebar()" (logout)="logout()"></app-layout-sidebar>
 
   <div class="layout-overlay" *ngIf="isSidebarOpen" (click)="closeSidebar()"></div>
 

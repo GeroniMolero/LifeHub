@@ -1,5 +1,5 @@
 <section class="public-user-container">
-  <a class="back-link" routerLink="/home">Volver al dashboard</a>
+  <a class="back-link" routerLink="/social">← Volver a Social</a>
 
   <p *ngIf="loading" class="muted">Cargando perfil...</p>
   <p *ngIf="error" class="error">{{ error }}</p>
@@ -23,6 +23,36 @@
       <ng-template #noBio>
         <p class="bio muted">Este usuario no ha agregado una biografía.</p>
       </ng-template>
+
+      <div class="friendship-actions" *ngIf="!loadingFriendship && currentUserId && currentUserId !== user.id">
+        <button type="button" class="btn btn-primary"
+          *ngIf="friendshipState === 'none'"
+          (click)="sendFriendRequest()">
+          Añadir amigo
+        </button>
+
+        <button type="button" class="btn btn-primary"
+          *ngIf="friendshipState === 'pending-received'"
+          (click)="acceptFriendRequest()">
+          Aceptar solicitud
+        </button>
+
+        <span class="friendship-status muted"
+          *ngIf="friendshipState === 'pending-sent'">
+          Solicitud enviada
+        </span>
+
+        <span class="friendship-status friendship-status--accepted"
+          *ngIf="friendshipState === 'accepted'">
+          Sois amigos
+        </span>
+
+        <button type="button" class="btn btn-danger"
+          *ngIf="friendshipState === 'accepted'"
+          (click)="removeFriend()">
+          Eliminar amigo
+        </button>
+      </div>
     </div>
   </article>
 </section>

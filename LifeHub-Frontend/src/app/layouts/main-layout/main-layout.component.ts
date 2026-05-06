@@ -4,6 +4,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
+import { ChatService } from '../../services/chat.service';
 import { User } from '../../models/auth.model';
 import { CreativeSpace } from '../../models/creative-space.model';
 import { Document } from '../../models/document.model';
@@ -22,6 +23,7 @@ export class MainLayoutComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   currentUser: User | null = null;
+  chatUnreadCount = 0;
   isSidebarOpen = false;
   headerTitle = 'LifeHub';
   headerDescription = 'Panel principal';
@@ -33,6 +35,7 @@ export class MainLayoutComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private chatService: ChatService,
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private layoutHeaderStateService: LayoutHeaderStateService
@@ -41,9 +44,11 @@ export class MainLayoutComponent implements OnInit {
   ngOnInit(): void {
     this.authService.getCurrentUser()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(user => {
-        this.currentUser = user;
-      });
+      .subscribe(user => { this.currentUser = user; });
+
+    this.chatService.unreadCount$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(count => { this.chatUnreadCount = count; });
 
     if (this.authService.isAuthenticated()) {
       this.authService.refreshCurrentUser().subscribe({

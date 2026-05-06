@@ -27,6 +27,9 @@
         </svg>
       </span>
       <span class="nav-label">{{ item.label }}</span>
+      <span class="nav-badge" *ngIf="item.route === '/social' && chatUnreadCount > 0">
+        {{ chatUnreadCount > 99 ? '99+' : chatUnreadCount }}
+      </span>
     </a>
   </nav>
 

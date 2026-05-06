@@ -29,8 +29,7 @@ namespace LifeHub.DTOs
         [MaxLength(2000)]
         public string? Bio { get; set; }
 
-        [MaxLength(500)]
-        [Url]
+        [MaxLength(2000)]
         public string? ProfilePictureUrl { get; set; }
     }
 

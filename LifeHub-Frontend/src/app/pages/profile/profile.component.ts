@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { ConfirmationService } from '../../services/confirmation.service';
 import { LayoutHeaderStateService } from '../../services/layout-header-state.service';
 import { UserService } from '../../services/user.service';
+import { ToastService } from '../../services/toast.service';
 import { User } from '../../models/auth.model';
 
 @Component({
@@ -21,8 +22,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   activeTab: 'view' | 'edit' = 'view';
   loading = false;
-  success = '';
-  error = '';
   submittedProfile = false;
   submittedPassword = false;
 
@@ -32,6 +31,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private confirmationService: ConfirmationService,
     private layoutHeaderStateService: LayoutHeaderStateService,
+    private toast: ToastService,
     private router: Router
   ) {}
 
@@ -59,10 +59,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.profileForm.invalid) return;
 
     this.loading = true;
-    this.success = '';
-    this.error = '';
 
-    this.userService.updateProfile(this.profileForm.value).subscribe({
+    const data = {
+      ...this.profileForm.value,
+      profilePictureUrl: this.profileForm.value.profilePictureUrl?.trim() || null
+    };
+    this.userService.updateProfile(data).subscribe({
       next: (user) => {
         this.currentUser = user;
         this.profileForm.patchValue({
@@ -71,16 +73,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
           profilePictureUrl: user.profilePictureUrl || ''
         });
         this.setHeaderState();
-        this.authService.refreshCurrentUser().subscribe({
-          error: () => {
-            // No bloquear la actualización local si falla la recarga global.
-          }
-        });
-        this.success = 'Perfil actualizado correctamente.';
+        this.authService.refreshCurrentUser().subscribe();
+        this.toast.success('Perfil actualizado correctamente.');
         this.loading = false;
       },
       error: (err) => {
-        this.error = err?.error?.message || 'No se pudo actualizar el perfil.';
+        this.toast.error(err?.error?.message || 'No se pudo actualizar el perfil.');
         this.loading = false;
       }
     });
@@ -93,26 +91,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const newPassword = this.passwordForm.get('newPassword')?.value;
     const confirmPassword = this.passwordForm.get('confirmPassword')?.value;
     if (newPassword !== confirmPassword) {
-      this.error = 'Las contraseñas no coinciden.';
-      this.success = '';
+      this.toast.error('Las contraseñas no coinciden.');
       return;
     }
 
     this.loading = true;
-    this.success = '';
-    this.error = '';
 
     this.userService.changePassword(
       this.passwordForm.get('currentPassword')?.value,
       newPassword
     ).subscribe({
       next: () => {
-        this.success = 'Contraseña actualizada correctamente.';
+        this.toast.success('Contraseña actualizada correctamente.');
         this.passwordForm.reset();
+        this.submittedPassword = false;
         this.loading = false;
       },
       error: (err) => {
-        this.error = err?.error?.message || 'No se pudo actualizar la contraseña.';
+        this.toast.error(err?.error?.message || 'No se pudo actualizar la contraseña.');
         this.loading = false;
       }
     });
@@ -122,14 +118,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (!this.confirmationService.confirmDelete('tu cuenta permanentemente')) return;
 
     this.loading = true;
-    this.error = '';
     this.userService.deleteCurrentUser().subscribe({
       next: () => {
         this.authService.logout();
         this.router.navigate(['/login']);
       },
       error: err => {
-        this.error = err?.error?.message || 'No se pudo eliminar la cuenta.';
+        this.toast.error(err?.error?.message || 'No se pudo eliminar la cuenta.');
         this.loading = false;
       }
     });
@@ -154,7 +149,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: () => {
-        this.error = 'No se pudo cargar el perfil.';
+        this.toast.error('No se pudo cargar el perfil.');
         this.loading = false;
       }
     });

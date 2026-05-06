@@ -92,6 +92,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/documents/document-detail/document-detail.component').then(m => m.DocumentDetailComponent)
       },
       {
+        path: 'social',
+        data: {
+          headerTitle: 'Social',
+          headerDescription: 'Chat en tiempo real con tus amigos'
+        },
+        loadComponent: () => import('./pages/social/social.component').then(m => m.SocialComponent)
+      },
+      {
         path: 'admin',
         canActivate: [AdminGuard],
         data: {
