@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs/operators';
 import { marked } from 'marked';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -98,6 +99,33 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   ) {
     // Defense-in-depth: do not render raw HTML blocks/tags from markdown input.
     this.markdownRenderer.html = ({ text }) => this.escapeHtml(text);
+
+    // Only allow https:// links; block http:// and other schemes.
+    this.markdownRenderer.link = ({ href, title, text }) => {
+      if (!href?.startsWith('https://')) return text;
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
+    };
+
+    // Only render images from allowlisted domains.
+    this.markdownRenderer.image = ({ href, title, text }) => {
+      if (!this.isDomainAllowed(href ?? '')) {
+        return `<span class="blocked-image" title="Imagen bloqueada: dominio no permitido">[imagen bloqueada: ${text || href}]</span>`;
+      }
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<img src="${href}" alt="${text}"${titleAttr}>`;
+    };
+  }
+
+  private isDomainAllowed(url: string): boolean {
+    try {
+      const { hostname } = new URL(url);
+      return this.allowedEmbedDomains.some(
+        domain => hostname === domain || hostname.endsWith('.' + domain)
+      );
+    } catch {
+      return false;
+    }
   }
 
   ngOnInit(): void {
@@ -120,6 +148,10 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       description: [''],
       content: ['']
     });
+
+    this.editDocumentForm.get('content')!.valueChanges
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateRenderedPreview());
 
     this.createEmbedForm = this.fb.group({
       label: ['', Validators.required],
@@ -624,10 +656,6 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     const html = this.renderMarkdownToHtml(content);
 
     this.renderedPreview = this.sanitizer.sanitize(SecurityContext.HTML, html) || '';
-  }
-
-  private looksLikeHtml(content: string): boolean {
-    return /<\/?[a-z][\s\S]*>/i.test(content);
   }
 
   private renderMarkdownToHtml(markdown: string): string {

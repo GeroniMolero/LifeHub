@@ -324,6 +324,29 @@ textarea {
     text-decoration: underline;
   }
 
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: $border-radius-md;
+    display: block;
+    margin: $space-3 0;
+  }
+
+  .blocked-image {
+    display: inline-block;
+    padding: $space-2 $space-3;
+    border-radius: $border-radius-md;
+    background: rgba(231, 76, 60, 0.08);
+    border: $border-width-base solid rgba(231, 76, 60, 0.25);
+    color: $color-danger;
+    font-size: $font-size-sm;
+  }
+
+  del {
+    color: $color-slate-500;
+    text-decoration: line-through;
+  }
+
   hr {
     border: 0;
     height: 1px;
