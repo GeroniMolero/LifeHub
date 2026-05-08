@@ -1,6 +1,6 @@
 ﻿# Plan de Pruebas — LifeHub
 
-**Fecha:** 06-05-2026 (última actualización)  
+**Fecha:** 08-05-2026 (última actualización)  
 **Versión del proyecto:** master (post-patrones de diseño, validación coherente, scripts robustos)  
 **Entorno de pruebas:** Docker dev stack (lifehub-sql-dev + lifehub-backend-dev) + frontend local
 
@@ -55,6 +55,7 @@
 | CP-03-05 | Versionado — crear snapshot | 1. Guardar documento 2. Crear snapshot vía API | Versión almacenada con número de versión | `{"id":1,"versionNumber":1,...}` devuelto por API | ✅ PASS |
 | CP-03-06 | Restaurar versión anterior | 1. Editar documento 2. Restaurar snapshot anterior | El contenido vuelve al estado de esa versión | Contenido restaurado verificado en GET posterior | ✅ PASS |
 | CP-03-07 | Eliminar documento | 1. Eliminar un documento con confirmación | Documento desaparece de la lista | HTTP 204 No Content | ✅ PASS |
+| CP-03-08 | Modo split del editor | 1. Abrir documento 2. Seleccionar pestaña Split | Código y preview se muestran lado a lado | — | ⏳ PENDIENTE |
 
 ---
 
@@ -66,6 +67,7 @@
 | CP-04-02 | Enviar solicitud de amistad | 1. Enviar solicitud a un usuario encontrado | Solicitud queda en estado pendiente | Verificado en frontend | ✅ PASS |
 | CP-04-03 | Aceptar solicitud | 1. Desde la otra cuenta, aceptar la solicitud | Ambos usuarios aparecen como amigos | Verificado en frontend | ✅ PASS |
 | CP-04-04 | Rechazar solicitud | 1. Rechazar una solicitud entrante | La solicitud desaparece. No se añade el amigo. | Verificado en frontend | ✅ PASS |
+| CP-04-05 | Badge de mensajes no leídos | 1. Recibir mensajes de un amigo sin abrir el chat 2. Ir a /social | Cada amigo muestra un contador con los mensajes no leídos | — | ⏳ PENDIENTE |
 
 ---
 
@@ -74,8 +76,22 @@
 | ID | Descripción | Pasos | Resultado esperado | Resultado real | Estado |
 |----|-------------|-------|--------------------|----------------|--------|
 | CP-05-01 | Actualizar perfil | 1. Ir a perfil 2. Cambiar nombre, descripción o imagen 3. Guardar | Cambios reflejados inmediatamente | Verificado en frontend | ✅ PASS |
-| CP-05-02 | Perfil público | 1. Acceder al perfil público de otro usuario | Se muestra nombre, bio, imagen y espacios favoritos | Verificado en frontend | ✅ PASS |
-| CP-05-03 | Añadir espacio favorito | 1. Marcar un espacio como favorito desde el perfil | El espacio aparece en la previsualización del perfil | Verificado en frontend | ✅ PASS |
+| CP-05-02 | Perfil público | 1. Acceder al perfil público de otro usuario | Se muestra nombre, bio, imagen y grid de documentos/espacios visibles | — | ⏳ PENDIENTE |
+| CP-05-03 | Marcar contenido visible en perfil | 1. Desde el perfil, activar toggle de visibilidad en hasta 3 documentos y 3 espacios | El contenido aparece en el grid del perfil público | — | ⏳ PENDIENTE |
+| CP-05-04 | Modal de previsualización de documento | 1. Desde el perfil público de un usuario, pulsar sobre un documento | Se abre modal con markdown renderizado y botones Ver y Descargar | — | ⏳ PENDIENTE |
+
+---
+
+---
+
+### CP-10 — Publicaciones de documentos
+
+| ID | Descripción | Pasos | Resultado esperado | Resultado real | Estado |
+|----|-------------|-------|--------------------|----------------|--------|
+| CP-10-01 | Publicar documento | 1. Abrir documento 2. Abrir modal de publicación 3. Confirmar | Documento queda publicado y accesible en vista pública | — | ⏳ PENDIENTE |
+| CP-10-02 | Autor visible en vista pública | 1. Acceder a la vista pública de un documento publicado | Se muestra el nombre del autor junto al contenido | — | ⏳ PENDIENTE |
+| CP-10-03 | Publicar documento ajeno (control de acceso) | 1. Intentar publicar un documento que no es propio vía API | HTTP 403 Forbidden | — | ⏳ PENDIENTE |
+| CP-10-04 | Despublicar documento | 1. Despublicar un documento publicado | Documento desaparece de la vista pública | — | ⏳ PENDIENTE |
 
 ---
 
@@ -126,16 +142,17 @@
 |--------|-------------|---------|----------|------------|
 | CP-01 Autenticación | 6 | 6 | 0 | 0 |
 | CP-02 Espacios creativos | 6 | 6 | 0 | 0 |
-| CP-03 Documentos | 7 | 7 | 0 | 0 |
-| CP-04 Amigos | 4 | 4 | 0 | 0 |
-| CP-05 Perfil | 3 | 3 | 0 | 0 |
+| CP-03 Documentos | 8 | 7 | 0 | 1 |
+| CP-04 Amigos | 5 | 4 | 0 | 1 |
+| CP-05 Perfil | 4 | 1 | 0 | 3 |
 | CP-06 Panel admin | 5 | 5 | 0 | 0 |
 | CP-07 Embebidos | 2 | 2 | 0 | 0 |
 | CP-08 Seguridad sesión | 1 | 1 | 0 | 0 |
 | CP-09 Backup y restauración | 3 | 3 | 0 | 0 |
-| **TOTAL** | **37** | **37** | **0** | **0** |
+| CP-10 Publicaciones | 4 | 0 | 0 | 4 |
+| **TOTAL** | **44** | **35** | **0** | **9** |
 
-### Pruebas automatizadas — suite `run-tests.ps1` (06-05-2026)
+### Pruebas automatizadas — suite `run-tests.ps1` (08-05-2026)
 
 | Bloque | Tests | OK | FAIL | SKIP |
 |--------|-------|----|------|------|
@@ -143,9 +160,10 @@
 | Espacios creativos | 5 | 5 | 0 | 0 |
 | Documentos y versiones | 9 | 9 | 0 | 0 |
 | Colaboración en espacios | 3 | 3 | 0 | 0 |
+| Publicaciones | 11 | 11 | 0 | 0 |
 | Panel de administración | 6 | 6 | 0 | 0 |
-| Seguridad | 2 | 2 | 0 | 0 |
-| **TOTAL** | **33** | **33** | **0** | **0** |
+| Seguridad | 4 | 4 | 0 | 0 |
+| **TOTAL** | **46** | **46** | **0** | **0** |
 
 ---
 
