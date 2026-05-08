@@ -145,6 +145,11 @@ backups/
 documentacion/RESULTADO_PRUEBAS_*.md
 
 #######################
+# Resultados de cobertura de código (generados por dotnet test)
+#######################
+TestResults*/
+
+#######################
 # Documentos binarios
 #######################
 *.pdf
