@@ -4,6 +4,8 @@
 
 **LifeHub** es un portal web completo desarrollado con **Angular** (frontend) y **.NET 8** (backend), diseñado como un entorno centralizado para herramientas útiles del día a día.
 
+Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicaciones Web (DAW).
+
 ## Características Principales
 
 ### Sistema de Autenticación
