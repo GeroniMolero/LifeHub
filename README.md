@@ -415,7 +415,7 @@ LifeHub/
 
 ## Licencia
 
-Uso personal y educativo libre. Uso comercial reservado al autor — ver el archivo LICENSE para detalles.
+Todos los derechos reservados al autor — ver el archivo LICENSE para detalles.
 
 ## Contacto
 
