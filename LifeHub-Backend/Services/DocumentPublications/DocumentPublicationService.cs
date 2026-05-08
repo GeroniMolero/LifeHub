@@ -65,6 +65,7 @@ namespace LifeHub.Services.DocumentPublications
 
             publication.PublicTitle = string.IsNullOrWhiteSpace(dto.PublicTitle) ? null : dto.PublicTitle.Trim();
             publication.PublicDescription = string.IsNullOrWhiteSpace(dto.PublicDescription) ? null : dto.PublicDescription.Trim();
+            publication.Author = string.IsNullOrWhiteSpace(dto.Author) ? null : dto.Author.Trim();
             publication.MediaReferencesJson = JsonSerializer.Serialize(dto.MediaReferences ?? new List<MediaReferenceDto>());
             publication.ExternalLinksJson = JsonSerializer.Serialize(
                 (dto.ExternalLinks ?? new List<string>())
@@ -100,6 +101,7 @@ namespace LifeHub.Services.DocumentPublications
                 Title = publication.PublicTitle ?? document.Title,
                 Description = publication.PublicDescription ?? document.Description,
                 Content = document.Content,
+                Author = publication.Author,
                 PublishedAt = document.PublishedAt,
                 MediaReferences = DeserializeList<MediaReferenceDto>(publication.MediaReferencesJson),
                 ExternalLinks = DeserializeList<string>(publication.ExternalLinksJson)
@@ -143,6 +145,7 @@ namespace LifeHub.Services.DocumentPublications
                 PublishedAt = document.PublishedAt,
                 PublicTitle = publication.PublicTitle,
                 PublicDescription = publication.PublicDescription,
+                Author = publication.Author,
                 MediaReferences = DeserializeList<MediaReferenceDto>(publication.MediaReferencesJson),
                 ExternalLinks = DeserializeList<string>(publication.ExternalLinksJson),
                 CreatedAt = publication.CreatedAt,

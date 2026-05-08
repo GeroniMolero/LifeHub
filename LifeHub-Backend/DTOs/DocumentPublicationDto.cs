@@ -16,6 +16,7 @@ namespace LifeHub.DTOs
         public DateTime? PublishedAt { get; set; }
         public string? PublicTitle { get; set; }
         public string? PublicDescription { get; set; }
+        public string? Author { get; set; }
         public List<MediaReferenceDto> MediaReferences { get; set; } = new();
         public List<string> ExternalLinks { get; set; } = new();
         public DateTime CreatedAt { get; set; }
@@ -27,6 +28,7 @@ namespace LifeHub.DTOs
         public bool IsPublic { get; set; }
         public string? PublicTitle { get; set; }
         public string? PublicDescription { get; set; }
+        public string? Author { get; set; }
         public List<MediaReferenceDto> MediaReferences { get; set; } = new();
         public List<string> ExternalLinks { get; set; } = new();
     }
@@ -37,6 +39,7 @@ namespace LifeHub.DTOs
         public string Title { get; set; } = null!;
         public string Description { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
+        public string? Author { get; set; }
         public DateTime? PublishedAt { get; set; }
         public List<MediaReferenceDto> MediaReferences { get; set; } = new();
         public List<string> ExternalLinks { get; set; } = new();

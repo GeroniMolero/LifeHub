@@ -49,6 +49,8 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
   showPublicationModal = false;
   isEditingPublication = false;
 
+  private currentUserName: string | null = null;
+
   private readonly markdownRenderer = new marked.Renderer();
   private allowedEmbedDomains: string[] = [...MEDIA_EMBED_ALLOWED_DOMAINS];
 
@@ -97,7 +99,8 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     this.publicationForm = this.fb.group({
       isPublic: [false],
       publicTitle: [''],
-      publicDescription: ['']
+      publicDescription: [''],
+      author: ['']
     });
 
     this.editForm.get('content')!.valueChanges
@@ -111,7 +114,10 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
 
     this.authService.getCurrentUser()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(user => { this.currentUserId = user?.id ?? null; });
+      .subscribe(user => {
+        this.currentUserId = user?.id ?? null;
+        this.currentUserName = user?.fullName || user?.email || null;
+      });
 
     this.route.data
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -252,6 +258,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
       isPublic: Boolean(this.publicationForm.value.isPublic),
       publicTitle: this.publicationForm.value.publicTitle || undefined,
       publicDescription: this.publicationForm.value.publicDescription || undefined,
+      author: this.publicationForm.value.author || undefined,
       mediaReferences: [],
       externalLinks: []
     }).subscribe({
@@ -548,7 +555,8 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         this.publicationForm.patchValue({
           isPublic: publication.isPublic,
           publicTitle: publication.publicTitle || '',
-          publicDescription: publication.publicDescription || ''
+          publicDescription: publication.publicDescription || '',
+          author: publication.author || this.currentUserName || ''
         });
       },
       error: () => { this.publication = null; }

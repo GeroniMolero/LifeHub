@@ -7,7 +7,7 @@ namespace LifeHub.Controllers
 {
     [ApiController]
     [Route("api/embed-allowlist")]
-    [Authorize]
+    [AllowAnonymous]
     public class EmbedAllowlistController : ApiControllerBase
     {
         private readonly IAllowedWebsiteService _allowedWebsiteService;

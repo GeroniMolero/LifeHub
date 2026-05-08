@@ -6,6 +6,7 @@ namespace LifeHub.Models
         public int DocumentId { get; set; }
         public string? PublicTitle { get; set; }
         public string? PublicDescription { get; set; }
+        public string? Author { get; set; }
         public string MediaReferencesJson { get; set; } = "[]";
         public string ExternalLinksJson { get; set; } = "[]";
         public string PublishedByUserId { get; set; } = null!;

@@ -7,6 +7,7 @@
     <header class="doc-header">
       <h1>{{ document.title }}</h1>
       <p class="description" *ngIf="document.description">{{ document.description }}</p>
+      <p class="doc-author" *ngIf="document.author">Por {{ document.author }}</p>
       <small class="pub-date" *ngIf="document.publishedAt">Publicado {{ document.publishedAt | date:'mediumDate' }}</small>
     </header>
 
