@@ -9,5 +9,6 @@ namespace LifeHub.Services.Documents
         Task<ServiceResult<DocumentDto>> CreateDocumentAsync(string userId, CreateDocumentDto dto);
         Task<ServiceResult<DocumentDto>> UpdateDocumentAsync(int id, string userId, UpdateDocumentDto dto);
         Task<ServiceResult<bool>> DeleteDocumentAsync(int id, string userId);
+        Task<ServiceResult<List<DocumentDto>>> GetPublicDocumentsByUserAsync(string targetUserId);
     }
 }

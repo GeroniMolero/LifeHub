@@ -22,6 +22,12 @@ using LifeHub.Hubs;
 var builder = WebApplication.CreateBuilder(args);
 
 // =============================
+// BUSINESS RULES CONFIG
+// =============================
+builder.Services.Configure<LifeHub.Utilidades.BusinessRules>(
+    builder.Configuration.GetSection("BusinessRules"));
+
+// =============================
 // DB CONTEXT
 // =============================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -157,6 +163,8 @@ builder.Services.AddAuthorization(options =>
 // =============================
 builder.Services.AddSignalR();
 
+builder.WebHost.ConfigureKestrel(o => o.AddServerHeader = false);
+
 var app = builder.Build();
 
 // =============================
@@ -174,6 +182,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
+
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    ctx.Response.Headers["X-Frame-Options"] = "DENY";
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -78,5 +78,17 @@ namespace LifeHub.Services.Messages
 
             return ServiceResult<int>.Ok(count);
         }
+
+        public async Task<ServiceResult<Dictionary<string, int>>> GetUnreadCountPerSenderAsync(string userId)
+        {
+            var counts = await _context.Messages
+                .Where(m => m.ReceiverId == userId && !m.IsRead)
+                .GroupBy(m => m.SenderId)
+                .Select(g => new { SenderId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            return ServiceResult<Dictionary<string, int>>.Ok(
+                counts.ToDictionary(x => x.SenderId, x => x.Count));
+        }
     }
 }

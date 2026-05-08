@@ -1,6 +1,6 @@
 <div class="profile-container">
-  <div *ngIf="activeTab === 'view' && currentUser" class="profile-card profile-view-card">
-    <div class="profile-view-banner">
+  <div *ngIf="activeTab === 'view' && currentUser">
+    <div class="profile-card profile-hero-card">
       <ng-container *ngIf="currentUser.profilePictureUrl; else viewInitialsAvatar">
         <img
           class="profile-view-avatar"
@@ -19,8 +19,22 @@
         <p class="email">{{ currentUser.email }}</p>
         <p class="bio" *ngIf="currentUser.bio; else noBioView">{{ currentUser.bio }}</p>
         <ng-template #noBioView>
-          <p class="bio muted">Este usuario no ha agregado una biografía.</p>
+          <p class="bio muted">Sin biografía.</p>
         </ng-template>
+      </div>
+    </div>
+
+    <div class="profile-card profile-spaces-card">
+      <h3>Espacios públicos</h3>
+      <p *ngIf="loadingSpaces" class="muted">Cargando...</p>
+      <p *ngIf="!loadingSpaces && publicSpaces.length === 0" class="muted">
+        No tienes espacios marcados como visibles. Actívalos desde "Editar perfil".
+      </p>
+      <div class="spaces-grid" *ngIf="!loadingSpaces && publicSpaces.length > 0">
+        <a *ngFor="let space of publicSpaces" class="space-card" [routerLink]="['/spaces', space.id]">
+          <strong>{{ space.name }}</strong>
+          <p>{{ space.description || 'Sin descripción' }}</p>
+        </a>
       </div>
     </div>
   </div>
@@ -136,6 +150,30 @@
         {{ loading ? 'Cambiando...' : 'Cambiar Contraseña' }}
       </button>
     </form>
+  </div>
+
+  <div class="profile-card" *ngIf="activeTab === 'edit'">
+    <h2>Espacios en perfil público</h2>
+    <p class="muted" *ngIf="loadingSpaces">Cargando espacios...</p>
+    <p class="muted" *ngIf="!loadingSpaces && spaces.length === 0">
+      Aún no tienes espacios creativos.
+    </p>
+    <ul class="spaces-visibility-list" *ngIf="!loadingSpaces && spaces.length > 0">
+      <li *ngFor="let space of spaces" class="spaces-visibility-item">
+        <div class="spaces-visibility-info">
+          <strong>{{ space.name }}</strong>
+          <span class="muted">{{ space.description || 'Sin descripción' }}</span>
+        </div>
+        <label class="toggle">
+          <input
+            type="checkbox"
+            [checked]="space.isPublicProfileVisible"
+            (change)="togglePublicVisibility(space)"
+          />
+          <span class="toggle-track"></span>
+        </label>
+      </li>
+    </ul>
   </div>
 
   <div class="profile-card danger-zone">

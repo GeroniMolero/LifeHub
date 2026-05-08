@@ -35,6 +35,8 @@ $script:SpaceId        = $null
 $script:DocId          = $null
 $script:VersionId      = $null
 $script:WebsiteId      = $null
+$script:PubDocId       = $null
+$script:UnpubDocId     = $null
 
 # Resultados
 $Results = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -51,15 +53,18 @@ function Invoke-ApiTest {
         [string]$Token         = $null,
         [int]$ExpectedStatus,
         [string]$Contains      = $null,
-        [string]$NotContains   = $null,
-        [scriptblock]$OnPass   = $null
+        [string]$NotContains       = $null,
+        [hashtable]$RequireHeaders = $null,
+        [hashtable]$ForbidHeaders  = $null,
+        [scriptblock]$OnPass       = $null
     )
 
     $headers = @{ "Content-Type" = "application/json" }
     if ($Token) { $headers["Authorization"] = "Bearer $Token" }
 
-    $actualStatus = 0
-    $responseBody = ""
+    $actualStatus    = 0
+    $responseBody    = ""
+    $responseHeaders = @{}
 
     try {
         $params = @{
@@ -72,8 +77,9 @@ function Invoke-ApiTest {
         if ($Body) { $params["Body"] = ($Body | ConvertTo-Json -Compress) }
 
         $response      = Invoke-WebRequest @params
-        $actualStatus  = [int]$response.StatusCode
-        $responseBody  = $response.Content
+        $actualStatus    = [int]$response.StatusCode
+        $responseBody    = $response.Content
+        $responseHeaders = $response.Headers
     }
     catch {
         try   { $actualStatus = [int]$_.Exception.Response.StatusCode }
@@ -90,6 +96,20 @@ function Invoke-ApiTest {
     $pass = ($actualStatus -eq $ExpectedStatus)
     if ($pass -and $Contains)    { $pass = $responseBody -match [regex]::Escape($Contains) }
     if ($pass -and $NotContains) { $pass = -not ($responseBody -match [regex]::Escape($NotContains)) }
+    if ($pass -and $RequireHeaders) {
+        foreach ($kv in $RequireHeaders.GetEnumerator()) {
+            $hval = if ($responseHeaders.ContainsKey($kv.Key)) { $responseHeaders[$kv.Key] } else { $null }
+            if ($null -eq $hval -or ($kv.Value -and $hval -ne $kv.Value)) { $pass = $false; break }
+        }
+    }
+    if ($pass -and $ForbidHeaders) {
+        foreach ($kv in $ForbidHeaders.GetEnumerator()) {
+            if ($responseHeaders.ContainsKey($kv.Key)) {
+                $hval = $responseHeaders[$kv.Key]
+                if (-not $kv.Value -or $hval -match [regex]::Escape($kv.Value)) { $pass = $false; break }
+            }
+        }
+    }
 
     if ($pass -and $OnPass) { & $OnPass $responseBody }
 
@@ -324,7 +344,136 @@ else {
     }
 }
 
-# --- BLOQUE 4: Colaboracion en documentos compartidos ---
+# --- BLOQUE 4: Publicaciones de documentos ---
+
+Section "PUBLICACIONES DE DOCUMENTOS"
+
+if (-not $script:UserToken) {
+    "T-PUB-01","T-PUB-02","T-PUB-03","T-PUB-04","T-PUB-05","T-PUB-06","T-PUB-07" | ForEach-Object {
+        Skip-Test -Id $_ -Description "Test de publicacion" -Reason "UserToken no disponible"
+    }
+}
+else {
+    # Setup: documento que se publicara
+    try {
+        $pubDocBody = @{ title="PubTest-$Timestamp"; content="# Documento publicado`nContenido de prueba."; description="" } | ConvertTo-Json -Compress
+        $pubDocResp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/documents" `
+            -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:UserToken" } `
+            -Body $pubDocBody -UseBasicParsing -ErrorAction Stop
+        $script:PubDocId = ($pubDocResp.Content | ConvertFrom-Json).id
+    } catch { }
+
+    # Setup: documento que NO se publicara (para T-PUB-04)
+    try {
+        $unpubDocBody = @{ title="UnpubTest-$Timestamp"; content="privado"; description="" } | ConvertTo-Json -Compress
+        $unpubDocResp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/documents" `
+            -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:UserToken" } `
+            -Body $unpubDocBody -UseBasicParsing -ErrorAction Stop
+        $script:UnpubDocId = ($unpubDocResp.Content | ConvertFrom-Json).id
+    } catch { }
+
+    if ($script:PubDocId) {
+        Invoke-ApiTest -Id "T-PUB-01" -Description "Consultar publicacion de documento propio -> 200" `
+            -Method GET -Url "/documents/$($script:PubDocId)/publication" -ExpectedStatus 200 `
+            -Token $script:UserToken `
+            -Contains '"isPublic"'
+
+        Invoke-ApiTest -Id "T-PUB-02" -Description "Publicar documento (isPublic=true) -> 200" `
+            -Method PUT -Url "/documents/$($script:PubDocId)/publication" -ExpectedStatus 200 `
+            -Token $script:UserToken `
+            -Contains '"isPublic":true' `
+            -Body @{ isPublic=$true; publicTitle="PubTest-$Timestamp"; publicDescription=""; author="Autor AutoTest"; mediaReferences=@(); externalLinks=@() }
+
+        Invoke-ApiTest -Id "T-PUB-03" -Description "Documento publicado accesible sin autenticacion -> 200" `
+            -Method GET -Url "/public/documents/$($script:PubDocId)" -ExpectedStatus 200 `
+            -Contains '"documentId"'
+
+        Invoke-ApiTest -Id "T-PUB-06" -Description "Publicar con enlace externo no permitido -> 400" `
+            -Method PUT -Url "/documents/$($script:PubDocId)/publication" -ExpectedStatus 400 `
+            -Token $script:UserToken `
+            -Body @{ isPublic=$false; publicTitle=""; publicDescription=""; author=""; mediaReferences=@(); externalLinks=@("https://autotest-blocked-domain.invalid/page") }
+    }
+    else {
+        "T-PUB-01","T-PUB-02","T-PUB-03","T-PUB-06" | ForEach-Object {
+            Skip-Test -Id $_ -Description "Test de publicacion" -Reason "PubDocId no disponible"
+        }
+    }
+
+    if ($script:UnpubDocId) {
+        Invoke-ApiTest -Id "T-PUB-04" -Description "Documento no publicado no accesible sin auth -> 404" `
+            -Method GET -Url "/public/documents/$($script:UnpubDocId)" -ExpectedStatus 404
+    }
+    else {
+        Skip-Test -Id "T-PUB-04" -Description "Documento no publicado no accesible sin auth" -Reason "UnpubDocId no disponible"
+    }
+
+    Invoke-ApiTest -Id "T-PUB-05" -Description "Publicacion de documento inexistente/ajeno -> 404" `
+        -Method GET -Url "/documents/99999/publication" -ExpectedStatus 404 `
+        -Token $script:UserToken
+
+    Invoke-ApiTest -Id "T-PUB-07" -Description "Embed allowlist publica sin autenticacion -> 200" `
+        -Method GET -Url "/embed-allowlist" -ExpectedStatus 200
+
+    if ($script:PubDocId) {
+        Invoke-ApiTest -Id "T-PUB-08" -Description "PUT publicacion sin token -> 401" `
+            -Method PUT -Url "/documents/$($script:PubDocId)/publication" -ExpectedStatus 401 `
+            -Body @{ isPublic=$true }
+
+        Invoke-ApiTest -Id "T-PUB-09" -Description "GET publicacion sin token -> 401" `
+            -Method GET -Url "/documents/$($script:PubDocId)/publication" -ExpectedStatus 401
+    }
+    else {
+        Skip-Test -Id "T-PUB-08" -Description "PUT publicacion sin token -> 401" -Reason "PubDocId no disponible"
+        Skip-Test -Id "T-PUB-09" -Description "GET publicacion sin token -> 401" -Reason "PubDocId no disponible"
+    }
+
+    if ($script:AdminToken) {
+        $script:Pub10DocId = $null
+        try {
+            $p10Body = @{ title="PubTest-Admin-$Timestamp"; content="doc admin pub test"; description="" } | ConvertTo-Json -Compress
+            $p10Resp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/documents" `
+                -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                -Body $p10Body -UseBasicParsing -ErrorAction Stop
+            $script:Pub10DocId = ($p10Resp.Content | ConvertFrom-Json).id
+        } catch { }
+
+        if ($script:Pub10DocId) {
+            Invoke-ApiTest -Id "T-PUB-10" -Description "Publicar documento ajeno -> 404" `
+                -Method PUT -Url "/documents/$($script:Pub10DocId)/publication" -ExpectedStatus 404 `
+                -Token $script:UserToken `
+                -Body @{ isPublic=$true; publicTitle=""; publicDescription=""; author=""; mediaReferences=@(); externalLinks=@() }
+
+            try {
+                Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:Pub10DocId)" `
+                    -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+                    -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+            } catch { }
+        }
+        else {
+            Skip-Test -Id "T-PUB-10" -Description "Publicar documento ajeno -> 404" -Reason "No se pudo crear documento de admin"
+        }
+    }
+    else {
+        Skip-Test -Id "T-PUB-10" -Description "Publicar documento ajeno -> 404" -Reason "AdminToken no disponible"
+    }
+
+    if ($script:PubDocId) {
+        try {
+            Invoke-WebRequest -Method PUT -Uri "$BaseUrl/documents/$($script:PubDocId)/publication" `
+                -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:UserToken" } `
+                -Body (@{ isPublic=$false; publicTitle=""; publicDescription=""; author=""; mediaReferences=@(); externalLinks=@() } | ConvertTo-Json -Compress) `
+                -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        } catch { }
+
+        Invoke-ApiTest -Id "T-PUB-11" -Description "Documento despublicado no accesible sin auth -> 404" `
+            -Method GET -Url "/public/documents/$($script:PubDocId)" -ExpectedStatus 404
+    }
+    else {
+        Skip-Test -Id "T-PUB-11" -Description "Documento despublicado no accesible sin auth" -Reason "PubDocId no disponible"
+    }
+}
+
+# --- BLOQUE 5: Colaboracion en documentos compartidos ---
 
 Section "COLABORACION EN ESPACIOS COMPARTIDOS"
 
@@ -495,9 +644,33 @@ else {
     Skip-Test -Id "T-SEC-02" -Description "Token User en endpoint Admin" -Reason "Tokens no disponibles"
 }
 
+Invoke-ApiTest -Id "T-SEC-03" -Description "Cabeceras de seguridad presentes (nosniff + no-frame)" `
+    -Method GET -Url "/embed-allowlist" -ExpectedStatus 200 `
+    -RequireHeaders @{ "X-Content-Type-Options" = "nosniff"; "X-Frame-Options" = "DENY" }
+
+Invoke-ApiTest -Id "T-SEC-04" -Description "Cabecera Server no revela tecnologia" `
+    -Method GET -Url "/embed-allowlist" -ExpectedStatus 200 `
+    -ForbidHeaders @{ "Server" = "" }
+
 # --- BLOQUE 7: Limpieza ---
 
 Section "LIMPIEZA"
+
+if ($script:PubDocId -and $script:UserToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:PubDocId)" `
+            -Headers @{ Authorization="Bearer $($script:UserToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Documento PubTest $($script:PubDocId) eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
+
+if ($script:UnpubDocId -and $script:UserToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:UnpubDocId)" `
+            -Headers @{ Authorization="Bearer $($script:UserToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Documento UnpubTest $($script:UnpubDocId) eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
 
 if ($script:SpaceId -and $script:UserToken) {
     try {
@@ -548,6 +721,7 @@ $groups = [ordered]@{
     "Autenticacion"                     = "T-AUTH"
     "Espacios Creativos"                = "T-SPACE"
     "Documentos y Versiones"            = "T-DOC"
+    "Publicaciones"                     = "T-PUB"
     "Colaboracion en espacios"          = "T-COL"
     "Panel de Administracion"           = "T-ADMIN"
     "Seguridad"                         = "T-SEC"

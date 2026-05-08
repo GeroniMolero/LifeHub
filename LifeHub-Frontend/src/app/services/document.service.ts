@@ -32,6 +32,14 @@ export class DocumentService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
+  getPublicDocumentsByUser(userId: string): Observable<Document[]> {
+    return this.http.get<Document[]>(`${this.apiUrl}/public/${userId}`);
+  }
+
+  setDocumentProfileVisibility(documentId: number, isVisible: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${documentId}/publication/profile-visibility`, isVisible);
+  }
+
   static getTypeText(type?: DocumentType | string | number): string {
     const typeMap: { [key: number]: string } = {
       [DocumentType.Note]: 'Nota',

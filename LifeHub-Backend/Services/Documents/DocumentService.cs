@@ -4,6 +4,7 @@ using LifeHub.DTOs;
 using LifeHub.Models;
 using LifeHub.Utilidades;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LifeHub.Services.Documents
 {
@@ -12,12 +13,14 @@ namespace LifeHub.Services.Documents
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IHtmlSanitizer _htmlSanitizer;
+        private readonly BusinessRules _rules;
 
-        public DocumentService(ApplicationDbContext context, IMapper mapper, IHtmlSanitizer htmlSanitizer)
+        public DocumentService(ApplicationDbContext context, IMapper mapper, IHtmlSanitizer htmlSanitizer, IOptions<BusinessRules> rules)
         {
             _context = context;
             _mapper = mapper;
             _htmlSanitizer = htmlSanitizer;
+            _rules = rules.Value;
         }
 
         public async Task<ServiceResult<List<DocumentDto>>> GetDocumentsAsync(string userId, bool canViewAll)
@@ -72,6 +75,11 @@ namespace LifeHub.Services.Documents
             if (!userExists)
                 return ServiceResult<DocumentDto>.Unauthorized("Sesión inválida. Inicia sesión de nuevo.");
 
+            var docCount = await _context.Documents.CountAsync(d => d.UserId == userId);
+            if (docCount >= _rules.MaxDocumentsPerUser)
+                return ServiceResult<DocumentDto>.BadRequest(
+                    $"Has alcanzado el límite de {_rules.MaxDocumentsPerUser} documentos.");
+
             dto.Content = _htmlSanitizer.Sanitize(dto.Content);
 
             var document = _mapper.Map<Document>(dto);
@@ -105,9 +113,9 @@ namespace LifeHub.Services.Documents
                 return ServiceResult<DocumentDto>.Forbidden("No tienes permiso para editar este documento.");
 
             var versionCount = await _context.DocumentVersions.CountAsync(v => v.DocumentId == id);
-            if (versionCount >= BusinessRules.MaxDocumentVersions)
+            if (versionCount >= _rules.MaxDocumentVersions)
                 return ServiceResult<DocumentDto>.BadRequest(
-                    $"Este documento ha alcanzado el límite de {BusinessRules.MaxDocumentVersions} versiones. Elimina alguna versión antes de guardar.");
+                    $"Este documento ha alcanzado el límite de {_rules.MaxDocumentVersions} versiones. Elimina alguna versión antes de guardar.");
 
             dto.Content = _htmlSanitizer.Sanitize(dto.Content);
 
@@ -153,6 +161,21 @@ namespace LifeHub.Services.Documents
             await _context.SaveChangesAsync();
 
             return ServiceResult<bool>.Ok(true);
+        }
+
+        public async Task<ServiceResult<List<DocumentDto>>> GetPublicDocumentsByUserAsync(string targetUserId)
+        {
+            var documents = await _context.DocumentPublications
+                .Where(p => p.PublishedByUserId == targetUserId && p.IsProfileVisible)
+                .Include(p => p.Document)
+                    .ThenInclude(d => d.User)
+                .Include(p => p.Document)
+                    .ThenInclude(d => d.Publication)
+                .OrderByDescending(p => p.UpdatedAt)
+                .Select(p => p.Document)
+                .ToListAsync();
+
+            return ServiceResult<List<DocumentDto>>.Ok(_mapper.Map<List<DocumentDto>>(documents));
         }
 
     }

@@ -24,6 +24,10 @@ export class CreativeSpaceService {
     return this.http.get<CreativeSpace[]>(this.apiUrl);
   }
 
+  getPublicSpacesByUser(userId: string): Observable<CreativeSpace[]> {
+    return this.http.get<CreativeSpace[]>(`${this.apiUrl}/public/${userId}`);
+  }
+
   getSpace(id: number): Observable<CreativeSpace> {
     return this.http.get<CreativeSpace>(`${this.apiUrl}/${id}`);
   }
