@@ -189,6 +189,23 @@ textarea {
   min-height: 34rem;
 }
 
+.editor-frame.split-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  .editor-tab-bar {
+    grid-column: 1 / -1;
+  }
+
+  .editor-pane:not(.preview-pane) {
+    border-right: $border-width-base solid $color-brand-border-medium;
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
 .editor-toolbar {
   display: flex;
   flex-wrap: wrap;

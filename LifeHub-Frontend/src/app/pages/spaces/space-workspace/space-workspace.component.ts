@@ -53,7 +53,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   documents: Document[] = [];
   mediaReferences: SpaceMediaReference[] = [];
   selectedDocument: Document | null = null;
-  activeTab: 'code' | 'preview' = 'code';
+  activeTab: 'code' | 'preview' | 'split' = 'code';
 
   loading = true;
   loadingDocuments = false;
@@ -150,7 +150,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     });
 
     this.editDocumentForm.get('content')!.valueChanges
-      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(50), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateRenderedPreview());
 
     this.createEmbedForm = this.fb.group({
@@ -297,9 +297,9 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.updateRenderedPreview();
   }
 
-  setActiveTab(tab: 'code' | 'preview'): void {
+  setActiveTab(tab: 'code' | 'preview' | 'split'): void {
     this.activeTab = tab;
-    if (tab === 'preview') {
+    if (tab === 'preview' || tab === 'split') {
       this.updateRenderedPreview();
     }
   }

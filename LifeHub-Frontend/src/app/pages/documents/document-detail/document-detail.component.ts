@@ -44,7 +44,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
   error = '';
   currentUserId: string | null = null;
 
-  activeTab: 'code' | 'preview' = 'preview';
+  activeTab: 'code' | 'preview' | 'split' = 'preview';
   renderedPreview = '';
   showPublicationModal = false;
   isEditingPublication = false;
@@ -104,7 +104,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     });
 
     this.editForm.get('content')!.valueChanges
-      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .pipe(debounceTime(50), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.updateRenderedPreview());
 
     this.allowedWebsiteService.getEmbedAllowlist().subscribe({
@@ -137,9 +137,9 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     this.layoutHeaderStateService.clearOverride();
   }
 
-  setActiveTab(tab: 'code' | 'preview'): void {
+  setActiveTab(tab: 'code' | 'preview' | 'split'): void {
     this.activeTab = tab;
-    if (tab === 'preview') this.updateRenderedPreview();
+    if (tab === 'preview' || tab === 'split') this.updateRenderedPreview();
   }
 
   saveDocument(): void {

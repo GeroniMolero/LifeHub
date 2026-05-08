@@ -24,14 +24,14 @@ interface VisualMediaLayout {
 export class SpaceEditorMainComponent {
   @Input({ required: true }) selectedDocument: Document | null = null;
   @Input({ required: true }) editDocumentForm!: FormGroup;
-  @Input({ required: true }) activeTab: 'code' | 'preview' = 'code';
+  @Input({ required: true }) activeTab: 'code' | 'preview' | 'split' = 'code';
   @Input({ required: true }) renderedPreview = '';
   @Input({ required: true }) loadingDocuments = false;
   @Input({ required: true }) activeVisualMediaReferences: SpaceMediaReference[] = [];
   @Input() localFileBlobUrls: Map<string, string> = new Map();
   @Input() visualLayouts: Map<string, VisualMediaLayout> = new Map();
 
-  @Output() setActiveTab = new EventEmitter<'code' | 'preview'>();
+  @Output() setActiveTab = new EventEmitter<'code' | 'preview' | 'split'>();
   @Output() saveDocument = new EventEmitter<void>();
   @Output() deleteDocument = new EventEmitter<number>();
   @Output() startDraggingMedia = new EventEmitter<{ event: PointerEvent; id: string }>();

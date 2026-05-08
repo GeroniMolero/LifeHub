@@ -48,18 +48,19 @@
           <input type="text" formControlName="description" class="editor-desc-input" placeholder="Descripción (opcional)" />
         </div>
 
-        <div class="editor-frame">
+        <div class="editor-frame" [class.split-mode]="activeTab === 'split'">
           <div class="editor-tab-bar">
             <div class="editor-tabs">
               <button type="button" class="tab-btn" [class.active]="activeTab === 'code'" (click)="setActiveTab.emit('code')">Code</button>
               <button type="button" class="tab-btn" [class.active]="activeTab === 'preview'" (click)="setActiveTab.emit('preview')">Preview</button>
+              <button type="button" class="tab-btn" [class.active]="activeTab === 'split'" (click)="setActiveTab.emit('split')">Split</button>
             </div>
             <div class="editor-tab-actions">
               <a [routerLink]="['/documents', selectedDocument.id]" class="btn-detail-link">Ver detalle ↗</a>
             </div>
           </div>
 
-          <div class="editor-pane" *ngIf="activeTab === 'code'">
+          <div class="editor-pane" *ngIf="activeTab === 'code' || activeTab === 'split'">
             <div class="editor-toolbar">
               <button type="button" class="toolbar-btn" title="Negrita (Ctrl+B)" (click)="applyBold(codeEditor)"><strong>B</strong></button>
               <button type="button" class="toolbar-btn" title="Cursiva (Ctrl+I)" (click)="applyItalic(codeEditor)"><em>I</em></button>
@@ -84,7 +85,7 @@
               (keydown)="onEditorKeyDown($event, codeEditor)"></textarea>
           </div>
 
-          <div class="editor-pane preview-pane" *ngIf="activeTab === 'preview'">
+          <div class="editor-pane preview-pane" *ngIf="activeTab === 'preview' || activeTab === 'split'">
             <div class="content-preview rendered-markdown" [innerHTML]="renderedPreview"></div>
           </div>
         </div>
