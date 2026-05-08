@@ -51,7 +51,7 @@
         </div>
 
         <div class="editor-actions">
-          <button type="button" class="btn-danger-outline" (click)="deleteDocument()">Eliminar</button>
+          <button *ngIf="isDocumentOwner" type="button" class="btn-danger-outline" (click)="deleteDocument()">Eliminar</button>
           <button type="submit" class="btn-primary" [disabled]="editForm.invalid || loading">
             {{ loading ? 'Guardando...' : 'Guardar cambios' }}
           </button>

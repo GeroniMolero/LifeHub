@@ -10,6 +10,7 @@ namespace LifeHub.Models
         public string MediaReferencesJson { get; set; } = "[]";
         public string ExternalLinksJson { get; set; } = "[]";
         public string PublishedByUserId { get; set; } = null!;
+        public bool IsProfileVisible { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

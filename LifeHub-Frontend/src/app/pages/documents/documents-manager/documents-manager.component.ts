@@ -38,7 +38,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   currentPage = 1;
   private filterChangesSub?: Subscription;
   private userChangesSub?: Subscription;
-  private currentUserId: string | null = null;
+  currentUserId: string | null = null;
   private currentUserDisplayName = 'Usuario actual';
 
   constructor(

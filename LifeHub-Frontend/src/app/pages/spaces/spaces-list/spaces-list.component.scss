@@ -1,22 +1,30 @@
 @use '../../../../styles/design-tokens' as *;
+@use '../../../../styles/table-toolbar';
 
 .spaces-container { max-width: 980px; margin: 0 auto; }
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .card { border: 1px solid $color-border; border-radius: $border-radius-xl; padding: 1rem; background: $color-white; }
-.form-card form, .edit-form { display: grid; gap: 0.5rem; }
+.form-card form { display: grid; gap: 0.5rem; }
 input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid $color-border; border-radius: $border-radius-md; }
 .checkbox { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem; }
 .checkbox input { width: auto; }
 .actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
-.filters {
-  margin: 0.75rem 0 1rem;
+.spaces-toolbar {
+  padding: $space-5;
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  margin-bottom: $space-4;
 }
 
-.filters-row {
-  display: grid;
-  grid-template-columns: minmax(200px, 1.3fr) repeat(3, minmax(160px, 1fr)) auto;
-  gap: 0.6rem;
-  align-items: center;
+.filters-form input,
+.filters-form select {
+  width: 100%;
+  padding: $space-3;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  font-family: inherit;
+  background: $color-white;
 }
 
 .btn-primary, .btn-secondary, .btn-danger { border: 0; border-radius: $border-radius-md; padding: 0.45rem 0.75rem; cursor: pointer; text-decoration: none; }
@@ -40,11 +48,6 @@ input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid $color
   margin-top: 1.25rem;
 }
 
-@media (max-width: 900px) {
-  .filters-row {
-    grid-template-columns: 1fr;
-  }
-}
 
 .permissions-panel {
   margin-top: 1rem;
@@ -82,4 +85,68 @@ input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid $color
 .permission-item small {
   display: block;
   color: $color-text-secondary;
+}
+
+.modal-tabs {
+  display: flex;
+  gap: $space-1;
+  background: $color-slate-100;
+  border-radius: $border-radius-lg;
+  padding: $space-1;
+  margin-bottom: $space-5;
+}
+
+.modal-tab-btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: $color-slate-600;
+  padding: $space-2 $space-4;
+  cursor: pointer;
+  font-weight: $font-weight-medium;
+  border-radius: $border-radius-md;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+  &.active {
+    background: $color-white;
+    color: $color-brand-900;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  }
+}
+
+.modal-tab-body {
+  min-height: 360px;
+}
+
+.permissions-tab {
+  display: grid;
+  gap: $space-3;
+}
+
+.modal-create-form {
+  display: grid;
+  gap: $space-4;
+}
+
+.form-group {
+  display: grid;
+  gap: $space-1;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+  }
+}
+
+.modal-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-3;
+  margin-top: $space-2;
+}
+
+.error-message {
+  font-size: $font-size-sm;
+  color: $color-danger;
 }

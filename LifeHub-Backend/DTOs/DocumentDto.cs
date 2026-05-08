@@ -13,6 +13,7 @@ namespace LifeHub.DTOs
         public string Content { get; set; } = null!;
         public int Type { get; set; } // DocumentType as int
         public bool IsPublic { get; set; }
+        public bool IsProfileVisible { get; set; }
         public DateTime? PublishedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
@@ -44,4 +45,5 @@ namespace LifeHub.DTOs
         public string Content { get; set; } = null!;
         public int? CreativeSpaceId { get; set; }
     }
+
 }

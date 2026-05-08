@@ -22,6 +22,12 @@ using LifeHub.Hubs;
 var builder = WebApplication.CreateBuilder(args);
 
 // =============================
+// BUSINESS RULES CONFIG
+// =============================
+builder.Services.Configure<LifeHub.Utilidades.BusinessRules>(
+    builder.Configuration.GetSection("BusinessRules"));
+
+// =============================
 // DB CONTEXT
 // =============================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

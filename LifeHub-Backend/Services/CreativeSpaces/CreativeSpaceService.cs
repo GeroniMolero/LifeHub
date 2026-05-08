@@ -5,6 +5,7 @@ using LifeHub.DTOs;
 using LifeHub.Models;
 using LifeHub.Utilidades;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LifeHub.Services.CreativeSpaces
 {
@@ -13,18 +14,30 @@ namespace LifeHub.Services.CreativeSpaces
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IActivityLogService _activityLogService;
+        private readonly BusinessRules _rules;
 
-        public CreativeSpaceService(ApplicationDbContext context, IMapper mapper, IActivityLogService activityLogService)
+        public CreativeSpaceService(ApplicationDbContext context, IMapper mapper, IActivityLogService activityLogService, IOptions<BusinessRules> rules)
         {
             _context = context;
             _mapper = mapper;
             _activityLogService = activityLogService;
+            _rules = rules.Value;
         }
 
         public async Task<ServiceResult<List<CreativeSpaceDto>>> GetCreativeSpacesAsync(string userId)
         {
             var spaces = await _context.CreativeSpaces
                 .Where(cs => cs.OwnerId == userId || cs.Permissions.Any(p => p.UserId == userId))
+                .OrderByDescending(cs => cs.UpdatedAt)
+                .ToListAsync();
+
+            return ServiceResult<List<CreativeSpaceDto>>.Ok(_mapper.Map<List<CreativeSpaceDto>>(spaces));
+        }
+
+        public async Task<ServiceResult<List<CreativeSpaceDto>>> GetPublicSpacesByUserAsync(string targetUserId)
+        {
+            var spaces = await _context.CreativeSpaces
+                .Where(cs => cs.OwnerId == targetUserId && cs.IsPublicProfileVisible)
                 .OrderByDescending(cs => cs.UpdatedAt)
                 .ToListAsync();
 
@@ -52,6 +65,11 @@ namespace LifeHub.Services.CreativeSpaces
             if (!userExists)
                 return ServiceResult<CreativeSpaceDto>.Unauthorized("Sesión inválida. Inicia sesión de nuevo.");
 
+            var spaceCount = await _context.CreativeSpaces.CountAsync(cs => cs.OwnerId == userId);
+            if (spaceCount >= _rules.MaxSpacesPerUser)
+                return ServiceResult<CreativeSpaceDto>.BadRequest(
+                    $"Has alcanzado el límite de {_rules.MaxSpacesPerUser} espacios creativos.");
+
             var space = _mapper.Map<CreativeSpace>(dto);
             space.OwnerId = userId;
 
@@ -69,6 +87,15 @@ namespace LifeHub.Services.CreativeSpaces
 
             if (space == null)
                 return ServiceResult<CreativeSpaceDto>.NotFound("Espacio creativo no encontrado.");
+
+            if (dto.IsPublicProfileVisible && !space.IsPublicProfileVisible)
+            {
+                var visibleCount = await _context.CreativeSpaces
+                    .CountAsync(cs => cs.OwnerId == userId && cs.IsPublicProfileVisible && cs.Id != id);
+                if (visibleCount >= _rules.MaxProfileVisibleSpacesPerUser)
+                    return ServiceResult<CreativeSpaceDto>.BadRequest(
+                        $"Solo puedes tener {_rules.MaxProfileVisibleSpacesPerUser} espacios visibles en tu perfil.");
+            }
 
             _mapper.Map(dto, space);
             space.UpdatedAt = DateTime.UtcNow;

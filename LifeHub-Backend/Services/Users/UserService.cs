@@ -17,13 +17,13 @@ namespace LifeHub.Services.Users
             _mapper = mapper;
         }
 
-        public async Task<ServiceResult<UserDto>> GetUserAsync(string id)
+        public async Task<ServiceResult<PublicUserDto>> GetUserAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
-                return ServiceResult<UserDto>.NotFound("Usuario no encontrado.");
+                return ServiceResult<PublicUserDto>.NotFound("Usuario no encontrado.");
 
-            return ServiceResult<UserDto>.Ok(_mapper.Map<UserDto>(user));
+            return ServiceResult<PublicUserDto>.Ok(_mapper.Map<PublicUserDto>(user));
         }
 
         public async Task<ServiceResult<UserDto>> GetCurrentUserAsync(string userId)

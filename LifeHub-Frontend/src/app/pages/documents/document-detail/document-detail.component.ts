@@ -117,6 +117,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
       .subscribe(user => {
         this.currentUserId = user?.id ?? null;
         this.currentUserName = user?.fullName || user?.email || null;
+        if (this.document) this.setHeaderState(this.document);
       });
 
     this.route.data
@@ -516,14 +517,14 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         ...(document.isPublic ? ['Publicado'] : [])
       ],
       actions: [
-        {
+        ...(this.isDocumentOwner ? [{
           label: 'Publicación',
-          variant: 'ghost',
+          variant: 'ghost' as const,
           action: () => { this.showPublicationModal = true; }
-        },
+        }] : []),
         {
           label: 'Volver a documentos',
-          variant: 'secondary',
+          variant: 'secondary' as const,
           route: '/documents'
         }
       ]

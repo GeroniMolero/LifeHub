@@ -1,5 +1,5 @@
 <div class="modal-backdrop" *ngIf="visible" (click)="onBackdropClick($event)">
-  <div class="modal-panel" role="dialog" [attr.aria-label]="title">
+  <div class="modal-panel" role="dialog" [attr.aria-label]="title" [style.max-width]="maxWidth">
     <div class="modal-header">
       <h2>{{ title }}</h2>
       <div class="modal-header-actions">

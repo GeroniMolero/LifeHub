@@ -10,6 +10,7 @@ namespace LifeHub.Utilidades
         {
             // User mappings
             CreateMap<ApplicationUser, UserDto>().ReverseMap();
+            CreateMap<ApplicationUser, PublicUserDto>();
 
             // Friendship mappings
             CreateMap<Friendship, FriendshipDto>()
@@ -40,6 +41,8 @@ namespace LifeHub.Utilidades
                         ? s.User!.FullName
                         : (!string.IsNullOrWhiteSpace(s.User != null ? s.User.Email : null) ? s.User!.Email : s.UserId)
                 ))
+                .ForMember(d => d.IsProfileVisible, o => o.MapFrom(s =>
+                    s.Publication != null && s.Publication.IsProfileVisible))
                 .ReverseMap()
                 .ForMember(d => d.Type, o => o.MapFrom(s => (DocumentType)s.Type));
 

@@ -302,6 +302,9 @@ namespace LifeHub.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsProfileVisible")
+                        .HasColumnType("bit");
+
                     b.Property<string>("MediaReferencesJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

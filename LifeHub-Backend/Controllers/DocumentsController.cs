@@ -18,6 +18,14 @@ namespace LifeHub.Controllers
             _documentService = documentService;
         }
 
+        [HttpGet("public/{userId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPublicDocumentsByUser(string userId)
+        {
+            var result = await _documentService.GetPublicDocumentsByUserAsync(userId);
+            return ToActionResult(result);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetDocuments()
         {

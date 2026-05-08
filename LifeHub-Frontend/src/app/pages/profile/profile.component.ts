@@ -1,180 +1,23 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { filter, take } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
-import { ConfirmationService } from '../../services/confirmation.service';
-import { LayoutHeaderStateService } from '../../services/layout-header-state.service';
-import { UserService } from '../../services/user.service';
-import { ToastService } from '../../services/toast.service';
-import { User } from '../../models/auth.model';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './profile.component.html',
-  styleUrls: ['./profile.component.scss']
+  imports: [],
+  template: ''
 })
-export class ProfileComponent implements OnInit, OnDestroy {
-  profileForm!: FormGroup;
-  passwordForm!: FormGroup;
-  currentUser: User | null = null;
-  activeTab: 'view' | 'edit' = 'view';
-  loading = false;
-  submittedProfile = false;
-  submittedPassword = false;
-
-  constructor(
-    private fb: FormBuilder,
-    private userService: UserService,
-    private authService: AuthService,
-    private confirmationService: ConfirmationService,
-    private layoutHeaderStateService: LayoutHeaderStateService,
-    private toast: ToastService,
-    private router: Router
-  ) {}
+export class ProfileComponent implements OnInit {
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-    this.initForms();
-    this.loadCurrentUser();
-  }
-
-  initForms(): void {
-    this.profileForm = this.fb.group({
-      fullName: ['', Validators.required],
-      bio: [''],
-      profilePictureUrl: ['']
+    this.authService.getCurrentUser().pipe(
+      filter(u => !!u?.id),
+      take(1)
+    ).subscribe(user => {
+      this.router.navigate(['/profile', user!.id], { replaceUrl: true });
     });
-
-    this.passwordForm = this.fb.group({
-      currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', Validators.required]
-    });
-  }
-
-  onProfileSubmit(): void {
-    this.submittedProfile = true;
-    if (this.profileForm.invalid) return;
-
-    this.loading = true;
-
-    const data = {
-      ...this.profileForm.value,
-      profilePictureUrl: this.profileForm.value.profilePictureUrl?.trim() || null
-    };
-    this.userService.updateProfile(data).subscribe({
-      next: (user) => {
-        this.currentUser = user;
-        this.profileForm.patchValue({
-          fullName: user.fullName || '',
-          bio: user.bio || '',
-          profilePictureUrl: user.profilePictureUrl || ''
-        });
-        this.setHeaderState();
-        this.authService.refreshCurrentUser().subscribe();
-        this.toast.success('Perfil actualizado correctamente.');
-        this.loading = false;
-      },
-      error: (err) => {
-        this.toast.error(err?.error?.message || 'No se pudo actualizar el perfil.');
-        this.loading = false;
-      }
-    });
-  }
-
-  onPasswordSubmit(): void {
-    this.submittedPassword = true;
-    if (this.passwordForm.invalid) return;
-
-    const newPassword = this.passwordForm.get('newPassword')?.value;
-    const confirmPassword = this.passwordForm.get('confirmPassword')?.value;
-    if (newPassword !== confirmPassword) {
-      this.toast.error('Las contraseñas no coinciden.');
-      return;
-    }
-
-    this.loading = true;
-
-    this.userService.changePassword(
-      this.passwordForm.get('currentPassword')?.value,
-      newPassword
-    ).subscribe({
-      next: () => {
-        this.toast.success('Contraseña actualizada correctamente.');
-        this.passwordForm.reset();
-        this.submittedPassword = false;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.toast.error(err?.error?.message || 'No se pudo actualizar la contraseña.');
-        this.loading = false;
-      }
-    });
-  }
-
-  deleteAccount(): void {
-    if (!this.confirmationService.confirmDelete('tu cuenta permanentemente')) return;
-
-    this.loading = true;
-    this.userService.deleteCurrentUser().subscribe({
-      next: () => {
-        this.authService.logout();
-        this.router.navigate(['/login']);
-      },
-      error: err => {
-        this.toast.error(err?.error?.message || 'No se pudo eliminar la cuenta.');
-        this.loading = false;
-      }
-    });
-  }
-
-  setActiveTab(tab: 'view' | 'edit'): void {
-    this.activeTab = tab;
-    this.setHeaderState();
-  }
-
-  private loadCurrentUser(): void {
-    this.loading = true;
-    this.userService.getCurrentUser().subscribe({
-      next: (user) => {
-        this.currentUser = user;
-        this.profileForm.patchValue({
-          fullName: user.fullName || '',
-          bio: user.bio || '',
-          profilePictureUrl: user.profilePictureUrl || ''
-        });
-        this.setHeaderState();
-        this.loading = false;
-      },
-      error: () => {
-        this.toast.error('No se pudo cargar el perfil.');
-        this.loading = false;
-      }
-    });
-  }
-
-  private setHeaderState(): void {
-    this.layoutHeaderStateService.setOverride({
-      title: this.currentUser?.fullName?.trim() || 'Mi perfil',
-      description: 'Gestiona tu información personal y preferencias',
-      actions: [
-        {
-          label: 'Ver perfil',
-          variant: this.activeTab === 'view' ? 'primary' : 'secondary',
-          action: () => this.setActiveTab('view')
-        },
-        {
-          label: 'Editar perfil',
-          variant: this.activeTab === 'edit' ? 'primary' : 'secondary',
-          action: () => this.setActiveTab('edit')
-        }
-      ]
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.layoutHeaderStateService.clearOverride();
   }
 }

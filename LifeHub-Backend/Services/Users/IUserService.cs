@@ -4,7 +4,7 @@ namespace LifeHub.Services.Users
 {
     public interface IUserService
     {
-        Task<ServiceResult<UserDto>> GetUserAsync(string id);
+        Task<ServiceResult<PublicUserDto>> GetUserAsync(string id);
         Task<ServiceResult<UserDto>> GetCurrentUserAsync(string userId);
         Task<ServiceResult<List<UserDto>>> GetUsersAsync();
         Task<ServiceResult<List<UserDto>>> SearchUsersAsync(string currentUserId, string? query);

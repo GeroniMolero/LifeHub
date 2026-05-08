@@ -65,7 +65,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
       },
       {
-        path: 'users/:id',
+        path: 'profile/:id',
         data: {
           headerTitle: 'Perfil público',
           headerDescription: 'Visualiza información básica de otro usuario'

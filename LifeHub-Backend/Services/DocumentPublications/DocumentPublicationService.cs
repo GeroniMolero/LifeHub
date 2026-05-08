@@ -4,16 +4,19 @@ using LifeHub.DTOs;
 using LifeHub.Models;
 using LifeHub.Utilidades;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LifeHub.Services.DocumentPublications
 {
     public class DocumentPublicationService : IDocumentPublicationService
     {
         private readonly ApplicationDbContext _context;
+        private readonly BusinessRules _rules;
 
-        public DocumentPublicationService(ApplicationDbContext context)
+        public DocumentPublicationService(ApplicationDbContext context, IOptions<BusinessRules> rules)
         {
             _context = context;
+            _rules = rules.Value;
         }
 
         public async Task<ServiceResult<DocumentPublicationDto>> GetPublicationAsync(int documentId, string userId)
@@ -75,6 +78,15 @@ namespace LifeHub.Services.DocumentPublications
                 .ToList());
             publication.UpdatedAt = DateTime.UtcNow;
 
+            if (dto.IsPublic && !document.IsPublic)
+            {
+                var publishedCount = await _context.Documents
+                    .CountAsync(d => d.UserId == userId && d.IsPublic && d.Id != documentId);
+                if (publishedCount >= _rules.MaxPublishedDocumentsPerUser)
+                    return ServiceResult<DocumentPublicationDto>.BadRequest(
+                        $"Has alcanzado el límite de {_rules.MaxPublishedDocumentsPerUser} documentos publicados.");
+            }
+
             document.IsPublic = dto.IsPublic;
             document.PublishedAt = dto.IsPublic ? (document.PublishedAt ?? DateTime.UtcNow) : null;
             document.UpdatedAt = DateTime.UtcNow;
@@ -106,6 +118,31 @@ namespace LifeHub.Services.DocumentPublications
                 MediaReferences = DeserializeList<MediaReferenceDto>(publication.MediaReferencesJson),
                 ExternalLinks = DeserializeList<string>(publication.ExternalLinksJson)
             });
+        }
+
+        public async Task<ServiceResult<DocumentPublicationDto>> SetProfileVisibilityAsync(int documentId, string userId, bool isVisible)
+        {
+            var publication = await _context.DocumentPublications
+                .Include(p => p.Document)
+                .FirstOrDefaultAsync(p => p.DocumentId == documentId && p.PublishedByUserId == userId);
+
+            if (publication == null)
+                return ServiceResult<DocumentPublicationDto>.NotFound("Publicación no encontrada.");
+
+            if (isVisible && !publication.IsProfileVisible)
+            {
+                var visibleCount = await _context.DocumentPublications
+                    .CountAsync(p => p.PublishedByUserId == userId && p.IsProfileVisible && p.DocumentId != documentId);
+                if (visibleCount >= _rules.MaxProfileVisibleDocumentsPerUser)
+                    return ServiceResult<DocumentPublicationDto>.BadRequest(
+                        $"Solo puedes tener {_rules.MaxProfileVisibleDocumentsPerUser} documentos visibles en tu perfil.");
+            }
+
+            publication.IsProfileVisible = isVisible;
+            publication.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<DocumentPublicationDto>.Ok(ToPublicationDto(publication.Document, publication));
         }
 
         private async Task<ServiceResult<DocumentPublicationDto>?> ValidateExternalLinksAsync(List<string>? externalLinks)
@@ -142,6 +179,7 @@ namespace LifeHub.Services.DocumentPublications
             {
                 DocumentId = document.Id,
                 IsPublic = document.IsPublic,
+                IsProfileVisible = publication.IsProfileVisible,
                 PublishedAt = document.PublishedAt,
                 PublicTitle = publication.PublicTitle,
                 PublicDescription = publication.PublicDescription,

@@ -1,62 +1,168 @@
 <div class="spaces-container">
-  <div *ngIf="showCreate" class="card form-card">
-    <h2>Crear espacio</h2>
-    <form [formGroup]="createForm" (ngSubmit)="createSpace()">
-      <label>Nombre</label>
-      <input type="text" formControlName="name" [class.is-invalid]="submittedCreate && createForm.get('name')?.errors" />
-      <div *ngIf="submittedCreate && createForm.get('name')?.errors" class="error-message">
-        <span *ngIf="createForm.get('name')?.errors?.['required']">El nombre es requerido</span>
-        <span *ngIf="createForm.get('name')?.errors?.['maxlength']">Máximo 200 caracteres</span>
+
+  <app-modal title="Editar espacio" [visible]="editingId !== null" (closed)="cancelEdit()">
+    <div class="modal-tabs" *ngIf="editingSpace && isOwner(editingSpace)">
+      <button type="button" class="modal-tab-btn" [class.active]="editModalTab === 'edit'" (click)="setEditModalTab('edit')">Editar</button>
+      <button type="button" class="modal-tab-btn" [class.active]="editModalTab === 'permissions'" (click)="setEditModalTab('permissions')">Permisos</button>
+    </div>
+
+    <div class="modal-tab-body">
+    <form *ngIf="editModalTab === 'edit'" [formGroup]="editForm" (ngSubmit)="saveEdit(editingId!)" class="modal-create-form">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" formControlName="name" [class.is-invalid]="submittedEdit && editForm.get('name')?.errors" />
+        <div *ngIf="submittedEdit && editForm.get('name')?.errors" class="error-message">
+          <span *ngIf="editForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+          <span *ngIf="editForm.get('name')?.errors?.['maxlength']">Máximo 200 caracteres</span>
+        </div>
       </div>
 
-      <label>Descripción</label>
-      <textarea rows="3" formControlName="description"></textarea>
-
-      <label>Privacidad</label>
-      <select formControlName="privacy">
-        <option [value]="SpacePrivacy.Private">Privado</option>
-        <option [value]="SpacePrivacy.Shared">Compartido</option>
-      </select>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea rows="3" formControlName="description"></textarea>
+      </div>
 
       <label class="checkbox">
         <input type="checkbox" formControlName="isPublicProfileVisible" />
         Visible en perfil público
       </label>
 
-      <button class="btn-primary" type="submit" [disabled]="createForm.invalid || loading">Crear</button>
+      <div class="modal-form-actions">
+        <button type="button" class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
+        <button class="btn-primary" type="submit" [disabled]="editForm.invalid || loading">
+          {{ loading ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
     </form>
-  </div>
+
+    <div *ngIf="editModalTab === 'permissions' && editingSpace" class="permissions-tab">
+      <form [formGroup]="permissionForms[editingSpace.id]" (ngSubmit)="shareSpace(editingSpace)" class="permission-form">
+        <label>Amigo</label>
+        <select formControlName="userId" [disabled]="friendOptions.length === 0 || friendsLoading">
+          <option value="">Selecciona un amigo</option>
+          <option *ngFor="let friend of friendOptions" [value]="friend.id">
+            {{ friendOptionLabel(friend) }}
+          </option>
+        </select>
+
+        <label>Nivel</label>
+        <select formControlName="permissionLevel">
+          <option [value]="SpacePermissionLevel.Viewer">Lector</option>
+          <option [value]="SpacePermissionLevel.Editor">Editor</option>
+        </select>
+
+        <button class="btn-primary" type="submit" [disabled]="permissionForms[editingSpace.id].invalid || permissionLoadingBySpace[editingSpace.id]">
+          Compartir
+        </button>
+      </form>
+
+      <div class="loading" *ngIf="permissionLoadingBySpace[editingSpace.id]">Cargando permisos...</div>
+      <div class="loading" *ngIf="friendsLoading">Cargando amigos...</div>
+      <div class="empty" *ngIf="!friendsLoading && !friendsError && friendOptions.length === 0">
+        No tienes amigos aceptados para compartir este espacio.
+      </div>
+
+      <div class="permissions-list" *ngIf="(permissionsBySpace[editingSpace.id] || []).length > 0">
+        <article class="permission-item" *ngFor="let permission of permissionsBySpace[editingSpace.id]">
+          <div>
+            <strong
+              [title]="permission.userEmail ?? ''"
+              [class.user-tip]="!!permission.userEmail"
+            >{{ permission.userName ?? permission.userId }}</strong>
+            <small>{{ permissionText(permission.permissionLevel) }} · {{ permission.createdAt | date:'short' }}</small>
+          </div>
+          <button class="btn-danger" type="button" (click)="removePermission(editingSpace, permission.userId)">Revocar</button>
+        </article>
+      </div>
+
+      <div class="empty" *ngIf="!permissionLoadingBySpace[editingSpace.id] && (permissionsBySpace[editingSpace.id] || []).length === 0">
+        Este espacio no está compartido con otros usuarios.
+      </div>
+    </div>
+    </div>
+  </app-modal>
+
+  <app-modal title="Nuevo espacio" [visible]="showCreate" (closed)="toggleCreate()">
+    <form [formGroup]="createForm" (ngSubmit)="createSpace()" class="modal-create-form">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" formControlName="name" [class.is-invalid]="submittedCreate && createForm.get('name')?.errors" />
+        <div *ngIf="submittedCreate && createForm.get('name')?.errors" class="error-message">
+          <span *ngIf="createForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+          <span *ngIf="createForm.get('name')?.errors?.['maxlength']">Máximo 200 caracteres</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea rows="3" formControlName="description"></textarea>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" formControlName="isPublicProfileVisible" />
+        Visible en perfil público
+      </label>
+
+      <div class="modal-form-actions">
+        <button type="button" class="btn-secondary" (click)="toggleCreate()">Cancelar</button>
+        <button class="btn-primary" type="submit" [disabled]="createForm.invalid || loading">
+          {{ loading ? 'Creando...' : 'Crear espacio' }}
+        </button>
+      </div>
+    </form>
+  </app-modal>
 
   <div *ngIf="loading" class="loading">Cargando...</div>
 
-  <section class="filters" *ngIf="!loading && spaces.length > 0">
-    <div class="filters-row">
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        placeholder="Buscar por nombre"
-        aria-label="Buscar espacios por nombre"
-      />
+  <section class="spaces-toolbar card" *ngIf="!loading && spaces.length > 0">
+    <form [formGroup]="filterForm" class="filters-form">
+      <div class="search-line">
+        <div class="filter-field filter-field-search">
+          <input id="spaces-search" type="search" formControlName="search" placeholder="Buscar por nombre" />
+        </div>
+        <div class="search-line-actions">
+          <button
+            type="button"
+            class="btn-secondary clear-filters-btn"
+            [class.clear-filters-btn-invisible]="!hasActiveFilters"
+            [disabled]="!hasActiveFilters"
+            (click)="clearFilters()"
+          >Limpiar</button>
+          <button
+            type="button"
+            class="btn-secondary filters-toggle"
+            (click)="toggleFiltersDropdown()"
+            [attr.aria-expanded]="showFiltersDropdown"
+          >Filtros {{ showFiltersDropdown ? '▴' : '▾' }}</button>
+        </div>
+      </div>
 
-      <select [(ngModel)]="favoriteFilter" aria-label="Filtrar por favoritos">
-        <option value="all">Favoritos: Todos</option>
-        <option value="favorites">Solo favoritos</option>
-        <option value="non-favorites">Solo no favoritos</option>
-      </select>
-
-      <select [(ngModel)]="permissionFilter" aria-label="Filtrar por permisos">
-        <option value="all">Permisos: Todos</option>
-        <option value="shared">Compartidos</option>
-        <option value="private">Privados</option>
-      </select>
-
-      <select [(ngModel)]="dateSort" aria-label="Ordenar por fecha">
-        <option value="updated-desc">Fecha: más recientes</option>
-        <option value="updated-asc">Fecha: más antiguos</option>
-      </select>
-
-      <button class="btn-secondary" type="button" (click)="clearFilters()">Limpiar filtros</button>
-    </div>
+      <div class="filters-expand-panel" *ngIf="showFiltersDropdown">
+        <div class="filter-field">
+          <label for="spaces-favorites">Favoritos</label>
+          <select id="spaces-favorites" formControlName="favorites">
+            <option value="all">Todos</option>
+            <option value="favorites">Solo favoritos</option>
+            <option value="non-favorites">Solo no favoritos</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="spaces-privacy">Privacidad</label>
+          <select id="spaces-privacy" formControlName="privacy">
+            <option value="all">Todos</option>
+            <option value="shared">Compartidos</option>
+            <option value="private">Privados</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label for="spaces-sort">Ordenar</label>
+          <select id="spaces-sort" formControlName="sort">
+            <option value="updated-desc">Más recientes</option>
+            <option value="updated-asc">Más antiguos</option>
+          </select>
+        </div>
+      </div>
+    </form>
   </section>
 
   <div *ngIf="!loading && spaces.length === 0" class="empty">
@@ -78,87 +184,10 @@
           {{ isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito' }}
         </button>
         <button class="btn-secondary" (click)="startEdit(space)">Editar</button>
-        <button class="btn-secondary" *ngIf="isOwner(space)" (click)="togglePermissions(space)">
-          {{ openPermissionsSpaceId === space.id ? 'Cerrar permisos' : 'Permisos' }}
-        </button>
         <button class="btn-danger" (click)="deleteSpace(space.id)">Eliminar</button>
         <a class="btn-primary" [routerLink]="['/spaces', space.id]">Abrir espacio</a>
       </div>
 
-      <form *ngIf="editingId === space.id" [formGroup]="editForm" (ngSubmit)="saveEdit(space.id)" class="edit-form">
-        <label>Nombre</label>
-        <input type="text" formControlName="name" [class.is-invalid]="submittedEdit && editForm.get('name')?.errors" />
-        <div *ngIf="submittedEdit && editForm.get('name')?.errors" class="error-message">
-          <span *ngIf="editForm.get('name')?.errors?.['required']">El nombre es requerido</span>
-          <span *ngIf="editForm.get('name')?.errors?.['maxlength']">Máximo 200 caracteres</span>
-        </div>
-
-        <label>Descripción</label>
-        <textarea rows="3" formControlName="description"></textarea>
-
-        <label>Privacidad</label>
-        <select formControlName="privacy">
-          <option [value]="SpacePrivacy.Private">Privado</option>
-          <option [value]="SpacePrivacy.Shared">Compartido</option>
-        </select>
-
-        <label class="checkbox">
-          <input type="checkbox" formControlName="isPublicProfileVisible" />
-          Visible en perfil público
-        </label>
-
-        <div class="actions">
-          <button class="btn-primary" type="submit" [disabled]="editForm.invalid || loading">Guardar</button>
-          <button class="btn-secondary" type="button" (click)="cancelEdit()">Cancelar</button>
-        </div>
-      </form>
-
-      <section class="permissions-panel" *ngIf="isOwner(space) && openPermissionsSpaceId === space.id">
-        <h4>Compartir espacio</h4>
-
-        <form [formGroup]="permissionForms[space.id]" (ngSubmit)="shareSpace(space)" class="permission-form">
-          <label>Amigo</label>
-          <select formControlName="userId" [disabled]="friendOptions.length === 0 || friendsLoading">
-            <option value="">Selecciona un amigo</option>
-            <option *ngFor="let friend of friendOptions" [value]="friend.id">
-              {{ friendOptionLabel(friend) }}
-            </option>
-          </select>
-
-          <label>Nivel</label>
-          <select formControlName="permissionLevel">
-            <option [value]="SpacePermissionLevel.Viewer">Lector</option>
-            <option [value]="SpacePermissionLevel.Editor">Editor</option>
-          </select>
-
-          <button class="btn-primary" type="submit" [disabled]="permissionForms[space.id].invalid || permissionLoadingBySpace[space.id]">
-            Compartir
-          </button>
-        </form>
-
-        <div class="loading" *ngIf="permissionLoadingBySpace[space.id]">Cargando permisos...</div>
-        <div class="loading" *ngIf="friendsLoading">Cargando amigos...</div>
-        <div class="empty" *ngIf="!friendsLoading && !friendsError && friendOptions.length === 0">
-          No tienes amigos aceptados para compartir este espacio.
-        </div>
-
-        <div class="permissions-list" *ngIf="(permissionsBySpace[space.id] || []).length > 0">
-          <article class="permission-item" *ngFor="let permission of permissionsBySpace[space.id]">
-            <div>
-              <strong
-                [title]="permission.userEmail ?? ''"
-                [class.user-tip]="!!permission.userEmail"
-              >{{ permission.userName ?? permission.userId }}</strong>
-              <small>{{ permissionText(permission.permissionLevel) }} · {{ permission.createdAt | date:'short' }}</small>
-            </div>
-            <button class="btn-danger" type="button" (click)="removePermission(space, permission.userId)">Revocar</button>
-          </article>
-        </div>
-
-        <div class="empty" *ngIf="!permissionLoadingBySpace[space.id] && (permissionsBySpace[space.id] || []).length === 0">
-          Este espacio no está compartido con otros usuarios.
-        </div>
-      </section>
     </article>
   </div>
 </div>

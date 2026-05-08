@@ -21,6 +21,14 @@ namespace LifeHub.DTOs
         public List<string> Claims { get; set; } = new();
     }
 
+    public class PublicUserDto
+    {
+        public string Id { get; set; } = null!;
+        public string? FullName { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public string? Bio { get; set; }
+    }
+
     public class UpdateProfileDto
     {
         [MaxLength(100)]

@@ -13,6 +13,7 @@ namespace LifeHub.DTOs
     {
         public int DocumentId { get; set; }
         public bool IsPublic { get; set; }
+        public bool IsProfileVisible { get; set; }
         public DateTime? PublishedAt { get; set; }
         public string? PublicTitle { get; set; }
         public string? PublicDescription { get; set; }
