@@ -24,14 +24,6 @@
       </div>
     </section>
 
-    <section class="links-section" *ngIf="document.externalLinks.length > 0">
-      <h2>Enlaces externos</h2>
-      <ul>
-        <li *ngFor="let link of document.externalLinks">
-          <a [href]="link" target="_blank" rel="noopener noreferrer">{{ link }}</a>
-        </li>
-      </ul>
-    </section>
   </article>
 </section>
 

@@ -123,7 +123,8 @@
 
 .header-action.secondary:hover,
 .header-action.ghost:hover {
-  background: $color-brand-050;
+  background: $color-brand-100;
+  border-color: $color-brand-700;
 }
 
 @media (max-width: 960px) {

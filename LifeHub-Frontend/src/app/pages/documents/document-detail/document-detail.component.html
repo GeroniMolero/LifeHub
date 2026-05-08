@@ -96,39 +96,46 @@
 
 </div>
 
-<app-modal title="Publicación pública" [visible]="showPublicationModal" (closed)="showPublicationModal = false">
-  <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
-    <label class="publish-toggle">
-      <input type="checkbox" formControlName="isPublic" />
-      Publicar documento
-    </label>
+<app-modal title="Publicación" [visible]="showPublicationModal" (closed)="onPublicationModalClose()">
+  <form [formGroup]="publicationForm">
+
+    <!-- Bloque 1: Metadata -->
+    <div class="pub-section-header">
+      <span class="pub-section-label">Opciones de publicación</span>
+      <button type="button" class="btn-secondary btn-sm" (click)="toggleEditPublication()">
+        {{ isEditingPublication ? 'Guardar' : 'Editar' }}
+      </button>
+    </div>
 
     <div class="pub-fields">
       <div class="form-group">
-        <label>Título público (opcional)</label>
-        <input type="text" formControlName="publicTitle" />
+        <label>Título público</label>
+        <p class="pub-field-value" *ngIf="!isEditingPublication">{{ publicationForm.value.publicTitle || '—' }}</p>
+        <input type="text" formControlName="publicTitle" *ngIf="isEditingPublication" />
       </div>
       <div class="form-group">
-        <label>Descripción pública (opcional)</label>
-        <textarea formControlName="publicDescription" rows="3"></textarea>
-      </div>
-      <div class="form-group">
-        <label>Enlaces externos permitidos</label>
-        <textarea [(ngModel)]="publicationLinksText" [ngModelOptions]="{standalone: true}" rows="3" placeholder="https://..."></textarea>
+        <label>Descripción pública</label>
+        <p class="pub-field-value" *ngIf="!isEditingPublication">{{ publicationForm.value.publicDescription || '—' }}</p>
+        <textarea formControlName="publicDescription" rows="3" *ngIf="isEditingPublication"></textarea>
       </div>
     </div>
 
-    <div class="publication-actions">
-      <button type="button" class="btn-secondary" (click)="loadSpaceMediaReferences()">Cargar multimedia del espacio</button>
-      <button type="submit" class="btn-primary">Guardar publicación</button>
+    <hr class="pub-divider" />
+
+    <!-- Bloque 2: Acceso -->
+    <div class="pub-access-section">
+      <label class="pub-access-toggle">
+        <input type="checkbox" formControlName="isPublic" (change)="onAccessToggle()" />
+        <span class="toggle-track"></span>
+        <span class="toggle-label">{{ publicationForm.get('isPublic')?.value ? 'Accesible' : 'No accesible' }}</span>
+      </label>
+      <div class="public-link" *ngIf="publication?.isPublic">
+        <a [href]="publicUrl" target="_blank" rel="noopener">Ver público ↗</a>
+        <button type="button" class="btn-link" (click)="copyPublicUrl()">Copiar enlace</button>
+      </div>
     </div>
 
     <p class="publication-message" *ngIf="publicationMessage">{{ publicationMessage }}</p>
-
-    <div class="public-link" *ngIf="publication?.isPublic">
-      <a [href]="publicUrl" target="_blank" rel="noopener">Ver documento público ↗</a>
-      <button type="button" class="btn-secondary" (click)="copyPublicUrl()">Copiar enlace</button>
-    </div>
   </form>
 </app-modal>
 

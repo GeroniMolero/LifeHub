@@ -121,7 +121,8 @@ select {
 .btn-secondary:hover,
 .doc-detail-link:hover,
 .btn-icon:hover {
-  background: $color-brand-050;
+  background: $color-brand-100;
+  border-color: $color-brand-700;
 }
 
 .btn-icon {

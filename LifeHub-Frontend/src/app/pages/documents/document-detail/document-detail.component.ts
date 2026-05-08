@@ -11,14 +11,12 @@ import { debounceTime } from 'rxjs/operators';
 
 import { Document, DocumentType } from '../../../models/document.model';
 import { DocumentVersion } from '../../../models/document-version.model';
-import { DocumentPublication, MediaReference } from '../../../models/document-publication.model';
-import { SpaceMediaReference } from '../../../models/space-media-reference.model';
+import { DocumentPublication } from '../../../models/document-publication.model';
 import { DocumentService } from '../../../services/document.service';
 import { ConfirmationService } from '../../../services/confirmation.service';
 import { DocumentVersionService } from '../../../services/document-version.service';
 import { DocumentPublicationService } from '../../../services/document-publication.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
-import { SpaceMediaSessionService } from '../../../services/space-media-session.service';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
 import { AllowedWebsiteService } from '../../../services/allowed-website.service';
@@ -40,7 +38,6 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
   versions: DocumentVersion[] = [];
   versionNote = '';
   publication: DocumentPublication | null = null;
-  publicationLinksText = '';
   publicationMessage = '';
   publicUrl = '';
   loading = true;
@@ -50,6 +47,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
   activeTab: 'code' | 'preview' = 'preview';
   renderedPreview = '';
   showPublicationModal = false;
+  isEditingPublication = false;
 
   private readonly markdownRenderer = new marked.Renderer();
   private allowedEmbedDomains: string[] = [...MEDIA_EMBED_ALLOWED_DOMAINS];
@@ -68,7 +66,6 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     private documentVersionService: DocumentVersionService,
     private publicationService: DocumentPublicationService,
     private layoutHeaderStateService: LayoutHeaderStateService,
-    private mediaSessionService: SpaceMediaSessionService,
     private authService: AuthService,
     private toastService: ToastService,
     private allowedWebsiteService: AllowedWebsiteService
@@ -100,8 +97,7 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     this.publicationForm = this.fb.group({
       isPublic: [false],
       publicTitle: [''],
-      publicDescription: [''],
-      mediaReferences: [[]]
+      publicDescription: ['']
     });
 
     this.editForm.get('content')!.valueChanges
@@ -232,39 +228,39 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
     this.publicationMessage = 'Enlace público copiado al portapapeles.';
   }
 
-  loadSpaceMediaReferences(): void {
-    if (!this.document?.creativeSpaceId) {
-      this.publicationMessage = 'Este documento no está asociado a un espacio con referencias multimedia.';
-      return;
-    }
-    const refs = this.mediaSessionService.getReferences(Number(this.document.creativeSpaceId));
-    this.publicationForm.patchValue({ mediaReferences: refs.map(r => this.toPublicationMediaReference(r)) });
-    this.publicationMessage = `${refs.length} referencia(s) multimedia cargadas desde la sesión del espacio.`;
+  onPublicationModalClose(): void {
+    this.showPublicationModal = false;
+    this.isEditingPublication = false;
+    this.publicationMessage = '';
   }
 
-  savePublication(): void {
-    if (!this.document) return;
+  onAccessToggle(): void {
+    this.savePublicationData();
+  }
 
+  toggleEditPublication(): void {
+    if (this.isEditingPublication) this.savePublicationData();
+    this.isEditingPublication = !this.isEditingPublication;
+  }
+
+  private savePublicationData(): void {
+    if (!this.document) return;
     this.loading = true;
     this.publicationMessage = '';
-
-    const externalLinks = this.publicationLinksText
-      .split('\n')
-      .map(l => l.trim())
-      .filter(l => !!l);
 
     this.publicationService.upsertPublication(this.document.id, {
       isPublic: Boolean(this.publicationForm.value.isPublic),
       publicTitle: this.publicationForm.value.publicTitle || undefined,
       publicDescription: this.publicationForm.value.publicDescription || undefined,
-      mediaReferences: (this.publicationForm.value.mediaReferences || []) as MediaReference[],
-      externalLinks
+      mediaReferences: [],
+      externalLinks: []
     }).subscribe({
       next: publication => {
         this.publication = publication;
         this.document = { ...this.document!, isPublic: publication.isPublic, publishedAt: publication.publishedAt as any };
+        this.setHeaderState(this.document);
         this.loading = false;
-        this.publicationMessage = publication.isPublic ? 'Documento publicado.' : 'Documento despublicado.';
+        this.publicationMessage = publication.isPublic ? 'Documento publicado.' : 'Acceso desactivado.';
       },
       error: err => {
         this.loading = false;
@@ -489,6 +485,21 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
   private setDocumentState(document: Document, loadRelated = true): void {
     this.document = document;
     this.publicUrl = `${window.location.origin}/public/documents/${document.id}`;
+    this.setHeaderState(document);
+    this.editForm.patchValue({
+      title: document.title,
+      description: document.description,
+      content: document.content
+    });
+    this.updateRenderedPreview();
+
+    if (loadRelated) {
+      this.loadVersions(document.id);
+      this.loadPublication(document.id);
+    }
+  }
+
+  private setHeaderState(document: Document): void {
     this.layoutHeaderStateService.setOverride({
       title: document.title,
       description: document.description?.trim() || 'Edición, versiones y publicación del documento',
@@ -510,17 +521,6 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         }
       ]
     });
-    this.editForm.patchValue({
-      title: document.title,
-      description: document.description,
-      content: document.content
-    });
-    this.updateRenderedPreview();
-
-    if (loadRelated) {
-      this.loadVersions(document.id);
-      this.loadPublication(document.id);
-    }
   }
 
   private refreshDocument(): void {
@@ -540,7 +540,6 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
 
   private loadPublication(documentId: number): void {
     this.publication = null;
-    this.publicationLinksText = '';
     this.publicationMessage = '';
 
     this.publicationService.getPublication(documentId).subscribe({
@@ -549,22 +548,11 @@ export class DocumentDetailComponent implements OnInit, OnDestroy {
         this.publicationForm.patchValue({
           isPublic: publication.isPublic,
           publicTitle: publication.publicTitle || '',
-          publicDescription: publication.publicDescription || '',
-          mediaReferences: publication.mediaReferences || []
+          publicDescription: publication.publicDescription || ''
         });
-        this.publicationLinksText = (publication.externalLinks || []).join('\n');
       },
       error: () => { this.publication = null; }
     });
   }
 
-  private toPublicationMediaReference(reference: SpaceMediaReference): MediaReference {
-    return {
-      type: reference.type,
-      label: reference.label,
-      source: reference.source,
-      provider: reference.provider,
-      embedUrl: reference.embedUrl
-    };
-  }
 }

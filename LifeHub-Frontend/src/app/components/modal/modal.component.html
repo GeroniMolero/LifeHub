@@ -2,11 +2,10 @@
   <div class="modal-panel" role="dialog" [attr.aria-label]="title">
     <div class="modal-header">
       <h2>{{ title }}</h2>
-      <button type="button" class="modal-close" (click)="close()" aria-label="Cerrar">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
+      <div class="modal-header-actions">
+        <ng-content select="[modal-header-actions]" />
+      </div>
+      <button type="button" class="modal-close" (click)="close()" aria-label="Cerrar">×</button>
     </div>
     <div class="modal-body">
       <ng-content />
