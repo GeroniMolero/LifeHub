@@ -3,33 +3,38 @@
 
   <div *ngIf="error" class="error">{{ error }}</div>
 
-  <article *ngIf="document" class="card">
-    <h1>{{ document.title }}</h1>
-    <p class="description">{{ document.description }}</p>
-    <small *ngIf="document.publishedAt">Publicado: {{ document.publishedAt | date:'short' }}</small>
+  <article *ngIf="document" class="doc-card">
+    <header class="doc-header">
+      <h1>{{ document.title }}</h1>
+      <p class="description" *ngIf="document.description">{{ document.description }}</p>
+      <small class="pub-date" *ngIf="document.publishedAt">Publicado {{ document.publishedAt | date:'mediumDate' }}</small>
+    </header>
 
-    <h2>Contenido</h2>
-    <pre class="content">{{ document.content }}</pre>
+    <div class="rendered-markdown" [innerHTML]="renderedContent"></div>
+    <p class="doc-empty" *ngIf="!renderedContent">(sin contenido)</p>
 
-    <h2 *ngIf="document.mediaReferences.length > 0">Recursos multimedia</h2>
-    <div *ngFor="let item of document.mediaReferences" class="media-item">
-      <h3>{{ item.label }}</h3>
-      <p>{{ item.type }} <span *ngIf="item.provider">· {{ item.provider }}</span></p>
-      <small>{{ item.source }}</small>
-      <div class="embed-wrapper" *ngIf="item.embedUrl">
-        <iframe [src]="toTrustedResource(item.embedUrl)" loading="lazy" title="Recurso embebido"></iframe>
+    <section class="media-section" *ngIf="document.mediaReferences.length > 0">
+      <h2>Recursos multimedia</h2>
+      <div *ngFor="let item of document.mediaReferences" class="media-item">
+        <h3>{{ item.label }}</h3>
+        <p class="media-meta">{{ item.type }}<span *ngIf="item.provider"> · {{ item.provider }}</span></p>
+        <div class="embed-wrapper" *ngIf="item.embedUrl">
+          <iframe [src]="toTrustedResource(item.embedUrl)" loading="lazy" title="Recurso embebido"></iframe>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <h2 *ngIf="document.externalLinks.length > 0">Enlaces externos</h2>
-    <ul *ngIf="document.externalLinks.length > 0">
-      <li *ngFor="let link of document.externalLinks">
-        <a [href]="link" target="_blank" rel="noopener">{{ link }}</a>
-      </li>
-    </ul>
+    <section class="links-section" *ngIf="document.externalLinks.length > 0">
+      <h2>Enlaces externos</h2>
+      <ul>
+        <li *ngFor="let link of document.externalLinks">
+          <a [href]="link" target="_blank" rel="noopener noreferrer">{{ link }}</a>
+        </li>
+      </ul>
+    </section>
   </article>
 </section>
 
 <ng-template #loadingTpl>
-  <p>Cargando documento público...</p>
+  <p class="loading-state">Cargando documento público...</p>
 </ng-template>

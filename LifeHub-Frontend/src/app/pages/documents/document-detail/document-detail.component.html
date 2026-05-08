@@ -1,116 +1,137 @@
-<div class="document-detail-container" *ngIf="document as currentDocument">
-  <div class="detail-toolbar">
-    <a [routerLink]="backLink" class="btn-secondary">{{ backLabel }}</a>
-    <div class="detail-toolbar-actions">
-      <button type="button" class="btn-danger" (click)="deleteDocument()">Eliminar</button>
-    </div>
+<div class="document-detail" *ngIf="document as doc">
+
+  <!-- Grid principal: editor + sidebar versiones -->
+  <div class="detail-grid">
+
+    <!-- Columna izquierda: editor -->
+    <section class="editor-card card">
+      <form [formGroup]="editForm" (ngSubmit)="saveDocument()">
+        <div class="editor-fields">
+          <input type="text" formControlName="title" class="editor-title-input" placeholder="Título del documento" />
+          <input type="text" formControlName="description" class="editor-desc-input" placeholder="Descripción (opcional)" />
+        </div>
+
+        <div class="editor-frame">
+          <div class="editor-tab-bar">
+            <div class="editor-tabs">
+              <button type="button" class="tab-btn" [class.active]="activeTab === 'code'" (click)="setActiveTab('code')">Code</button>
+              <button type="button" class="tab-btn" [class.active]="activeTab === 'preview'" (click)="setActiveTab('preview')">Preview</button>
+            </div>
+          </div>
+
+          <div class="editor-pane" *ngIf="activeTab === 'code'">
+            <div class="editor-toolbar">
+              <button type="button" class="toolbar-btn" title="Negrita (Ctrl+B)" (click)="applyBold(codeEditor)"><strong>B</strong></button>
+              <button type="button" class="toolbar-btn" title="Cursiva (Ctrl+I)" (click)="applyItalic(codeEditor)"><em>I</em></button>
+              <button type="button" class="toolbar-btn" title="Tachado" (click)="applyStrikethrough(codeEditor)"><s>S</s></button>
+              <button type="button" class="toolbar-btn" title="Limpiar formato" (click)="clearFormatting(codeEditor)">Tx</button>
+              <button type="button" class="toolbar-btn" title="Encabezado 1" (click)="applyHeading(codeEditor, 1)">H1</button>
+              <button type="button" class="toolbar-btn" title="Encabezado 2" (click)="applyHeading(codeEditor, 2)">H2</button>
+              <button type="button" class="toolbar-btn" title="Encabezado 3" (click)="applyHeading(codeEditor, 3)">H3</button>
+              <button type="button" class="toolbar-btn" title="Cita (blockquote)" (click)="applyBlockquote(codeEditor)">❝</button>
+              <button type="button" class="toolbar-btn" title="Lista con viñetas" (click)="applyBulletList(codeEditor)">• Lista</button>
+              <button type="button" class="toolbar-btn" title="Lista numerada" (click)="applyOrderedList(codeEditor)">1. Lista</button>
+              <button type="button" class="toolbar-btn" title="Insertar enlace" (click)="insertLink(codeEditor)">Enlace</button>
+              <button type="button" class="toolbar-btn" title="Insertar imagen" (click)="insertImage(codeEditor)">Imagen</button>
+              <button type="button" class="toolbar-btn" title="Bloque de código" (click)="insertCodeBlock(codeEditor)">```</button>
+            </div>
+            <textarea
+              #codeEditor
+              formControlName="content"
+              class="code-editor"
+              spellcheck="false"
+              placeholder="Escribe el contenido aquí..."
+              (keydown)="onEditorKeyDown($event, codeEditor)"></textarea>
+          </div>
+
+          <div class="editor-pane preview-pane" *ngIf="activeTab === 'preview'">
+            <div class="content-preview rendered-markdown" [innerHTML]="renderedPreview"></div>
+          </div>
+        </div>
+
+        <div class="editor-actions">
+          <button type="button" class="btn-danger-outline" (click)="deleteDocument()">Eliminar</button>
+          <button type="submit" class="btn-primary" [disabled]="editForm.invalid || loading">
+            {{ loading ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Columna derecha: versiones -->
+    <aside class="versions-sidebar card">
+      <div class="sidebar-header">
+        <h3>Versiones</h3>
+        <span class="version-count">{{ versions.length }}/30</span>
+      </div>
+
+      <div class="version-create">
+        <input
+          type="text"
+          [(ngModel)]="versionNote"
+          [ngModelOptions]="{standalone: true}"
+          placeholder="Nota (opcional)" />
+        <button type="button" class="btn-create-version" (click)="createVersion()" title="Crear versión">+</button>
+      </div>
+
+      <p class="empty-versions" *ngIf="versions.length === 0">No hay versiones guardadas.</p>
+
+      <div class="versions-list" *ngIf="versions.length > 0">
+        <div class="version-item" *ngFor="let v of versions">
+          <div class="version-info">
+            <strong>v{{ v.versionNumber }}</strong>
+            <p class="version-desc" *ngIf="v.description">{{ v.description }}</p>
+            <small>{{ v.createdAt | date:'short' }} · {{ v.createdByUserName ?? v.createdByUserId }}</small>
+          </div>
+          <div class="version-actions">
+            <button type="button" class="btn-restore" (click)="restoreVersion(v.id)" title="Restaurar esta versión">↩</button>
+            <button *ngIf="isDocumentOwner" type="button" class="btn-delete-version" (click)="deleteVersion(v.id)" title="Eliminar versión">✕</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
   </div>
 
-  <section class="detail-meta card">
-    <span>Tipo: {{ getTypeText(currentDocument.type) }}</span>
-    <span>Actualizado {{ currentDocument.updatedAt | date:'medium' }}</span>
-    <span *ngIf="currentDocument.isPublic">Publicado</span>
-  </section>
 
-  <section class="card detail-section">
-    <h2>Editar documento</h2>
-    <form [formGroup]="editForm" (ngSubmit)="saveDocument()">
+</div>
+
+<app-modal title="Publicación pública" [visible]="showPublicationModal" (closed)="showPublicationModal = false">
+  <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
+    <label class="publish-toggle">
+      <input type="checkbox" formControlName="isPublic" />
+      Publicar documento
+    </label>
+
+    <div class="pub-fields">
       <div class="form-group">
-        <label>Título</label>
-        <input type="text" formControlName="title" />
-      </div>
-
-      <div class="form-group">
-        <label>Descripción</label>
-        <input type="text" formControlName="description" />
-      </div>
-
-      <div class="form-group">
-        <label>Contenido</label>
-        <textarea formControlName="content" rows="12"></textarea>
-      </div>
-
-      <div class="detail-actions">
-        <button type="submit" class="btn-primary" [disabled]="editForm.invalid || loading">Guardar cambios</button>
-      </div>
-    </form>
-  </section>
-
-  <section class="card detail-section versions-panel">
-    <h2>Historial de versiones</h2>
-    <p class="version-limit-info">Límite: {{ versions.length }}/30 versiones. Solo el propietario puede eliminar versiones.</p>
-    <div class="version-create">
-      <input
-        type="text"
-        [(ngModel)]="versionNote"
-        [ngModelOptions]="{standalone: true}"
-        placeholder="Nota opcional para esta versión" />
-      <button type="button" class="btn-primary" (click)="createVersion()">Crear versión</button>
-    </div>
-
-    <div *ngIf="versions.length === 0" class="empty-state">
-      <p>Aún no hay versiones guardadas.</p>
-    </div>
-
-    <div *ngIf="versions.length > 0" class="versions-list">
-      <div class="version-item" *ngFor="let version of versions">
-        <div>
-          <strong>Versión #{{ version.versionNumber }}</strong>
-          <p>{{ version.description }}</p>
-          <small>{{ version.createdAt | date:'short' }} · por <span
-              [title]="version.createdByUserEmail ?? ''"
-              [class.user-tip]="!!version.createdByUserEmail"
-            >{{ version.createdByUserName ?? version.createdByUserId }}</span></small>
-        </div>
-        <div class="version-actions">
-          <button type="button" class="btn-secondary" (click)="restoreVersion(version.id)">Restaurar</button>
-          <button *ngIf="isDocumentOwner" type="button" class="btn-danger-sm" (click)="deleteVersion(version.id)">Eliminar</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card detail-section publication-panel">
-    <h2>Publicación pública</h2>
-    <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
-      <label class="publish-toggle">
-        <input type="checkbox" formControlName="isPublic" />
-        Publicar documento
-      </label>
-
-      <div class="form-group">
-        <label>Título público opcional</label>
+        <label>Título público (opcional)</label>
         <input type="text" formControlName="publicTitle" />
       </div>
-
       <div class="form-group">
-        <label>Descripción pública opcional</label>
+        <label>Descripción pública (opcional)</label>
         <textarea formControlName="publicDescription" rows="3"></textarea>
       </div>
-
       <div class="form-group">
         <label>Enlaces externos permitidos</label>
-        <textarea
-          [(ngModel)]="publicationLinksText"
-          [ngModelOptions]="{standalone: true}"
-          rows="4"
-          placeholder="https://..."></textarea>
+        <textarea [(ngModel)]="publicationLinksText" [ngModelOptions]="{standalone: true}" rows="3" placeholder="https://..."></textarea>
       </div>
+    </div>
 
-      <div class="publication-actions">
-        <button type="button" class="btn-secondary" (click)="loadSpaceMediaReferences()">Cargar multimedia del espacio</button>
-        <button type="submit" class="btn-primary">Guardar publicación</button>
-      </div>
+    <div class="publication-actions">
+      <button type="button" class="btn-secondary" (click)="loadSpaceMediaReferences()">Cargar multimedia del espacio</button>
+      <button type="submit" class="btn-primary">Guardar publicación</button>
+    </div>
 
-      <p class="publication-message" *ngIf="publicationMessage">{{ publicationMessage }}</p>
+    <p class="publication-message" *ngIf="publicationMessage">{{ publicationMessage }}</p>
 
-      <div class="public-link" *ngIf="publication?.isPublic">
-        <a [href]="publicUrl" target="_blank" rel="noopener">Ver documento público</a>
-        <button type="button" class="btn-secondary" (click)="copyPublicUrl()">Copiar enlace</button>
-      </div>
-    </form>
-  </section>
+    <div class="public-link" *ngIf="publication?.isPublic">
+      <a [href]="publicUrl" target="_blank" rel="noopener">Ver documento público ↗</a>
+      <button type="button" class="btn-secondary" (click)="copyPublicUrl()">Copiar enlace</button>
+    </div>
+  </form>
+</app-modal>
 
-  <div *ngIf="loading" class="loading">Cargando...</div>
-
+<div class="loading-state" *ngIf="!document && loading">
+  <p>Cargando documento...</p>
 </div>
