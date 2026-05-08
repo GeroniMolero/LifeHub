@@ -415,7 +415,7 @@ LifeHub/
 
 ## Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para detalles.
+Uso personal y educativo libre. Uso comercial reservado al autor — ver el archivo LICENSE para detalles.
 
 ## Contacto
 
