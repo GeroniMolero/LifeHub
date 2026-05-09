@@ -174,13 +174,12 @@
   </div>
 
   <div class="grid" *ngIf="!loading && filteredSpaces.length > 0">
-    <article class="card" *ngFor="let space of filteredSpaces">
+    <article class="card" *ngFor="let space of filteredSpaces" (click)="openSpace(space.id)"
+      [class.card-shared]="space.privacy === SpacePrivacy.Shared"
+      [class.card-private]="space.privacy === SpacePrivacy.Private">
       <div class="card-header">
         <h3>{{ space.name }}</h3>
-        <div class="card-actions">
-          <a [routerLink]="['/spaces', space.id]" class="icon-action icon-action-open" title="Abrir espacio" aria-label="Abrir espacio">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6.5 5 2 12 2 12s4.5 7 10 7 10-7 10-7-4.5-7-10-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>
-          </a>
+        <div class="card-actions" (click)="$event.stopPropagation()">
           <button type="button" (click)="toggleFavorite(space.id)"
             class="icon-action icon-action-favorite" [class.is-favorite]="isFavorite(space.id)"
             [title]="isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito'"
@@ -197,8 +196,20 @@
           </button>
         </div>
       </div>
-      <p>{{ space.description || 'Sin descripción' }}</p>
-      <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>
+      <div class="card-body">
+        <p>{{ space.description || 'Sin descripción' }}</p>
+      </div>
+      <div class="card-footer">
+        <span class="privacy-icon" [class.privacy-shared]="space.privacy === SpacePrivacy.Shared" aria-hidden="true">
+          <svg *ngIf="space.privacy === SpacePrivacy.Shared" viewBox="0 0 24 24" fill="none">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+          </svg>
+          <svg *ngIf="space.privacy === SpacePrivacy.Private" viewBox="0 0 24 24" fill="none">
+            <path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zM7 11V7a5 5 0 0 1 10 0v4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>
+      </div>
     </article>
   </div>
 </div>
