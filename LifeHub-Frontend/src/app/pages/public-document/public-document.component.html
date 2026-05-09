@@ -3,7 +3,7 @@
     <img src="/assets/images/logo-nombre.png" alt="LifeHub" class="brand-hero-logo" />
   </a>
 
-  <ng-container *ngIf="document">
+  <div class="brand-hero-content" *ngIf="document">
     <h1 class="brand-hero-title">{{ document.title }}</h1>
     <p class="brand-hero-desc" *ngIf="document.description">{{ document.description }}</p>
     <div class="brand-hero-meta">
@@ -11,7 +11,7 @@
       <span *ngIf="document.author && document.publishedAt"> · </span>
       <span *ngIf="document.publishedAt">{{ document.publishedAt | date:'mediumDate' }}</span>
     </div>
-  </ng-container>
+  </div>
 </div>
 
 <section class="public-doc" *ngIf="!loading; else loadingTpl">

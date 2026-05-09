@@ -12,20 +12,19 @@
 
 .brand-hero {
   width: 100%;
-  padding: $space-12 $space-8 $space-10;
-  background:
-    linear-gradient(160deg, $color-brand-900 0%, $color-brand-700 100%);
+  padding: $space-8;
+  background: linear-gradient(160deg, $color-brand-900 0%, $color-brand-700 100%);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: $space-4;
-  text-align: center;
+  gap: $space-8;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .brand-hero-logo-link {
   display: inline-block;
   text-decoration: none;
-  margin-bottom: $space-2;
+  flex-shrink: 0;
   opacity: 0.95;
   transition: opacity $transition-fast;
 
@@ -33,34 +32,40 @@
 }
 
 .brand-hero-logo {
-  height: 52px;
+  height: 72px;
   width: auto;
   display: block;
   filter: brightness(0) invert(1);
 }
 
+.brand-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  min-width: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding-left: $space-8;
+}
+
 .brand-hero-title {
   margin: 0;
   color: $color-white;
-  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  font-size: clamp(1.3rem, 3vw, 2rem);
   font-weight: $font-weight-bold;
   line-height: $line-height-tight;
-  max-width: 720px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 .brand-hero-desc {
   margin: 0;
   color: rgba(255, 255, 255, 0.75);
-  font-size: $font-size-lg;
-  max-width: 600px;
+  font-size: $font-size-base;
   line-height: $line-height-relaxed;
 }
 
 .brand-hero-meta {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.5);
   font-size: $font-size-sm;
-  margin-top: $space-1;
 }
 
 .error {
