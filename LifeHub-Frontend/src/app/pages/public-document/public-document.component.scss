@@ -8,6 +8,14 @@
   gap: $space-6;
 }
 
+.public-brand-bar {
+  width: 100%;
+  padding: $space-5 $space-8;
+  background: $color-white;
+  border-bottom: 1px solid $color-brand-border-medium;
+  box-shadow: $shadow-sm;
+}
+
 .brand-link {
   display: inline-block;
   text-decoration: none;
@@ -18,7 +26,7 @@
 }
 
 .brand-logo {
-  height: 32px;
+  height: 48px;
   width: auto;
   display: block;
 }
