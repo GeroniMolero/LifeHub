@@ -7,7 +7,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { User } from '../../models/auth.model';
 import { Friendship, FriendshipStatus } from '../../models/friendship.model';
-import { CreativeSpace } from '../../models/creative-space.model';
+import { CreativeSpace, SpacePrivacy } from '../../models/creative-space.model';
 import { Document } from '../../models/document.model';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
@@ -19,11 +19,12 @@ import { LayoutHeaderStateService } from '../../services/layout-header-state.ser
 import { ToastService } from '../../services/toast.service';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { ConfigService } from '../../services/config.service';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-public-user',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, ModalComponent],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, ModalComponent, DragDropModule],
   templateUrl: './public-user.component.html',
   styleUrls: ['./public-user.component.scss']
 })
@@ -55,6 +56,81 @@ export class PublicUserComponent implements OnInit, OnDestroy {
   submittedPassword = false;
   savingProfile = false;
   savingPassword = false;
+
+  showDocPicker = false;
+  showSpacePicker = false;
+
+  get editVisibleDocs(): Document[] { return this.publicDocuments; }
+  get editAvailableDocs(): Document[] {
+    const visibleIds = new Set(this.publicDocuments.map(d => d.id));
+    return this.allPublishedDocs.filter(d => !visibleIds.has(d.id));
+  }
+  get editDocEmptySlots(): null[] {
+    return Array(Math.max(0, this.MAX_PROFILE_DOCS - this.publicDocuments.length)).fill(null);
+  }
+  get editVisibleSpaces(): CreativeSpace[] { return this.publicSpaces; }
+  get editAvailableSpaces(): CreativeSpace[] {
+    const visibleIds = new Set(this.publicSpaces.map(s => s.id));
+    return this.allSpaces.filter(s => s.privacy !== SpacePrivacy.Private && !visibleIds.has(s.id));
+  }
+  get editSpaceEmptySlots(): null[] {
+    return Array(Math.max(0, this.MAX_PROFILE_SPACES - this.publicSpaces.length)).fill(null);
+  }
+
+  toggleDocPicker(): void { this.showDocPicker = !this.showDocPicker; this.showSpacePicker = false; }
+  toggleSpacePicker(): void { this.showSpacePicker = !this.showSpacePicker; this.showDocPicker = false; }
+
+  dropDoc(event: CdkDragDrop<Document[]>): void {
+    moveItemInArray(this.publicDocuments, event.previousIndex, event.currentIndex);
+  }
+
+  dropSpace(event: CdkDragDrop<CreativeSpace[]>): void {
+    moveItemInArray(this.publicSpaces, event.previousIndex, event.currentIndex);
+  }
+
+  removeDocFromProfile(doc: Document): void {
+    this.documentService.setDocumentProfileVisibility(doc.id, false).subscribe({
+      next: () => { this.publicDocuments = this.publicDocuments.filter(d => d.id !== doc.id); },
+      error: err => this.toast.error(err?.error?.message || 'No se pudo actualizar.')
+    });
+  }
+
+  addDocToProfile(doc: Document): void {
+    if (this.publicDocuments.length >= this.MAX_PROFILE_DOCS) {
+      this.toast.error(`Solo puedes tener ${this.MAX_PROFILE_DOCS} documentos visibles en tu perfil.`);
+      return;
+    }
+    this.documentService.setDocumentProfileVisibility(doc.id, true).subscribe({
+      next: () => { this.publicDocuments = [...this.publicDocuments, doc]; this.showDocPicker = false; },
+      error: err => this.toast.error(err?.error?.message || 'No se pudo actualizar.')
+    });
+  }
+
+  removeSpaceFromProfile(space: CreativeSpace): void {
+    const s = this.allSpaces.find(x => x.id === space.id) ?? space;
+    this.spaceService.updateSpace(s.id, { name: s.name, description: s.description, privacy: s.privacy, isFavorite: s.isFavorite, isPublicProfileVisible: false }).subscribe({
+      next: () => {
+        this.publicSpaces = this.publicSpaces.filter(x => x.id !== s.id);
+        this.allSpaces = this.allSpaces.map(x => x.id === s.id ? { ...x, isPublicProfileVisible: false } : x);
+      },
+      error: err => this.toast.error(err?.error?.message || 'No se pudo actualizar.')
+    });
+  }
+
+  addSpaceToProfile(space: CreativeSpace): void {
+    if (this.publicSpaces.length >= this.MAX_PROFILE_SPACES) {
+      this.toast.error(`Solo puedes tener ${this.MAX_PROFILE_SPACES} espacios visibles en tu perfil.`);
+      return;
+    }
+    this.spaceService.updateSpace(space.id, { name: space.name, description: space.description, privacy: space.privacy, isFavorite: space.isFavorite, isPublicProfileVisible: true }).subscribe({
+      next: () => {
+        this.publicSpaces = [...this.publicSpaces, space];
+        this.allSpaces = this.allSpaces.map(x => x.id === space.id ? { ...x, isPublicProfileVisible: true } : x);
+        this.showSpacePicker = false;
+      },
+      error: err => this.toast.error(err?.error?.message || 'No se pudo actualizar.')
+    });
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -277,9 +353,14 @@ export class PublicUserComponent implements OnInit, OnDestroy {
     if (!this.isOwnProfile) return;
     this.layoutHeaderStateService.setOverride({
       actions: [
+        ...(this.showEdit ? [{
+          label: 'Guardar perfil',
+          variant: 'primary' as const,
+          action: () => this.onProfileSubmit()
+        }] : []),
         {
           label: this.showEdit ? 'Ver perfil' : 'Editar perfil',
-          variant: this.showEdit ? 'secondary' : 'primary',
+          variant: 'secondary' as const,
           action: () => {
             this.showEdit = !this.showEdit;
             if (this.showEdit && this.allSpaces.length === 0) this.loadAllSpaces();
@@ -315,7 +396,7 @@ export class PublicUserComponent implements OnInit, OnDestroy {
   private loadAllSpaces(): void {
     this.loadingAllSpaces = true;
     this.spaceService.getSpaces().subscribe({
-      next: spaces => { this.allSpaces = spaces; this.loadingAllSpaces = false; },
+      next: spaces => { this.allSpaces = spaces.filter(s => s.ownerId === this.currentUserId); this.loadingAllSpaces = false; },
       error: () => { this.loadingAllSpaces = false; }
     });
   }
@@ -344,7 +425,7 @@ export class PublicUserComponent implements OnInit, OnDestroy {
     this.loadingAllPublishedDocs = true;
     this.documentService.getDocuments().subscribe({
       next: docs => {
-        this.allPublishedDocs = docs.filter(d => d.isPublic);
+        this.allPublishedDocs = docs.filter(d => d.isPublic && d.userId === this.currentUserId);
         this.loadingAllPublishedDocs = false;
       },
       error: () => { this.loadingAllPublishedDocs = false; }

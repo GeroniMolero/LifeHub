@@ -1,10 +1,8 @@
 .public-user-container {
-  max-width: 960px;
+  max-width: 56rem;
+  width: 100%;
   margin: 0 auto;
   padding: 1.4rem;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .back-link {
@@ -21,10 +19,8 @@
   border-radius: 14px;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 1.5rem;
+  min-height: 38.75rem;
 }
 
 .profile-header {
@@ -114,13 +110,10 @@
 .content-grid {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  flex: 1;
-  min-height: 0;
 }
 
 .content-panel {
   padding: 1.25rem;
-  overflow-y: auto;
 
   &--right {
     border-left: 1px solid #e2e8f0;
@@ -143,7 +136,7 @@
 .spaces-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
 }
 
 .space-card {
@@ -460,6 +453,165 @@
 
     &:hover { background: #b91c1c; }
   }
+}
+
+.edit-header-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #0f172a;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:focus {
+      outline: none;
+      border-color: #1f7a8c;
+      box-shadow: 0 0 0 3px rgba(31, 122, 140, 0.12);
+    }
+
+    &.is-invalid { border-color: #ef4444; }
+  }
+
+  textarea { resize: vertical; }
+}
+
+.edit-slot {
+  position: relative;
+
+  &.edit-slot--filled {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 0.85rem 1rem 0.85rem 1rem;
+  }
+
+  &.edit-slot--empty {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+    transition: border-color 0.15s, background 0.15s;
+
+    &:hover {
+      border-color: #1f7a8c;
+      background: #f0f9ff;
+    }
+  }
+}
+
+.edit-slot-remove {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: none;
+  background: #fee2e2;
+  color: #ef4444;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+
+  &:hover { background: #fca5a5; }
+}
+
+.edit-slot-plus {
+  font-size: 1.75rem;
+  color: #94a3b8;
+  line-height: 1;
+  font-weight: 300;
+}
+
+.spaces-edit-empty-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.cdk-drag-preview {
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+  opacity: 0.9;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.35;
+  border: 2px dashed #94a3b8 !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
+}
+
+.cdk-drop-list-dragging .edit-slot--filled:not(.cdk-drag-placeholder) {
+  transition: transform 200ms ease;
+}
+
+[cdkDrag] { cursor: grab; }
+[cdkDrag]:active { cursor: grabbing; }
+
+.slot-picker {
+  margin-top: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.slot-picker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-family: inherit;
+
+  &:hover { background: #f0f9ff; }
+  & + & { border-top: 1px solid #f1f5f9; }
+
+  strong { color: #0f172a; font-size: 0.875rem; }
+  span { color: #64748b; font-size: 0.78rem; }
+}
+
+.slot-picker-empty {
+  padding: 0.75rem 0.85rem;
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.edit-secondary {
+  display: grid;
+  gap: 1.25rem;
 }
 
 @media (max-width: 640px) {
