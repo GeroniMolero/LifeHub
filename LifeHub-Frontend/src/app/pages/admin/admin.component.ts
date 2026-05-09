@@ -186,8 +186,8 @@ export class AdminComponent implements OnInit, OnDestroy {
   logsError     = '';
   logsTotalCount = 0;
   logsPage       = 1;
-  logsPageSizeControl = this.fb.control(50);
-  get logsPageSize(): number { return this.logsPageSizeControl.value ?? 50; }
+  logsPageSizeControl = this.fb.control(25);
+  get logsPageSize(): number { return this.logsPageSizeControl.value ?? 25; }
 
   private destroy$ = new Subject<void>();
 
