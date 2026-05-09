@@ -774,14 +774,14 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         `Actualizado ${new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(space.updatedAt))}`
       ],
       actions: [
-        {
+        ...(this.isOwner() ? [{
           label: 'Ajustes',
-          variant: 'ghost',
+          variant: 'ghost' as const,
           action: () => this.openSettingsModal()
-        },
+        }] : []),
         {
           label: 'Volver a espacios',
-          variant: 'secondary',
+          variant: 'secondary' as const,
           route: '/spaces'
         }
       ]

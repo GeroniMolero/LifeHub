@@ -1,7 +1,7 @@
 @use '../../../../styles/design-tokens' as *;
 @use '../../../../styles/table-toolbar';
 
-.spaces-container { max-width: 980px; margin: 0 auto; }
+.spaces-container { max-width: 100%; margin: 0 auto; }
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .card {
   position: relative;

@@ -179,7 +179,7 @@
       [class.card-private]="space.privacy === SpacePrivacy.Private">
       <div class="card-header">
         <h3>{{ space.name }}</h3>
-        <div class="card-actions" (click)="$event.stopPropagation()">
+        <div class="card-actions" *ngIf="isOwner(space)" (click)="$event.stopPropagation()">
           <button type="button" (click)="toggleFavorite(space.id)"
             class="icon-action icon-action-favorite" [class.is-favorite]="isFavorite(space.id)"
             [title]="isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito'"
