@@ -65,6 +65,28 @@ describe('AuthService', () => {
     });
   });
 
+  it('login stores isActive in user from response', (done) => {
+    const user = makeUser({ isActive: false });
+    httpSpy.post.and.returnValue(of({ success: true, token: 'tok', user }));
+
+    service.login('u1@test.com', 'pass').subscribe(() => {
+      const stored = JSON.parse(localStorage.getItem('lifehub_user')!);
+      expect(stored.isActive).toBeFalse();
+      done();
+    });
+  });
+
+  it('login stores createdAt in user from response', (done) => {
+    const user = makeUser({ createdAt: '2026-01-15T10:00:00Z' });
+    httpSpy.post.and.returnValue(of({ success: true, token: 'tok', user }));
+
+    service.login('u1@test.com', 'pass').subscribe(() => {
+      const stored = JSON.parse(localStorage.getItem('lifehub_user')!);
+      expect(stored.createdAt).toBe('2026-01-15T10:00:00Z');
+      done();
+    });
+  });
+
   // ── logout ───────────────────────────────────────────────────────────────
   it('logout clears token and user from localStorage', () => {
     localStorage.setItem('lifehub_token', 'tok');
@@ -170,6 +192,20 @@ describe('AuthService', () => {
       expect(service.canViewAdmin()).toBeFalse();
       done();
     });
+  });
+
+  // ── isActive ─────────────────────────────────────────────────────────────
+
+  it('getCurrentUser reflects isActive false when stored user has isActive false', () => {
+    const user = makeUser({ isActive: false });
+    localStorage.setItem('lifehub_token', 'tok');
+    localStorage.setItem('lifehub_user', JSON.stringify(user));
+
+    service = new AuthService(httpSpy as any);
+
+    let current: any = null;
+    service.getCurrentUser().subscribe(u => (current = u));
+    expect(current?.isActive).toBeFalse();
   });
 
   // ── loadUser on construction ─────────────────────────────────────────────
