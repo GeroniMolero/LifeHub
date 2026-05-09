@@ -52,7 +52,6 @@ export interface ActivityLogEntry {
   entityType: string;
   entityId: string | null;
   details: string;
-  ipAddress: string;
   createdAt: string;
 }
 

@@ -196,26 +196,33 @@
     <div *ngIf="logsError" class="error-banner">{{ logsError }}</div>
 
     <section class="admin-toolbar card">
-      <form [formGroup]="logsFilterForm" class="filters-form" (ngSubmit)="loadActivityLogs()">
+      <form [formGroup]="logsFilterForm" class="filters-form">
         <div class="search-line">
           <div class="filter-field filter-field-search">
-            <input type="search" formControlName="userEmail" placeholder="Filtrar por email de usuario..." />
+            <input type="search" formControlName="userEmail" placeholder="Buscar por email de usuario..." />
           </div>
           <div class="search-line-actions">
-            <button type="button" class="btn-secondary" (click)="clearLogsFilters()">Limpiar</button>
-            <button type="submit" class="btn-primary">Buscar</button>
+            <button type="button" class="btn-secondary clear-filters-btn"
+              [class.clear-filters-btn-invisible]="!hasActiveLogsFilters"
+              [disabled]="!hasActiveLogsFilters"
+              (click)="clearLogsFilters()">Limpiar</button>
+            <button type="button" class="btn-secondary filters-toggle"
+              (click)="showLogsFilters = !showLogsFilters">
+              Filtros {{ showLogsFilters ? '▴' : '▾' }}
+            </button>
           </div>
         </div>
-        <div class="filters-expand-panel" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem;">
+        <div class="filters-expand-panel" *ngIf="showLogsFilters">
           <div class="filter-field">
             <label>Tipo de entidad</label>
             <select formControlName="entityType">
               <option value="">Todos</option>
               <option value="Document">Documento</option>
               <option value="CreativeSpace">Espacio</option>
-              <option value="Friendship">Amistad</option>
-              <option value="Message">Mensaje</option>
-              <option value="User">Usuario</option>
+              <option value="" disabled>── sin registros ──</option>
+              <option value="Friendship" disabled>Amistad</option>
+              <option value="Message" disabled>Mensaje</option>
+              <option value="User" disabled>Usuario</option>
             </select>
           </div>
           <div class="filter-field">
@@ -225,6 +232,15 @@
           <div class="filter-field">
             <label>Hasta</label>
             <input type="date" formControlName="to" />
+          </div>
+          <div class="filter-field">
+            <label>Por página</label>
+            <select [formControl]="logsPageSizeControl">
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
           </div>
         </div>
       </form>
@@ -245,7 +261,6 @@
               <th>Acción</th>
               <th>Entidad</th>
               <th>Detalles</th>
-              <th>IP</th>
             </tr>
           </thead>
           <tbody>
@@ -253,12 +268,11 @@
               <td class="nowrap">{{ log.createdAt | date:'dd/MM/yy HH:mm' }}</td>
               <td>
                 <span *ngIf="log.userEmail">{{ log.userFullName || log.userEmail }}</span>
-                <span *ngIf="!log.userEmail" class="text-muted">—</span>
+                <span *ngIf="!log.userEmail" class="text-muted">Usuario eliminado</span>
               </td>
               <td><code class="log-action">{{ log.action }}</code></td>
               <td>{{ log.entityType }}<span *ngIf="log.entityId"> #{{ log.entityId }}</span></td>
               <td class="log-details">{{ log.details || '—' }}</td>
-              <td class="nowrap text-muted">{{ log.ipAddress || '—' }}</td>
             </tr>
           </tbody>
         </table>

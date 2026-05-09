@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { AdminService, ActivityLogQuery } from '../../services/admin.service';
@@ -34,7 +35,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.closeEditUserModal();
     this.setHeaderState();
-    if (tab === 'logs' && this.activityLogs.length === 0) {
+    if (tab === 'logs') {
       this.loadActivityLogs();
     }
   }
@@ -158,7 +159,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   viewUserLogs(user: AdminUser): void {
-    this.logsFilterForm.reset({ userId: user.id, userEmail: user.email, entityType: '', from: '', to: '' });
+    this.logsFilterForm.reset({ userId: user.id, userEmail: user.email, entityType: '', from: '', to: '' }, { emitEvent: false });
     this.logsPage = 1;
     this.setTab('logs');
   }
@@ -185,7 +186,10 @@ export class AdminComponent implements OnInit, OnDestroy {
   logsError     = '';
   logsTotalCount = 0;
   logsPage       = 1;
-  readonly logsPageSize = 50;
+  logsPageSizeControl = this.fb.control(50);
+  get logsPageSize(): number { return this.logsPageSizeControl.value ?? 50; }
+
+  private destroy$ = new Subject<void>();
 
   logsFilterForm = this.fb.group({
     userId:     [''],
@@ -208,6 +212,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   showUsersFilters    = false;
   showWebsitesFilters = false;
+  showLogsFilters     = false;
 
   // ── Create forms ───────────────────────────────────────────────────────────
 
@@ -248,10 +253,27 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.setHeaderState();
     this.loadAdminUsers();
     this.loadWebsites();
+
+    this.logsFilterForm.valueChanges.pipe(
+      debounceTime(400),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.logsPage = 1;
+      this.loadActivityLogs();
+    });
+
+    this.logsPageSizeControl.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.logsPage = 1;
+      if (this._activeTab === 'logs') this.loadActivityLogs();
+    });
   }
 
   ngOnDestroy(): void {
     this.layoutHeaderStateService.clearOverride();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // ── Filtered data ──────────────────────────────────────────────────────────
@@ -287,6 +309,11 @@ export class AdminComponent implements OnInit, OnDestroy {
   get hasActiveWebsitesFilters(): boolean {
     const { search, status } = this.websitesFilterForm.getRawValue();
     return !!search?.trim() || status !== 'all';
+  }
+
+  get hasActiveLogsFilters(): boolean {
+    const { userId, userEmail, entityType, from, to } = this.logsFilterForm.getRawValue();
+    return !!(userId?.trim() || userEmail?.trim() || entityType || from || to);
   }
 
   clearUsersFilters(): void {
@@ -412,7 +439,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   clearLogsFilters(): void {
-    this.logsFilterForm.reset({ userId: '', userEmail: '', entityType: '', from: '', to: '' });
+    this.logsFilterForm.reset({ userId: '', userEmail: '', entityType: '', from: '', to: '' }, { emitEvent: false });
     this.logsPage = 1;
     this.loadActivityLogs();
   }

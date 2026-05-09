@@ -197,7 +197,6 @@ namespace LifeHub.Services.Admin
                     EntityType = l.EntityType,
                     EntityId = l.EntityId,
                     Details = l.Details,
-                    IpAddress = l.IpAddress,
                     CreatedAt = l.CreatedAt
                 })
                 .ToListAsync();
