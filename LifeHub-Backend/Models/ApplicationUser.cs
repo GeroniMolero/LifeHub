@@ -9,6 +9,7 @@ namespace LifeHub.Models
         [MaxLength(2000)]
         public string? ProfilePictureUrl { get; set; }
         public string? Bio { get; set; }
+        public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
