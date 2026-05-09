@@ -3,14 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
-import { User } from '../../models/auth.model';
+import { AdminService, ActivityLogQuery } from '../../services/admin.service';
+import { AdminUser, ActivityLogEntry } from '../../models/auth.model';
 import { ConfirmationService } from '../../services/confirmation.service';
 import { AllowedWebsiteService } from '../../services/allowed-website.service';
 import { AllowedWebsite } from '../../models/allowed-website.model';
 import { LayoutHeaderStateService } from '../../services/layout-header-state.service';
 import { ModalComponent } from '../../components/modal/modal.component';
 
-type Tab = 'websites' | 'users';
+type Tab = 'websites' | 'users' | 'logs' | 'sistema';
+type EditUserTab = 'data' | 'password' | 'role';
 
 @Component({
   selector: 'app-admin',
@@ -30,10 +32,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   setTab(tab: Tab): void {
     this._activeTab = tab;
     this.showModal = false;
+    this.closeEditUserModal();
     this.setHeaderState();
+    if (tab === 'logs' && this.activityLogs.length === 0) {
+      this.loadActivityLogs();
+    }
   }
 
-  // ── Modal ──────────────────────────────────────────────────────────────────
+  // ── Modal (crear dominio / usuario) ────────────────────────────────────────
 
   showModal = false;
 
@@ -44,9 +50,122 @@ export class AdminComponent implements OnInit, OnDestroy {
     return this._activeTab === 'users' ? 'Nuevo usuario' : 'Nuevo dominio';
   }
 
+  // ── Edit user modal ────────────────────────────────────────────────────────
+
+  showEditUserModal = false;
+  editingUser: AdminUser | null = null;
+  editUserTab: EditUserTab = 'data';
+
+  editUserForm = this.fb.group({
+    email:    ['', [Validators.required, Validators.email]],
+    fullName: ['', Validators.maxLength(100)]
+  });
+
+  setPasswordForm = this.fb.group({
+    newPassword: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(128)]]
+  });
+
+  roleForm = this.fb.group({
+    role: ['', Validators.required]
+  });
+
+  editUserLoading = false;
+  editUserError   = '';
+
+  openEditUserModal(user: AdminUser): void {
+    this.editingUser = user;
+    this.editUserTab = 'data';
+    this.editUserError = '';
+    this.editUserForm.reset({ email: user.email, fullName: user.fullName ?? '' });
+    this.setPasswordForm.reset({ newPassword: '' });
+    this.roleForm.reset({ role: user.roles[0] ?? 'User' });
+    this.showEditUserModal = true;
+  }
+
+  closeEditUserModal(): void {
+    this.showEditUserModal = false;
+    this.editingUser = null;
+    this.editUserError = '';
+  }
+
+  setEditUserTab(tab: EditUserTab): void {
+    this.editUserTab = tab;
+    this.editUserError = '';
+  }
+
+  saveEditUser(): void {
+    if (this.editUserForm.invalid || !this.editingUser) return;
+    this.editUserLoading = true;
+    this.editUserError   = '';
+    const { email, fullName } = this.editUserForm.value;
+    this.adminService.adminUpdateUser(this.editingUser.id, { email: email!, fullName: fullName ?? undefined }).subscribe({
+      next: updated => {
+        this.adminUsers = this.adminUsers.map(u => u.id === updated.id ? updated : u);
+        this.editingUser = updated;
+        this.editUserLoading = false;
+      },
+      error: err => {
+        this.editUserError   = err?.error?.message || 'No se pudo actualizar el usuario.';
+        this.editUserLoading = false;
+      }
+    });
+  }
+
+  savePassword(): void {
+    if (this.setPasswordForm.invalid || !this.editingUser) return;
+    this.editUserLoading = true;
+    this.editUserError   = '';
+    const { newPassword } = this.setPasswordForm.value;
+    this.adminService.adminSetPassword(this.editingUser.id, newPassword!).subscribe({
+      next: () => {
+        this.setPasswordForm.reset({ newPassword: '' });
+        this.editUserLoading = false;
+      },
+      error: err => {
+        this.editUserError   = err?.error?.message || 'No se pudo actualizar la contraseña.';
+        this.editUserLoading = false;
+      }
+    });
+  }
+
+  saveRole(): void {
+    if (this.roleForm.invalid || !this.editingUser) return;
+    this.editUserLoading = true;
+    this.editUserError   = '';
+    const { role } = this.roleForm.value;
+    this.adminService.adminUpdateRole(this.editingUser.id, role!).subscribe({
+      next: updated => {
+        this.adminUsers = this.adminUsers.map(u => u.id === updated.id ? updated : u);
+        this.editingUser = updated;
+        this.editUserLoading = false;
+      },
+      error: err => {
+        this.editUserError   = err?.error?.message || 'No se pudo cambiar el rol.';
+        this.editUserLoading = false;
+      }
+    });
+  }
+
+  toggleActive(user: AdminUser): void {
+    this.usersError = '';
+    this.adminService.toggleUserActive(user.id).subscribe({
+      next: updated => {
+        this.adminUsers = this.adminUsers.map(u => u.id === updated.id ? updated : u);
+        if (this.editingUser?.id === updated.id) this.editingUser = updated;
+      },
+      error: err => { this.usersError = err?.error?.message || 'No se pudo cambiar el estado.'; }
+    });
+  }
+
+  viewUserLogs(user: AdminUser): void {
+    this.logsFilterForm.reset({ userId: user.id, userEmail: user.email, entityType: '', from: '', to: '' });
+    this.logsPage = 1;
+    this.setTab('logs');
+  }
+
   // ── Data ───────────────────────────────────────────────────────────────────
 
-  users: User[] = [];
+  adminUsers: AdminUser[] = [];
   allowedWebsites: AllowedWebsite[] = [];
 
   usersLoading = false;
@@ -59,9 +178,32 @@ export class AdminComponent implements OnInit, OnDestroy {
   createWebsiteError  = '';
   createWebsiteLoading = false;
 
+  // ── Activity logs ──────────────────────────────────────────────────────────
+
+  activityLogs: ActivityLogEntry[] = [];
+  logsLoading   = false;
+  logsError     = '';
+  logsTotalCount = 0;
+  logsPage       = 1;
+  readonly logsPageSize = 50;
+
+  logsFilterForm = this.fb.group({
+    userId:     [''],
+    userEmail:  [''],
+    entityType: [''],
+    from:       [''],
+    to:         ['']
+  });
+
+  // ── Sistema / Backup ───────────────────────────────────────────────────────
+
+  backupLoading = false;
+  backupResult  = '';
+  backupError   = '';
+
   // ── Filter forms ───────────────────────────────────────────────────────────
 
-  usersFilterForm = this.fb.group({ search: [''], role: ['all'] });
+  usersFilterForm    = this.fb.group({ search: [''], role: ['all'] });
   websitesFilterForm = this.fb.group({ search: [''], status: ['all'] });
 
   showUsersFilters    = false;
@@ -80,10 +222,23 @@ export class AdminComponent implements OnInit, OnDestroy {
     isActive: [true]
   });
 
+  // ── Pagination ─────────────────────────────────────────────────────────────
+
+  get logsTotalPages(): number {
+    return Math.max(1, Math.ceil(this.logsTotalCount / this.logsPageSize));
+  }
+
+  get logsPages(): number[] {
+    const pages: number[] = [];
+    for (let i = 1; i <= this.logsTotalPages; i++) pages.push(i);
+    return pages;
+  }
+
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
     private authService: AuthService,
+    private adminService: AdminService,
     private confirmationService: ConfirmationService,
     private allowedWebsiteService: AllowedWebsiteService,
     private layoutHeaderStateService: LayoutHeaderStateService
@@ -91,7 +246,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.setHeaderState();
-    this.loadUsers();
+    this.loadAdminUsers();
     this.loadWebsites();
   }
 
@@ -101,12 +256,12 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   // ── Filtered data ──────────────────────────────────────────────────────────
 
-  get filteredUsers(): User[] {
+  get filteredUsers(): AdminUser[] {
     const search = (this.usersFilterForm.get('search')?.value ?? '').trim().toLowerCase();
     const role   = this.usersFilterForm.get('role')?.value ?? 'all';
 
-    return this.users.filter(u => {
-      if (role !== 'all' && !u.roles?.includes(role)) return false;
+    return this.adminUsers.filter(u => {
+      if (role !== 'all' && !u.roles.includes(role)) return false;
       if (!search) return true;
       return [u.fullName, u.email].filter(Boolean).join(' ').toLowerCase().includes(search);
     });
@@ -142,6 +297,12 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.websitesFilterForm.reset({ search: '', status: 'all' });
   }
 
+  // ── Usage helpers ──────────────────────────────────────────────────────────
+
+  isUsageWarn(value: number, max: number): boolean {
+    return max > 0 && value / max >= 0.9;
+  }
+
   // ── Users CRUD ─────────────────────────────────────────────────────────────
 
   createUser(): void {
@@ -155,7 +316,7 @@ export class AdminComponent implements OnInit, OnDestroy {
         this.createUserForm.reset();
         this.closeModal();
         this.createUserLoading = false;
-        this.loadUsers();
+        this.loadAdminUsers();
       },
       error: err => {
         this.createUserError   = err?.error?.message || 'No se pudo crear el usuario.';
@@ -168,7 +329,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     if (!this.confirmationService.confirmDelete('este usuario')) return;
     this.usersError = '';
     this.userService.deleteUser(userId).subscribe({
-      next: () => { this.users = this.users.filter(u => u.id !== userId); },
+      next: () => { this.adminUsers = this.adminUsers.filter(u => u.id !== userId); },
       error: err => { this.usersError = err?.error?.message || 'No se pudo eliminar el usuario.'; }
     });
   }
@@ -216,13 +377,71 @@ export class AdminComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ── Activity logs ──────────────────────────────────────────────────────────
+
+  loadActivityLogs(): void {
+    this.logsLoading = true;
+    this.logsError   = '';
+    const v = this.logsFilterForm.value;
+    const query: ActivityLogQuery = {
+      userId:     v.userId || undefined,
+      userEmail:  v.userEmail || undefined,
+      entityType: v.entityType || undefined,
+      from:       v.from || undefined,
+      to:         v.to || undefined,
+      page:       this.logsPage,
+      pageSize:   this.logsPageSize
+    };
+    this.adminService.getActivityLogs(query).subscribe({
+      next: result => {
+        this.activityLogs  = result.items;
+        this.logsTotalCount = result.totalCount;
+        this.logsLoading   = false;
+      },
+      error: err => {
+        this.logsError   = err?.error?.message || 'No se pudo cargar los logs.';
+        this.logsLoading = false;
+      }
+    });
+  }
+
+  changePage(page: number): void {
+    if (page < 1 || page > this.logsTotalPages) return;
+    this.logsPage = page;
+    this.loadActivityLogs();
+  }
+
+  clearLogsFilters(): void {
+    this.logsFilterForm.reset({ userId: '', userEmail: '', entityType: '', from: '', to: '' });
+    this.logsPage = 1;
+    this.loadActivityLogs();
+  }
+
+  // ── Backup ─────────────────────────────────────────────────────────────────
+
+  triggerBackup(): void {
+    this.backupLoading = true;
+    this.backupResult  = '';
+    this.backupError   = '';
+    this.adminService.triggerBackup().subscribe({
+      next: res => {
+        this.backupResult  = res.backupFile ? `Backup guardado: ${res.backupFile}` : res.message;
+        this.backupLoading = false;
+      },
+      error: err => {
+        this.backupError   = err?.error?.message || 'Error al lanzar el backup.';
+        this.backupLoading = false;
+      }
+    });
+  }
+
   // ── Private ────────────────────────────────────────────────────────────────
 
-  private loadUsers(): void {
+  private loadAdminUsers(): void {
     this.usersLoading = true;
     this.usersError   = '';
-    this.userService.getUsers().subscribe({
-      next: users => { this.users = users; this.usersLoading = false; },
+    this.adminService.getAdminUsers().subscribe({
+      next: users => { this.adminUsers = users; this.usersLoading = false; },
       error: err  => { this.usersError = err?.error?.message || 'No se pudo cargar usuarios.'; this.usersLoading = false; }
     });
   }
@@ -237,7 +456,15 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   private setHeaderState(): void {
-    const isUsers = this._activeTab === 'users';
+    const tab = this._activeTab;
+    if (tab === 'logs' || tab === 'sistema') {
+      this.layoutHeaderStateService.setOverride({
+        description: tab === 'logs' ? 'Registro de actividad de la plataforma' : 'Herramientas del sistema',
+        actions: []
+      });
+      return;
+    }
+    const isUsers = tab === 'users';
     this.layoutHeaderStateService.setOverride({
       description: isUsers
         ? 'Gestión de usuarios de la plataforma'

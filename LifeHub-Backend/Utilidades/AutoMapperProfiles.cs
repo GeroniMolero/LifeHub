@@ -80,6 +80,11 @@ namespace LifeHub.Utilidades
                     s.CreatedByUser != null ? s.CreatedByUser.Email : null))
                 .ReverseMap();
 
+            // ActivityLog mappings
+            CreateMap<ActivityLog, ActivityLogDto>()
+                .ForMember(d => d.UserEmail,    o => o.MapFrom(s => s.User != null ? s.User.Email : null))
+                .ForMember(d => d.UserFullName, o => o.MapFrom(s => s.User != null ? s.User.FullName : null));
+
             // MusicFile mappings
             CreateMap<MusicFile, MusicFileDto>().ReverseMap();
             CreateMap<CreateMusicFileDto, MusicFile>();

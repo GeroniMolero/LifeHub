@@ -12,6 +12,7 @@ using LifeHub.Services.MusicFiles;
 using LifeHub.Services.Messages;
 using LifeHub.Services.Users;
 using LifeHub.Services.AllowedWebsites;
+using LifeHub.Services.Admin;
 using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -59,6 +60,7 @@ builder.Services.AddScoped<IMusicFileService, MusicFileService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAllowedWebsiteService, AllowedWebsiteService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 // =============================
 // SWAGGER + AUTH JWT
