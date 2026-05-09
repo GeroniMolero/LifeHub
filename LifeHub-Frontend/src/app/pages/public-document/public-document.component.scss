@@ -8,13 +8,19 @@
   gap: $space-6;
 }
 
-.back-link {
-  color: $color-brand-700;
-  text-decoration: none;
-  font-weight: $font-weight-medium;
+.brand-link {
   display: inline-block;
+  text-decoration: none;
+  opacity: 0.9;
+  transition: opacity $transition-fast;
 
-  &:hover { text-decoration: underline; }
+  &:hover { opacity: 1; }
+}
+
+.brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
 }
 
 .error {
