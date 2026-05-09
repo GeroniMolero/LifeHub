@@ -149,6 +149,7 @@ export class PublicUserComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    document.body.classList.add('profile-page');
     this.initForms();
 
     this.authService.getCurrentUser()
@@ -171,6 +172,7 @@ export class PublicUserComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.body.classList.remove('profile-page');
     this.layoutHeaderStateService.clearOverride();
   }
 

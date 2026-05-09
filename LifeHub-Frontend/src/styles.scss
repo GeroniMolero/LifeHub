@@ -173,6 +173,14 @@ input, textarea {
   border-color: color.adjust($color-info-light, $lightness: -10%);
 }
 
+// ============================================================
+// FONDO DE PÁGINA DE PERFIL
+// ============================================================
+
+body.profile-page .layout-shell {
+  background: url('/assets/images/fondo_profile.jpeg') center / cover no-repeat fixed !important;
+}
+
 /* Tooltip de usuario (nombre visible, email en title nativo) */
 .user-tip {
   cursor: help;
