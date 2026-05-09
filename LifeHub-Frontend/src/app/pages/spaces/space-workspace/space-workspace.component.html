@@ -1,12 +1,86 @@
-﻿<section class="workspace" *ngIf="!loading; else loadingTpl">
+<app-modal title="Ajustes del espacio" [visible]="showSettingsModal" (closed)="closeSettingsModal()">
+  <div class="modal-tabs" *ngIf="isOwner()">
+    <button type="button" class="modal-tab-btn" [class.active]="settingsModalTab === 'edit'" (click)="setSettingsModalTab('edit')">Editar</button>
+    <button type="button" class="modal-tab-btn" [class.active]="settingsModalTab === 'permissions'" (click)="setSettingsModalTab('permissions')">Permisos</button>
+  </div>
 
-  <app-space-settings-panel
-    [showEditSpace]="showEditSpace"
-    [editSpaceForm]="editSpaceForm"
-    [loading]="loading"
-    (save)="saveSpace()"
-    (cancel)="toggleEditSpace()">
-  </app-space-settings-panel>
+  <div class="modal-tab-body">
+    <form *ngIf="settingsModalTab === 'edit'" [formGroup]="editSpaceForm" (ngSubmit)="saveSpace()" class="modal-create-form">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" formControlName="name" [class.is-invalid]="submittedEdit && editSpaceForm.get('name')?.errors" />
+        <div *ngIf="submittedEdit && editSpaceForm.get('name')?.errors" class="error-message">
+          <span *ngIf="editSpaceForm.get('name')?.errors?.['required']">El nombre es requerido</span>
+          <span *ngIf="editSpaceForm.get('name')?.errors?.['maxlength']">Máximo 200 caracteres</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea rows="3" formControlName="description"></textarea>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" formControlName="isPublicProfileVisible" />
+        Visible en perfil público
+      </label>
+
+      <div class="modal-form-actions">
+        <button type="button" class="btn-secondary" (click)="closeSettingsModal()">Cancelar</button>
+        <button class="btn-primary" type="submit" [disabled]="editSpaceForm.invalid || loading">
+          {{ loading ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="settingsModalTab === 'permissions' && space" class="permissions-tab">
+      <form *ngIf="permissionForm" [formGroup]="permissionForm" (ngSubmit)="shareSpace()" class="permission-form">
+        <label>Amigo</label>
+        <select formControlName="userId" [disabled]="friendOptions.length === 0 || friendsLoading">
+          <option value="">Selecciona un amigo</option>
+          <option *ngFor="let friend of friendOptions" [value]="friend.id">
+            {{ friendOptionLabel(friend) }}
+          </option>
+        </select>
+
+        <label>Nivel</label>
+        <select formControlName="permissionLevel">
+          <option [value]="SpacePermissionLevel.Viewer">Lector</option>
+          <option [value]="SpacePermissionLevel.Editor">Editor</option>
+        </select>
+
+        <button class="btn-primary" type="submit" [disabled]="!permissionForm || permissionForm.invalid || permissionLoading">
+          Compartir
+        </button>
+      </form>
+
+      <div class="loading" *ngIf="permissionLoading">Cargando permisos...</div>
+      <div class="loading" *ngIf="friendsLoading">Cargando amigos...</div>
+      <div class="empty" *ngIf="!friendsLoading && friendOptions.length === 0">
+        No tienes amigos aceptados para compartir este espacio.
+      </div>
+
+      <div class="permissions-list" *ngIf="permissions.length > 0">
+        <article class="permission-item" *ngFor="let permission of permissions">
+          <div>
+            <strong
+              [title]="permission.userEmail ?? ''"
+              [class.user-tip]="!!permission.userEmail"
+            >{{ permission.userName ?? permission.userId }}</strong>
+            <small>{{ permissionText(permission.permissionLevel) }} · {{ permission.createdAt | date:'short' }}</small>
+          </div>
+          <button class="btn-danger" type="button" (click)="removePermission(permission.userId)">Revocar</button>
+        </article>
+      </div>
+
+      <div class="empty" *ngIf="!permissionLoading && permissions.length === 0">
+        Este espacio no está compartido con otros usuarios.
+      </div>
+    </div>
+  </div>
+</app-modal>
+
+<section class="workspace" *ngIf="!loading; else loadingTpl">
 
   <!-- ── Main workspace body ────────────────────────────── -->
   <div class="workspace-body" *ngIf="space">

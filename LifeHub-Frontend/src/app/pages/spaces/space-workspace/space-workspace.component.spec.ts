@@ -11,10 +11,12 @@ describe('SpaceWorkspaceComponent markdown security', () => {
       new FormBuilder(),
       { sanitize: (_context: any, value: string | null) => value } as any,
       { getEmbedAllowlist: () => of([]) } as any,
+      { getCurrentUser: () => of(null) } as any,
       {} as any,
       {} as any,
       {} as any,
       {} as any,
+      { getAcceptedFriendships: () => of([]) } as any,
       {} as any,
       {} as any,
       {} as any
