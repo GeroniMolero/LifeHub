@@ -175,19 +175,30 @@
 
   <div class="grid" *ngIf="!loading && filteredSpaces.length > 0">
     <article class="card" *ngFor="let space of filteredSpaces">
-      <h3>{{ space.name }}</h3>
+      <div class="card-header">
+        <h3>{{ space.name }}</h3>
+        <div class="card-actions">
+          <a [routerLink]="['/spaces', space.id]" class="icon-action icon-action-open" title="Abrir espacio" aria-label="Abrir espacio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6.5 5 2 12 2 12s4.5 7 10 7 10-7 10-7-4.5-7-10-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>
+          </a>
+          <button type="button" (click)="toggleFavorite(space.id)"
+            class="icon-action icon-action-favorite" [class.is-favorite]="isFavorite(space.id)"
+            [title]="isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito'"
+            [attr.aria-label]="isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito'">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
+          <button type="button" (click)="startEdit(space)" class="icon-action icon-action-edit" title="Editar espacio" aria-label="Editar espacio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button type="button" (click)="deleteSpace(space.id)" class="icon-action icon-action-delete" title="Eliminar espacio" aria-label="Eliminar espacio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Zm2-10h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z"/></svg>
+          </button>
+        </div>
+      </div>
       <p>{{ space.description || 'Sin descripción' }}</p>
       <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>
-
-      <div class="actions">
-        <button class="btn-secondary" type="button" (click)="toggleFavorite(space.id)">
-          {{ isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito' }}
-        </button>
-        <button class="btn-secondary" (click)="startEdit(space)">Editar</button>
-        <button class="btn-danger" (click)="deleteSpace(space.id)">Eliminar</button>
-        <a class="btn-primary" [routerLink]="['/spaces', space.id]">Abrir espacio</a>
-      </div>
-
     </article>
   </div>
 </div>

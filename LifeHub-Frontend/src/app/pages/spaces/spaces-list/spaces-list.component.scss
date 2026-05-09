@@ -8,7 +8,80 @@
 input, textarea, select { width: 100%; padding: 0.5rem; border: 1px solid $color-border; border-radius: $border-radius-md; }
 .checkbox { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.25rem; }
 .checkbox input { width: auto; }
-.actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-2;
+
+  h3 { margin: 0; }
+}
+
+.card-actions {
+  display: flex;
+  gap: $space-1;
+  flex-shrink: 0;
+}
+
+.icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: $border-radius-md;
+  color: $color-text-secondary;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+
+  &:hover { transform: translateY(-1px); }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
+}
+
+.icon-action-open:hover {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.icon-action-edit:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: $color-brand-700;
+}
+
+.icon-action-favorite svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5px;
+}
+
+.icon-action-favorite.is-favorite svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.icon-action-favorite:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.icon-action-favorite.is-favorite {
+  color: #f59e0b;
+}
+
+.icon-action-delete { color: $color-danger; }
+
+.icon-action-delete:hover { background: rgba(180, 57, 31, 0.1); }
 .spaces-toolbar {
   padding: $space-5;
   background: $color-white;
