@@ -109,9 +109,14 @@
         [loadingDocuments]="loadingDocuments"
         [documents]="documents"
         [selectedDocument]="selectedDocument"
+        [showImportPanel]="showImportPanel"
+        [importableDocuments]="importableDocuments"
+        [loadingImportable]="loadingImportable"
         (toggleCreateDocument)="toggleCreateDocument()"
         (createDocument)="createDocument()"
-        (selectDocument)="selectDocument($event)">
+        (selectDocument)="selectDocument($event)"
+        (openImportPanel)="openImportPanel()"
+        (importDocument)="importDocument($event)">
       </app-space-documents-sidebar>
 
       <app-space-media-sidebar

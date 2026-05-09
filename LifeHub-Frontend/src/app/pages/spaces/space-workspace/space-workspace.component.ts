@@ -67,6 +67,9 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   renderedPreview = '';
 
   showCreateDocument = false;
+  showImportPanel = false;
+  importableDocuments: Document[] = [];
+  loadingImportable = false;
   showCreateMedia = false;
   showSettingsModal = false;
   settingsModalTab: 'edit' | 'permissions' = 'edit';
@@ -404,6 +407,39 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.updateRenderedPreview();
   }
 
+  openImportPanel(): void {
+    this.showImportPanel = !this.showImportPanel;
+    if (!this.showImportPanel) return;
+
+    this.loadingImportable = true;
+    this.documentService.getDocuments().subscribe({
+      next: (docs) => {
+        this.importableDocuments = docs.filter(d =>
+          d.userId === this.currentUserId && d.creativeSpaceId !== this.space?.id
+        );
+        this.loadingImportable = false;
+      },
+      error: () => { this.loadingImportable = false; }
+    });
+  }
+
+  importDocument(doc: Document): void {
+    if (!this.space) return;
+    this.loadingImportable = true;
+    this.documentService.copyToSpace(doc.id, this.space.id).subscribe({
+      next: (copy) => {
+        this.documents = [copy, ...this.documents];
+        this.showImportPanel = false;
+        this.loadingImportable = false;
+        this.toastService.success('Documento importado al espacio.');
+      },
+      error: (err: any) => {
+        this.toastService.error(err?.error?.message ?? 'No se pudo importar el documento.');
+        this.loadingImportable = false;
+      }
+    });
+  }
+
   setActiveTab(tab: 'code' | 'preview' | 'split'): void {
     this.activeTab = tab;
     if (tab === 'preview' || tab === 'split') {
@@ -658,7 +694,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     if (!this.space) return;
 
     this.loadingDocuments = true;
-    this.documentService.getDocuments().subscribe({
+    this.documentService.getDocuments(this.space.id).subscribe({
       next: (documents) => {
         this.documents = documents;
         this.loadingDocuments = false;

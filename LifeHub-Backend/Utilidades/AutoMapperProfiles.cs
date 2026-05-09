@@ -47,7 +47,10 @@ namespace LifeHub.Utilidades
                 .ForMember(d => d.Type, o => o.MapFrom(s => (DocumentType)s.Type));
 
             CreateMap<CreateDocumentDto, Document>();
-            CreateMap<UpdateDocumentDto, Document>();
+            CreateMap<UpdateDocumentDto, Document>()
+                .ForMember(d => d.CreativeSpaceId, o => o.Ignore())
+                .ForMember(d => d.UserId, o => o.Ignore());
+
 
             // Creative Space mappings
             CreateMap<CreativeSpace, CreativeSpaceDto>()

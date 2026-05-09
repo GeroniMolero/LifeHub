@@ -46,4 +46,9 @@ namespace LifeHub.DTOs
         public int? CreativeSpaceId { get; set; }
     }
 
+    public class CopyDocumentDto
+    {
+        [Required]
+        public int TargetSpaceId { get; set; }
+    }
 }
