@@ -1,5 +1,11 @@
 @use '../../../styles/design-tokens' as *;
 
+:host {
+  display: block;
+  min-height: 100vh;
+  background: $color-white;
+}
+
 .public-doc {
   max-width: 860px;
   margin: 0 auto;
@@ -12,7 +18,7 @@
 
 .brand-hero {
   width: 100%;
-  padding: $space-8;
+  padding: $space-10 $space-8;
   background: linear-gradient(160deg, $color-brand-900 0%, $color-brand-700 100%);
   display: flex;
   align-items: center;
@@ -32,7 +38,7 @@
 }
 
 .brand-hero-logo {
-  height: 72px;
+  height: 88px;
   width: auto;
   display: block;
   filter: brightness(0) invert(1);
@@ -75,10 +81,6 @@
 
 .doc-card {
   background: $color-white;
-  border: $border-width-base solid $color-brand-border-medium;
-  border-radius: $border-radius-2xl;
-  box-shadow: $shadow-brand-soft;
-  padding: $space-8;
   display: grid;
   gap: $space-6;
 }
