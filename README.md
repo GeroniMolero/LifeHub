@@ -258,14 +258,21 @@ Los backups se guardan en `backups/` con el formato `<DB_NAME>_<timestamp>.bak`.
 
 ## Pruebas
 
+Estado verificado a fecha **2026-05-10**:
+
+- Última ejecución de integración registrada: `documentacion/RESULTADO_PRUEBAS_20260510_195344.md`.
+- Resultado integración API: **60/60 PASS**, **0 FAIL**, **0 SKIP**.
+- Suite unitaria backend: **160 tests** (xUnit).
+- Suite unitaria frontend: **4 specs** (Jasmine/Karma).
+
 ### Tests unitarios (sin servidor)
 
-La suite unitaria cubre ~**160 casos** de backend y **3 specs** de frontend:
+La suite unitaria cubre **160 casos** de backend y **4 specs** de frontend:
 
 | Capa | Herramienta | Cobertura |
 |------|-------------|-----------|
 | Backend — 9 servicios | xUnit + EF Core InMemory | AllowedWebsite, CreativeSpace, Document, DocumentPublication, DocumentVersion, Friendship, Message, MusicFile, Recommendation, User |
-| Frontend | Jasmine / Karma | AuthService, ConfigService, SpaceWorkspaceComponent |
+| Frontend | Jasmine / Karma | AdminService, AuthService, ConfigService, SpaceWorkspaceComponent |
 
 **Windows:**
 ```powershell
@@ -283,16 +290,16 @@ No requiere servidor ni base de datos — se ejecutan en local en segundos.
 
 ### Tests de integración E2E (requieren servidor)
 
-La suite cubre **46 casos de prueba** sobre la API REST del backend, agrupados en siete módulos:
+La suite cubre **60 casos de prueba** sobre la API REST del backend, agrupados en siete módulos:
 
 | Módulo | Casos | Qué se verifica |
 |--------|-------|------------------|
-| AUTH | 8 | Registro, login, validación de campos, tokens inválidos |
+| AUTH | 9 | Registro, login, activación de usuario de pruebas, validación de campos, tokens inválidos |
 | DOCS | 9 | CRUD de documentos, versionado, control de acceso |
 | SPACES | 5 | CRUD de espacios creativos, validación de nombre |
 | COL | 3 | Permisos de colaboración (Viewer vs Editor), acceso a documentos compartidos |
 | PUBLICATIONS | 11 | Flujo completo de publicaciones, casos negativos (sin token, documento ajeno, tras despublicar) |
-| ADMIN | 6 | Gestión de dominios permitidos (requiere rol Admin) |
+| ADMIN | 19 | Acceso por rol, gestión de dominios, usuarios, backup y logs de actividad |
 | SEGURIDAD | 4 | Acceso sin token, token manipulado, cabeceras de seguridad HTTP |
 
 Los tests crean un usuario temporal propio y lo eliminan al finalizar — la base de datos queda limpia. Los tests de administrador requieren credenciales de admin en el `.env`.
@@ -319,6 +326,17 @@ Los tests crean un usuario temporal propio y lo eliminan al finalizar — la bas
 ```
 
 El informe se guarda en `documentacion/RESULTADO_PRUEBAS_<timestamp>.md` (archivo ignorado por git).
+
+### Cobertura actual y plan de ampliación
+
+Actualmente se valida bien la lógica de negocio backend y los flujos críticos de API. La cobertura frontend todavía está concentrada en servicios y seguridad de renderizado Markdown.
+
+Objetivo de incremento de cobertura (siguiente iteración):
+
+1. **Frontend unitario (prioridad alta):** ampliar specs en `guards`, `interceptors` y componentes clave de `pages/social`, `pages/profile` y `pages/spaces`.
+2. **Frontend integración (prioridad alta):** empezar a poblar `LifeHub-Frontend/test/integration` con flujos de login, creación/edición de espacios y publicación/despublicación de documentos.
+3. **Frontend E2E (prioridad media):** añadir escenarios de humo en `LifeHub-Frontend/test/e2e` para navegación principal y control de permisos.
+4. **Métrica de cobertura (prioridad media):** publicar porcentaje de líneas/ramas frontend en CI con umbral mínimo (por ejemplo, 60% inicial y subida progresiva por sprint).
 
 ### Ejecución interactiva (resultados en tiempo real en la terminal)
 
