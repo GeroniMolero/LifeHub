@@ -7,9 +7,8 @@
     <h1 class="brand-hero-title">{{ document.title }}</h1>
     <p class="brand-hero-desc" *ngIf="document.description">{{ document.description }}</p>
     <div class="brand-hero-meta">
-      <span *ngIf="document.author">{{ document.author }}</span>
-      <span *ngIf="document.author && document.publishedAt"> · </span>
-      <span *ngIf="document.publishedAt">{{ document.publishedAt | date:'mediumDate' }}</span>
+      <span class="meta-chip" *ngIf="document.author">{{ document.author }}</span>
+      <span class="meta-chip" *ngIf="document.publishedAt">{{ document.publishedAt | date:'mediumDate' }}</span>
     </div>
   </div>
 </div>
@@ -23,7 +22,7 @@
     <p class="doc-empty" *ngIf="!renderedContent">(sin contenido)</p>
 
     <section class="media-section" *ngIf="document.mediaReferences.length > 0">
-      <h2>Recursos multimedia</h2>
+      <h2 class="section-heading">Recursos multimedia</h2>
       <div *ngFor="let item of document.mediaReferences" class="media-item">
         <h3>{{ item.label }}</h3>
         <p class="media-meta">{{ item.type }}<span *ngIf="item.provider"> · {{ item.provider }}</span></p>

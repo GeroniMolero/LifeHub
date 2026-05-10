@@ -3,7 +3,10 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: $color-white;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(142, 202, 230, 0.2), transparent 44%),
+    linear-gradient(180deg, #f8fbfd 0%, #f3f7f9 100%);
+  overflow-x: hidden;
 }
 
 .public-doc {
@@ -12,11 +15,14 @@
   padding: $space-8 $space-4 $space-12;
   display: grid;
   gap: $space-6;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 // ─── Hero de marca ────────────────────────────────────────────────────────────
 
 .brand-hero {
+  position: relative;
   width: 100%;
   padding: $space-10 $space-8;
   background: linear-gradient(160deg, $color-brand-900 0%, $color-brand-700 100%);
@@ -25,6 +31,21 @@
   gap: $space-8;
   max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.2);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.14), transparent 46%);
+    pointer-events: none;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .brand-hero-logo-link {
@@ -49,6 +70,7 @@
   flex-direction: column;
   gap: $space-2;
   min-width: 0;
+  flex: 1;
   border-left: 1px solid rgba(255, 255, 255, 0.2);
   padding-left: $space-8;
 }
@@ -70,17 +92,35 @@
 }
 
 .brand-hero-meta {
-  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.meta-chip {
+  color: rgba(255, 255, 255, 0.95);
   font-size: $font-size-sm;
+  border-radius: $border-radius-full;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.14);
+  padding: 0.2rem $space-3;
 }
 
 .error {
-  color: $color-danger;
+  color: $color-danger-text;
   font-size: $font-size-sm;
+  background: $color-danger-light;
+  border: 1px solid rgba(231, 76, 60, 0.22);
+  border-radius: $border-radius-lg;
+  padding: $space-3 $space-4;
 }
 
 .doc-card {
   background: $color-white;
+  border: $border-width-base solid $color-brand-border-medium;
+  border-radius: $border-radius-2xl;
+  box-shadow: $shadow-brand-soft;
+  padding: $space-8;
   display: grid;
   gap: $space-6;
 }
@@ -127,6 +167,7 @@
 :host ::ng-deep .rendered-markdown {
   display: block;
   line-height: 1.7;
+  min-width: 0;
   overflow-wrap: break-word;
   word-break: break-word;
 
@@ -137,10 +178,18 @@
     &:first-child { margin-top: 0; }
   }
 
-  p { margin: $space-3 0; }
+  p {
+    margin: $space-3 0;
+    max-width: 72ch;
+    color: $color-slate-700;
+  }
 
   ul, ol { margin: $space-3 0; padding-left: $space-6; }
-  li { margin: $space-1 0; }
+  li {
+    margin: $space-1 0;
+    max-width: 72ch;
+    color: $color-slate-700;
+  }
 
   li.task-item { list-style: none; margin-left: -$space-4; }
   .task-box { display: inline-block; min-width: 1.25rem; margin-right: $space-1; color: $color-brand-900; font-weight: $font-weight-semibold; }
@@ -158,6 +207,7 @@
     margin: $space-4 0;
     padding: $space-4;
     border-radius: $border-radius-lg;
+    max-width: 100%;
     overflow-x: auto;
     background: #0d1117;
     border: $border-width-base solid $color-brand-border-medium;
@@ -167,7 +217,16 @@
 
   code { padding: 0.15rem $space-1; border-radius: $border-radius-sm; background: $color-brand-050; color: $color-brand-900; font-family: Consolas, 'Courier New', monospace; font-size: 0.9em; }
 
-  a { color: $color-brand-700; text-decoration: underline; }
+  a {
+    color: $color-brand-700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1.5px;
+
+    &:hover {
+      color: $color-brand-900;
+    }
+  }
 
   img { max-width: 100%; height: auto; border-radius: $border-radius-md; display: block; margin: $space-4 0; }
 
@@ -202,6 +261,13 @@
   border: $border-width-base solid $color-divider;
   border-radius: $border-radius-lg;
   margin-bottom: $space-3;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fcfd 100%);
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+
+  &:hover {
+    border-color: rgba(31, 122, 140, 0.35);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  }
 
   h3 { margin: 0 0 $space-1; font-size: $font-size-base; color: $color-slate-900; }
 }
@@ -215,9 +281,24 @@
 .embed-wrapper iframe {
   width: 100%;
   min-height: 260px;
-  border: 0;
+  border: 1px solid rgba(31, 122, 140, 0.2);
   border-radius: $border-radius-lg;
   display: block;
+}
+
+.section-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+
+  &::before {
+    content: '';
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: $border-radius-full;
+    background: $color-brand-700;
+    box-shadow: 0 0 0 4px rgba(31, 122, 140, 0.18);
+  }
 }
 
 .links-section ul {
@@ -232,4 +313,68 @@
   text-align: center;
   padding: $space-12;
   color: $color-text-secondary;
+  max-width: 40rem;
+  margin: $space-8 auto;
+  background: $color-white;
+  border: $border-width-base solid $color-brand-border-medium;
+  border-radius: $border-radius-xl;
+  box-shadow: $shadow-brand-soft;
+}
+
+@media (max-width: 900px) {
+  .brand-hero {
+    padding: $space-8 $space-5;
+    gap: $space-5;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .brand-hero-logo {
+    height: 72px;
+  }
+
+  .brand-hero-content {
+    width: 100%;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.24);
+    padding-left: 0;
+    padding-top: $space-4;
+  }
+
+  .doc-card {
+    padding: $space-6;
+  }
+}
+
+@media (max-width: 640px) {
+  .public-doc {
+    padding: $space-6 $space-3 $space-8;
+    gap: $space-5;
+  }
+
+  .brand-hero {
+    padding: $space-6 $space-4;
+  }
+
+  .brand-hero-title {
+    font-size: 1.45rem;
+  }
+
+  .brand-hero-desc,
+  .brand-hero-meta {
+    font-size: $font-size-sm;
+  }
+
+  .meta-chip {
+    max-width: 100%;
+  }
+
+  .doc-card {
+    padding: $space-4;
+    border-radius: $border-radius-xl;
+  }
+
+  .embed-wrapper iframe {
+    min-height: 200px;
+  }
 }

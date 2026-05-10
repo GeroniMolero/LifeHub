@@ -21,6 +21,7 @@
   border-radius: 14px;
   box-shadow: 0 4px 16px $color-brand-shadow-soft;
   overflow: hidden;
+  margin-top: $space-4;
   margin-bottom: $space-6;
   min-height: 38.75rem;
 }
@@ -80,6 +81,35 @@
   gap: $space-3;
   flex-wrap: wrap;
   flex-shrink: 0;
+
+  // Keep remove-friend action available but visually secondary.
+  .btn.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: transparent;
+    border: 1px solid $color-border;
+    color: $color-slate-500;
+    font-weight: $font-weight-medium;
+    padding: 0.38rem $space-3;
+
+    .btn-icon {
+      width: 0.9rem;
+      height: 0.9rem;
+      opacity: 0.72;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      border-color: rgba(231, 76, 60, 0.28);
+      background: rgba(231, 76, 60, 0.06);
+      color: $color-danger;
+
+      .btn-icon {
+        opacity: 0.9;
+      }
+    }
+  }
 }
 
 .btn {
@@ -129,9 +159,10 @@
 }
 
 .section-title {
-  font-size: 1.1rem;
+  font-size: 1.14rem;
   font-weight: $font-weight-bold;
-  color: $color-slate-900;
+  color: $color-brand-900;
+  letter-spacing: 0.01em;
   margin: 0 0 $space-3;
 }
 

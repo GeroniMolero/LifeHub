@@ -178,7 +178,9 @@ input, textarea {
 // ============================================================
 
 body.profile-page .layout-shell {
-  background: url('/assets/images/fondo_profile.jpeg') center / cover no-repeat fixed !important;
+  background:
+    linear-gradient(rgba(10, 16, 34, 0.18), rgba(10, 16, 34, 0.22)),
+    url('/assets/images/moinzon-mountains.png') center / cover no-repeat fixed !important;
 }
 
 /* Tooltip de usuario (nombre visible, email en title nativo) */

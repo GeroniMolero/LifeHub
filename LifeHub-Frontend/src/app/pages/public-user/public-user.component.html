@@ -51,7 +51,12 @@
         <span class="friendship-status friendship-status--accepted" *ngIf="friendshipState === 'accepted'">Sois amigos</span>
         <button type="button" class="btn btn-danger"
           *ngIf="friendshipState === 'accepted'"
-          (click)="removeFriend()">Eliminar amigo</button>
+          (click)="removeFriend()">
+          <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span>Eliminar amigo</span>
+        </button>
       </div>
 
     </div>
