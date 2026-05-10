@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CreativeSpace,
@@ -59,8 +59,13 @@ export class SpacesListComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private friendshipService: FriendshipService,
     private layoutHeaderStateService: LayoutHeaderStateService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private router: Router
   ) {}
+
+  openSpace(id: number): void {
+    this.router.navigate(['/spaces', id]);
+  }
 
   ngOnInit(): void {
     this.filterForm = this.fb.group({

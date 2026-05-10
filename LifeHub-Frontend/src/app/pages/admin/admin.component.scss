@@ -94,8 +94,9 @@
 
 // ── Status pill variants ───────────────────────────────────────────────────────
 
-.status-pill-active { background: rgba(21, 128, 61, 0.12); color: #166534; }
-.status-pill-admin  { background: #ede9fe; color: #5b21b6; }
+.status-pill-active   { background: rgba(21, 128, 61, 0.12); color: #166534; }
+.status-pill-admin    { background: #ede9fe; color: #5b21b6; }
+.status-pill-inactive { background: $color-slate-100; color: $color-text-secondary; }
 
 // ── Acciones de fila ──────────────────────────────────────────────────────────
 
@@ -129,4 +130,139 @@
   }
 }
 
+// ── Usage cell ────────────────────────────────────────────────────────────────
+
+.usage-cell {
+  font-size: $font-size-sm;
+  white-space: nowrap;
+  color: $color-text-secondary;
+}
+
+.usage-warn {
+  color: $color-danger;
+  font-weight: $font-weight-semibold;
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: $space-3 0 0;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  min-width: 2rem;
+  height: 2rem;
+  border: $border-width-base solid $color-border;
+  border-radius: $border-radius-base;
+  background: $color-white;
+  color: $color-text-heading;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) { border-color: $color-primary; color: $color-primary; }
+  &.active { background: $color-primary; color: $color-white; border-color: $color-primary; }
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
+.page-info {
+  margin-left: $space-2;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+// ── Logs table ────────────────────────────────────────────────────────────────
+
+.nowrap { white-space: nowrap; }
+.text-muted { color: $color-text-secondary; }
+
+.log-action {
+  font-size: $font-size-sm;
+  background: $color-slate-100;
+  border-radius: $border-radius-sm;
+  padding: 0.1rem 0.35rem;
+}
+
+.log-details {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: $font-size-sm;
+}
+
+// ── Sistema / Backup ──────────────────────────────────────────────────────────
+
+.sistema-card {
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  padding: $space-5;
+  display: grid;
+  gap: $space-3;
+  max-width: 600px;
+}
+
+.sistema-section-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-heading;
+  margin: 0;
+}
+
+.sistema-note {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin: 0;
+  line-height: 1.5;
+
+  code {
+    background: $color-slate-100;
+    border-radius: $border-radius-sm;
+    padding: 0.1rem 0.3rem;
+    font-size: 0.9em;
+  }
+}
+
+.backup-actions { display: flex; gap: $space-3; }
+
+.backup-result {
+  padding: $space-3 $space-4;
+  border-radius: $border-radius-base;
+  font-size: $font-size-sm;
+
+  &--ok    { background: rgba(21, 128, 61, 0.1); color: #166534; border: 1px solid rgba(21, 128, 61, 0.2); }
+  &--error { background: rgba(180, 57, 31, 0.1); color: $color-danger; border: 1px solid rgba(180, 57, 31, 0.18); }
+}
+
+// ── Edit user modal tabs ──────────────────────────────────────────────────────
+
+.edit-user-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid $color-border-light;
+  margin-bottom: $space-4;
+
+  button {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: $space-2 $space-4;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-secondary;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+
+    &:hover  { color: $color-text-heading; }
+    &.active { color: $color-primary; border-bottom-color: $color-primary; }
+  }
+}
+
+.edit-user-body { min-height: 200px; }
 

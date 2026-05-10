@@ -1,12 +1,19 @@
 @use '../../../styles/design-tokens' as *;
 
+:host {
+  display: block;
+  height: 100%;
+}
+
 .social-layout {
   display: grid;
   grid-template-columns: 320px 1fr;
+  grid-template-rows: 1fr;
   gap: $space-4;
   height: 100%;
   max-width: 1180px;
   margin: 0 auto;
+  min-height: 0;
 }
 
 // ─── Panel izquierdo ──────────────────────────────────────────────────────────
@@ -306,6 +313,7 @@
 
 .messages-area {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: $space-4;
   display: flex;

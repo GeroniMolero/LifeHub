@@ -12,8 +12,13 @@ export class DocumentService {
 
   constructor(private http: HttpClient) {}
 
-  getDocuments(): Observable<Document[]> {
-    return this.http.get<Document[]>(this.apiUrl);
+  getDocuments(spaceId?: number): Observable<Document[]> {
+    const params = spaceId != null ? `?spaceId=${spaceId}` : '';
+    return this.http.get<Document[]>(`${this.apiUrl}${params}`);
+  }
+
+  copyToSpace(documentId: number, targetSpaceId: number): Observable<Document> {
+    return this.http.post<Document>(`${this.apiUrl}/${documentId}/copy`, { targetSpaceId });
   }
 
   getDocument(id: number): Observable<Document> {

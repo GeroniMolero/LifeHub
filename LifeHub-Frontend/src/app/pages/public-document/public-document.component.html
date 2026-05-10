@@ -1,16 +1,24 @@
+<div class="brand-hero">
+  <a routerLink="/login" class="brand-hero-logo-link" aria-label="Ir a LifeHub">
+    <img src="/assets/images/logo-nombre.png" alt="LifeHub" class="brand-hero-logo" />
+  </a>
+
+  <div class="brand-hero-content" *ngIf="document">
+    <h1 class="brand-hero-title">{{ document.title }}</h1>
+    <p class="brand-hero-desc" *ngIf="document.description">{{ document.description }}</p>
+    <div class="brand-hero-meta">
+      <span *ngIf="document.author">{{ document.author }}</span>
+      <span *ngIf="document.author && document.publishedAt"> · </span>
+      <span *ngIf="document.publishedAt">{{ document.publishedAt | date:'mediumDate' }}</span>
+    </div>
+  </div>
+</div>
+
 <section class="public-doc" *ngIf="!loading; else loadingTpl">
-  <a routerLink="/login" class="back-link">Ir a LifeHub</a>
 
   <div *ngIf="error" class="error">{{ error }}</div>
 
   <article *ngIf="document" class="doc-card">
-    <header class="doc-header">
-      <h1>{{ document.title }}</h1>
-      <p class="description" *ngIf="document.description">{{ document.description }}</p>
-      <p class="doc-author" *ngIf="document.author">Por {{ document.author }}</p>
-      <small class="pub-date" *ngIf="document.publishedAt">Publicado {{ document.publishedAt | date:'mediumDate' }}</small>
-    </header>
-
     <div class="rendered-markdown" [innerHTML]="renderedContent"></div>
     <p class="doc-empty" *ngIf="!renderedContent">(sin contenido)</p>
 
@@ -24,8 +32,8 @@
         </div>
       </div>
     </section>
-
   </article>
+
 </section>
 
 <ng-template #loadingTpl>

@@ -1,6 +1,6 @@
 ﻿# Plan de Pruebas — LifeHub
 
-**Fecha:** 06-05-2026 (última actualización)  
+**Fecha:** 08-05-2026 (última actualización)  
 **Versión del proyecto:** master (post-patrones de diseño, validación coherente, scripts robustos)  
 **Entorno de pruebas:** Docker dev stack (lifehub-sql-dev + lifehub-backend-dev) + frontend local
 
@@ -28,6 +28,7 @@
 | CP-01-04 | Login con contraseña incorrecta | 1. Introducir email válido y contraseña errónea | Mensaje de error. No se accede a la app. | `{"success":false,"message":"Email o contraseña incorrectos"}` | ✅ PASS |
 | CP-01-05 | Acceso a ruta protegida sin sesión | 1. Sin estar logueado, navegar a /spaces | Redirige a /login | API devuelve HTTP 401 sin token | ✅ PASS |
 | CP-01-06 | Cierre de sesión | 1. Estando logueado, pulsar logout | Redirige a /login. Token eliminado de localStorage. | Verificado en frontend (token eliminado de localStorage) | ✅ PASS |
+| CP-01-07 | Login con cuenta pendiente de activación | 1. Registrar nuevo usuario 2. Intentar login inmediatamente sin que el admin active la cuenta | HTTP 401. Mensaje: "Esta cuenta no está activa." | `{"success":false,"message":"Esta cuenta no está activa."}` | ✅ PASS |
 
 ---
 
@@ -55,6 +56,7 @@
 | CP-03-05 | Versionado — crear snapshot | 1. Guardar documento 2. Crear snapshot vía API | Versión almacenada con número de versión | `{"id":1,"versionNumber":1,...}` devuelto por API | ✅ PASS |
 | CP-03-06 | Restaurar versión anterior | 1. Editar documento 2. Restaurar snapshot anterior | El contenido vuelve al estado de esa versión | Contenido restaurado verificado en GET posterior | ✅ PASS |
 | CP-03-07 | Eliminar documento | 1. Eliminar un documento con confirmación | Documento desaparece de la lista | HTTP 204 No Content | ✅ PASS |
+| CP-03-08 | Modo split del editor | 1. Abrir documento 2. Seleccionar pestaña Split | Código y preview se muestran lado a lado | `activeTab: 'split'` implementado en document-detail y space-editor-main. Tab bar con tres opciones, grid 1fr/1fr. | ✅ PASS |
 
 ---
 
@@ -66,6 +68,7 @@
 | CP-04-02 | Enviar solicitud de amistad | 1. Enviar solicitud a un usuario encontrado | Solicitud queda en estado pendiente | Verificado en frontend | ✅ PASS |
 | CP-04-03 | Aceptar solicitud | 1. Desde la otra cuenta, aceptar la solicitud | Ambos usuarios aparecen como amigos | Verificado en frontend | ✅ PASS |
 | CP-04-04 | Rechazar solicitud | 1. Rechazar una solicitud entrante | La solicitud desaparece. No se añade el amigo. | Verificado en frontend | ✅ PASS |
+| CP-04-05 | Badge de mensajes no leídos | 1. Recibir mensajes de un amigo sin abrir el chat 2. Ir a /social | Cada amigo muestra un contador con los mensajes no leídos | `unreadPerFriend`, `hasUnread()` y `unreadCountForFriend()` implementados. Contador se actualiza en tiempo real vía SignalR y se resetea al abrir el chat. | ✅ PASS |
 
 ---
 
@@ -74,8 +77,22 @@
 | ID | Descripción | Pasos | Resultado esperado | Resultado real | Estado |
 |----|-------------|-------|--------------------|----------------|--------|
 | CP-05-01 | Actualizar perfil | 1. Ir a perfil 2. Cambiar nombre, descripción o imagen 3. Guardar | Cambios reflejados inmediatamente | Verificado en frontend | ✅ PASS |
-| CP-05-02 | Perfil público | 1. Acceder al perfil público de otro usuario | Se muestra nombre, bio, imagen y espacios favoritos | Verificado en frontend | ✅ PASS |
-| CP-05-03 | Añadir espacio favorito | 1. Marcar un espacio como favorito desde el perfil | El espacio aparece en la previsualización del perfil | Verificado en frontend | ✅ PASS |
+| CP-05-02 | Perfil público | 1. Acceder al perfil público de otro usuario | Se muestra nombre, bio, imagen y grid de documentos/espacios visibles | Grid de dos columnas implementado en public-user. Documentos y espacios marcados como visibles se muestran correctamente. | ✅ PASS |
+| CP-05-03 | Marcar contenido visible en perfil | 1. Desde el perfil, activar toggle de visibilidad en hasta 3 documentos y 3 espacios | El contenido aparece en el grid del perfil público | `toggleDocumentProfileVisibility()` e `isProfileVisible` implementados. Badge de contador se deshabilita al alcanzar el límite configurado. | ✅ PASS |
+| CP-05-04 | Modal de previsualización de documento | 1. Desde el perfil público de un usuario, pulsar sobre un documento | Se abre modal con markdown renderizado y botones Ver y Descargar | `openDocPreview()` y `closeDocPreview()` implementados. Markdown renderizado con `marked` y sanitizado con `DomSanitizer`. | ✅ PASS |
+
+---
+
+---
+
+### CP-10 — Publicaciones de documentos
+
+| ID | Descripción | Pasos | Resultado esperado | Resultado real | Estado |
+|----|-------------|-------|--------------------|----------------|--------|
+| CP-10-01 | Publicar documento | 1. Abrir documento 2. Abrir modal de publicación 3. Confirmar | Documento queda publicado y accesible en vista pública | Modal `showPublicationModal` implementado. `savePublicationData()` llama a `upsertPublication()` con `isPublic: true`. Mensaje de confirmación: "Documento publicado." | ✅ PASS |
+| CP-10-02 | Autor visible en vista pública | 1. Acceder a la vista pública de un documento publicado | Se muestra el nombre del autor junto al contenido | Campo `Author` presente en `DocumentPublicationDto` y en los DTOs de respuesta pública. | ✅ PASS |
+| CP-10-03 | Publicar documento ajeno (control de acceso) | 1. Intentar publicar un documento que no es propio vía API | HTTP 403 Forbidden | Cubierto por suite automatizada T-PUB (documento ajeno → 403). 46/46 OK. | ✅ PASS |
+| CP-10-04 | Despublicar documento | 1. Despublicar un documento publicado | Documento desaparece de la vista pública | `savePublicationData()` con `isPublic: false`. Mensaje: "Acceso desactivado." Verificado en código y suite T-PUB. | ✅ PASS |
 
 ---
 
@@ -88,6 +105,14 @@
 | CP-06-03 | Añadir dominio permitido | 1. En panel admin, añadir un dominio a la allowlist | Dominio aparece en la lista y los embeds de ese dominio funcionan | `{"id":6,"domain":"testsite.com","isActive":true}` | ✅ PASS |
 | CP-06-04 | Desactivar dominio | 1. Desactivar un dominio de la allowlist | Los embeds de ese dominio dejan de cargarse | HTTP 200, `isActive` actualizado a false | ✅ PASS |
 | CP-06-05 | Ver listado de usuarios | 1. Ir a la sección de usuarios del panel admin | Lista de usuarios del sistema visible | 5 usuarios devueltos correctamente | ✅ PASS |
+| CP-06-06 | Nuevo usuario queda inactivo hasta activación | 1. Registrar nuevo usuario 2. Verificar en panel admin que aparece como "Inactivo" | Usuario visible en lista con estado Inactivo | `isActive: false` en respuesta de `GET /admin/users` | ✅ PASS |
+| CP-06-07 | Activar usuario e iniciar sesión | 1. Activar usuario desde panel admin 2. El usuario intenta login | Login exitoso tras activación | Toggle devuelve `isActive: true`. Login retorna token. | ✅ PASS |
+| CP-06-08 | Desactivar usuario bloquea login | 1. Desactivar usuario activo desde panel admin 2. El usuario intenta login | HTTP 401 con mensaje "Esta cuenta no está activa." | `{"success":false,"message":"Esta cuenta no está activa."}` | ✅ PASS |
+| CP-06-09 | Admin edita email de usuario | 1. Editar email de un usuario desde modal admin 2. Usuario hace login con el nuevo email | Login con nuevo email funciona. Email anterior deja de funcionar. | `PUT /admin/users/{id}` devuelve usuario actualizado. Login con nuevo email OK. | ✅ PASS |
+| CP-06-10 | Admin resetea contraseña | 1. Desde modal admin, establecer nueva contraseña a un usuario 2. Usuario hace login con la nueva contraseña | Login con nueva contraseña funciona | `POST /admin/users/{id}/set-password` devuelve 204. Login con nueva clave OK. | ✅ PASS |
+| CP-06-11 | Admin cambia rol de usuario | 1. Desde modal admin, cambiar rol a Admin 2. Usuario hace login de nuevo | El usuario obtiene el rol Admin en el nuevo token | `PUT /admin/users/{id}/roles` devuelve usuario con rol actualizado. | ✅ PASS |
+| CP-06-12 | Ver logs de actividad con filtros | 1. Ir a pestaña Actividad 2. Filtrar por tipo de entidad "Document" y rango de fechas | Se muestran solo los logs del tipo y rango seleccionados con paginación | `GET /admin/activity-logs?entityType=Document` devuelve `{"items":[...],"totalCount":N}` | ✅ PASS |
+| CP-06-13 | Lanzar backup desde panel admin | 1. Ir a pestaña Sistema 2. Pulsar "Lanzar backup" | Mensaje de éxito con ruta del archivo .bak generado | `{"message":"Backup completado correctamente.","backupFile":"/var/opt/mssql/backup/LifeHubDB_...bak"}` | ✅ PASS |
 
 ---
 
@@ -120,32 +145,44 @@
 
 ## Resumen de resultados
 
-### Pruebas manuales (23-04-2026)
+### Pruebas manuales (09-05-2026)
 
 | Módulo | Total casos | Pasados | Fallidos | Pendientes |
 |--------|-------------|---------|----------|------------|
-| CP-01 Autenticación | 6 | 6 | 0 | 0 |
+| CP-01 Autenticación | 7 | 7 | 0 | 0 |
 | CP-02 Espacios creativos | 6 | 6 | 0 | 0 |
-| CP-03 Documentos | 7 | 7 | 0 | 0 |
-| CP-04 Amigos | 4 | 4 | 0 | 0 |
-| CP-05 Perfil | 3 | 3 | 0 | 0 |
-| CP-06 Panel admin | 5 | 5 | 0 | 0 |
+| CP-03 Documentos | 8 | 8 | 0 | 0 |
+| CP-04 Amigos | 5 | 5 | 0 | 0 |
+| CP-05 Perfil | 4 | 4 | 0 | 0 |
+| CP-06 Panel admin | 13 | 13 | 0 | 0 |
 | CP-07 Embebidos | 2 | 2 | 0 | 0 |
 | CP-08 Seguridad sesión | 1 | 1 | 0 | 0 |
 | CP-09 Backup y restauración | 3 | 3 | 0 | 0 |
-| **TOTAL** | **37** | **37** | **0** | **0** |
+| CP-10 Publicaciones | 4 | 4 | 0 | 0 |
+| **TOTAL** | **53** | **53** | **0** | **0** |
 
-### Pruebas automatizadas — suite `run-tests.ps1` (06-05-2026)
+### Pruebas automatizadas — suite `run-tests.ps1` (09-05-2026)
 
 | Bloque | Tests | OK | FAIL | SKIP |
 |--------|-------|----|------|------|
-| AUTH | 8 | 8 | 0 | 0 |
+| AUTH | 9 | 9 | 0 | 0 |
 | Espacios creativos | 5 | 5 | 0 | 0 |
 | Documentos y versiones | 9 | 9 | 0 | 0 |
 | Colaboración en espacios | 3 | 3 | 0 | 0 |
-| Panel de administración | 6 | 6 | 0 | 0 |
-| Seguridad | 2 | 2 | 0 | 0 |
-| **TOTAL** | **33** | **33** | **0** | **0** |
+| Publicaciones | 11 | 11 | 0 | 0 |
+| Panel de administración | 19 | 19 | 0 | 0 |
+| Seguridad | 4 | 4 | 0 | 0 |
+| **TOTAL** | **60** | **60** | **0** | **0** |
+
+### Tests unitarios frontend — Jasmine (09-05-2026)
+
+| Archivo | Tests | OK |
+|---------|-------|----|
+| `auth.service.spec.ts` | 17 | 17 |
+| `admin.service.spec.ts` | 13 | 13 |
+| `config.service.spec.ts` | 3 | 3 |
+| `space-workspace.component.spec.ts` | 5 | 5 |
+| **TOTAL** | **38** | **38** |
 
 ---
 

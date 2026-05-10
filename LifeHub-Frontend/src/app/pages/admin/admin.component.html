@@ -4,6 +4,8 @@
   <nav class="admin-tabs">
     <button type="button" [class.active]="activeTab === 'websites'" (click)="setTab('websites')">Embebidos</button>
     <button type="button" [class.active]="activeTab === 'users'"    (click)="setTab('users')">Usuarios</button>
+    <button type="button" [class.active]="activeTab === 'logs'"     (click)="setTab('logs')">Actividad</button>
+    <button type="button" [class.active]="activeTab === 'sistema'"  (click)="setTab('sistema')">Sistema</button>
   </nav>
 
   <!-- ══════════════════════════════════════════════════════════════
@@ -13,7 +15,6 @@
 
     <div *ngIf="websitesError" class="error-banner">{{ websitesError }}</div>
 
-    <!-- Toolbar -->
     <section class="admin-toolbar card" *ngIf="!websitesLoading">
       <form [formGroup]="websitesFilterForm" class="filters-form">
         <div class="search-line">
@@ -44,9 +45,7 @@
       </form>
     </section>
 
-    <!-- Tabla -->
     <div *ngIf="websitesLoading" class="empty-state"><p>Cargando dominios...</p></div>
-
     <div *ngIf="!websitesLoading && filteredWebsites.length === 0 && allowedWebsites.length === 0" class="empty-state">
       <p>No hay dominios permitidos todavía.</p>
     </div>
@@ -74,12 +73,10 @@
               </td>
               <td class="actions-column">
                 <div class="row-actions">
-                  <button type="button" class="action-btn action-btn--toggle"
-                    (click)="toggleWebsite(w)">
+                  <button type="button" class="action-btn action-btn--toggle" (click)="toggleWebsite(w)">
                     {{ w.isActive ? 'Desactivar' : 'Activar' }}
                   </button>
-                  <button type="button" class="action-btn action-btn--danger"
-                    (click)="deleteWebsite(w.id)">Eliminar</button>
+                  <button type="button" class="action-btn action-btn--danger" (click)="deleteWebsite(w.id)">Eliminar</button>
                 </div>
               </td>
             </tr>
@@ -97,7 +94,6 @@
 
     <div *ngIf="usersError" class="error-banner">{{ usersError }}</div>
 
-    <!-- Toolbar -->
     <section class="admin-toolbar card" *ngIf="!usersLoading">
       <form [formGroup]="usersFilterForm" class="filters-form">
         <div class="search-line">
@@ -128,13 +124,11 @@
       </form>
     </section>
 
-    <!-- Tabla -->
     <div *ngIf="usersLoading" class="empty-state"><p>Cargando usuarios...</p></div>
-
-    <div *ngIf="!usersLoading && filteredUsers.length === 0 && users.length === 0" class="empty-state">
+    <div *ngIf="!usersLoading && filteredUsers.length === 0 && adminUsers.length === 0" class="empty-state">
       <p>No hay usuarios registrados.</p>
     </div>
-    <div *ngIf="!usersLoading && filteredUsers.length === 0 && users.length > 0" class="empty-state empty-state-filtered">
+    <div *ngIf="!usersLoading && filteredUsers.length === 0 && adminUsers.length > 0" class="empty-state empty-state-filtered">
       <p>Ningún usuario coincide con los filtros actuales.</p>
     </div>
 
@@ -146,6 +140,8 @@
               <th>Nombre</th>
               <th>Email</th>
               <th>Rol</th>
+              <th>Estado</th>
+              <th>Uso</th>
               <th class="actions-column">Acciones</th>
             </tr>
           </thead>
@@ -154,20 +150,164 @@
               <td><strong>{{ user.fullName || '—' }}</strong></td>
               <td>{{ user.email }}</td>
               <td>
-                <span class="status-pill" [class.status-pill-admin]="user.roles?.includes('Admin')">
-                  {{ user.roles?.length ? user.roles?.join(', ') : 'User' }}
+                <span class="status-pill" [class.status-pill-admin]="user.roles.includes('Admin')">
+                  {{ user.roles.length ? user.roles.join(', ') : 'User' }}
+                </span>
+              </td>
+              <td>
+                <span class="status-pill" [class.status-pill-active]="user.isActive" [class.status-pill-inactive]="!user.isActive">
+                  {{ user.isActive ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>
+                <span class="usage-cell">
+                  <span [class.usage-warn]="isUsageWarn(user.usage.spacesCount, user.usage.maxSpaces)">
+                    {{ user.usage.spacesCount }}/{{ user.usage.maxSpaces }} esp
+                  </span>
+                  &nbsp;·&nbsp;
+                  <span [class.usage-warn]="isUsageWarn(user.usage.documentsCount, user.usage.maxDocuments)">
+                    {{ user.usage.documentsCount }}/{{ user.usage.maxDocuments }} docs
+                  </span>
                 </span>
               </td>
               <td class="actions-column">
                 <div class="row-actions">
-                  <button type="button" class="action-btn action-btn--danger"
-                    (click)="deleteUser(user.id)">Eliminar</button>
+                  <button type="button" class="action-btn action-btn--toggle" (click)="openEditUserModal(user)">Editar</button>
+                  <button type="button" class="action-btn action-btn--toggle" (click)="toggleActive(user)">
+                    {{ user.isActive ? 'Desactivar' : 'Activar' }}
+                  </button>
+                  <button type="button" class="action-btn action-btn--toggle" (click)="viewUserLogs(user)">Ver logs</button>
+                  <button type="button" class="action-btn action-btn--danger" (click)="deleteUser(user.id)">Eliminar</button>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       PESTAÑA: ACTIVIDAD
+  ═══════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="activeTab === 'logs'">
+
+    <div *ngIf="logsError" class="error-banner">{{ logsError }}</div>
+
+    <section class="admin-toolbar card">
+      <form [formGroup]="logsFilterForm" class="filters-form">
+        <div class="search-line">
+          <div class="filter-field filter-field-search">
+            <input type="search" formControlName="userEmail" placeholder="Buscar por email de usuario..." />
+          </div>
+          <div class="search-line-actions">
+            <button type="button" class="btn-secondary clear-filters-btn"
+              [class.clear-filters-btn-invisible]="!hasActiveLogsFilters"
+              [disabled]="!hasActiveLogsFilters"
+              (click)="clearLogsFilters()">Limpiar</button>
+            <button type="button" class="btn-secondary filters-toggle"
+              (click)="showLogsFilters = !showLogsFilters">
+              Filtros {{ showLogsFilters ? '▴' : '▾' }}
+            </button>
+          </div>
+        </div>
+        <div class="filters-expand-panel" *ngIf="showLogsFilters">
+          <div class="filter-field">
+            <label>Tipo de entidad</label>
+            <select formControlName="entityType">
+              <option value="">Todos</option>
+              <option value="Document">Documento</option>
+              <option value="CreativeSpace">Espacio</option>
+              <option value="" disabled>── sin registros ──</option>
+              <option value="Friendship" disabled>Amistad</option>
+              <option value="Message" disabled>Mensaje</option>
+              <option value="User" disabled>Usuario</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label>Desde</label>
+            <input type="date" formControlName="from" />
+          </div>
+          <div class="filter-field">
+            <label>Hasta</label>
+            <input type="date" formControlName="to" />
+          </div>
+          <div class="filter-field">
+            <label>Por página</label>
+            <select [formControl]="logsPageSizeControl">
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <div *ngIf="logsLoading" class="empty-state"><p>Cargando logs...</p></div>
+    <div *ngIf="!logsLoading && activityLogs.length === 0" class="empty-state">
+      <p>No hay registros de actividad para los filtros actuales.</p>
+    </div>
+
+    <div class="admin-table-shell card" *ngIf="!logsLoading && activityLogs.length > 0">
+      <div class="admin-table-scroll">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Usuario</th>
+              <th>Acción</th>
+              <th>Entidad</th>
+              <th>Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let log of activityLogs">
+              <td class="nowrap">{{ log.createdAt | date:'dd/MM/yy HH:mm' }}</td>
+              <td>
+                <span *ngIf="log.userEmail">{{ log.userFullName || log.userEmail }}</span>
+                <span *ngIf="!log.userEmail" class="text-muted">Usuario eliminado</span>
+              </td>
+              <td><code class="log-action">{{ log.action }}</code></td>
+              <td>{{ log.entityType }}<span *ngIf="log.entityId"> #{{ log.entityId }}</span></td>
+              <td class="log-details">{{ log.details || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" *ngIf="logsTotalPages > 1">
+        <button type="button" class="page-btn" [disabled]="logsPage === 1" (click)="changePage(logsPage - 1)">‹</button>
+        <ng-container *ngFor="let p of logsPages">
+          <button type="button" class="page-btn" [class.active]="p === logsPage" (click)="changePage(p)">{{ p }}</button>
+        </ng-container>
+        <button type="button" class="page-btn" [disabled]="logsPage === logsTotalPages" (click)="changePage(logsPage + 1)">›</button>
+        <span class="page-info">{{ (logsPage - 1) * logsPageSize + 1 }}–{{ logsPage * logsPageSize > logsTotalCount ? logsTotalCount : logsPage * logsPageSize }} de {{ logsTotalCount }}</span>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       PESTAÑA: SISTEMA
+  ═══════════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="activeTab === 'sistema'">
+
+    <div class="sistema-card card">
+      <h3 class="sistema-section-title">Backup de base de datos</h3>
+      <p class="sistema-note">
+        Ejecuta el script de backup del servidor. El archivo se guarda en la carpeta
+        <code>/backups/</code> del servidor. El restore debe realizarse desde CLI.
+      </p>
+      <div class="backup-actions">
+        <button type="button" class="btn-primary" [disabled]="backupLoading" (click)="triggerBackup()">
+          {{ backupLoading ? 'Ejecutando backup...' : 'Lanzar backup' }}
+        </button>
+      </div>
+      <div *ngIf="backupResult" class="backup-result backup-result--ok">{{ backupResult }}</div>
+      <div *ngIf="backupError"  class="backup-result backup-result--error">{{ backupError }}</div>
     </div>
 
   </ng-container>
@@ -218,4 +358,79 @@
       </button>
     </div>
   </form>
+</app-modal>
+
+<!-- ── Modal editar usuario ── -->
+<app-modal [visible]="showEditUserModal" [title]="'Editar usuario'" (closed)="closeEditUserModal()">
+  <ng-container *ngIf="editingUser">
+
+    <div class="edit-user-tabs">
+      <button type="button" [class.active]="editUserTab === 'data'"     (click)="setEditUserTab('data')">Datos</button>
+      <button type="button" [class.active]="editUserTab === 'password'" (click)="setEditUserTab('password')">Contraseña</button>
+      <button type="button" [class.active]="editUserTab === 'role'"     (click)="setEditUserTab('role')">Rol</button>
+    </div>
+
+    <div class="edit-user-body">
+
+      <!-- Datos -->
+      <ng-container *ngIf="editUserTab === 'data'">
+        <form [formGroup]="editUserForm" (ngSubmit)="saveEditUser()" class="modal-form">
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" formControlName="email" />
+          </div>
+          <div class="form-field">
+            <label>Nombre completo</label>
+            <input type="text" formControlName="fullName" />
+          </div>
+          <div class="error-banner" *ngIf="editUserError">{{ editUserError }}</div>
+          <div class="modal-form-actions">
+            <button type="button" class="btn-secondary" (click)="closeEditUserModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="editUserForm.invalid || editUserLoading">
+              {{ editUserLoading ? 'Guardando...' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </ng-container>
+
+      <!-- Contraseña -->
+      <ng-container *ngIf="editUserTab === 'password'">
+        <form [formGroup]="setPasswordForm" (ngSubmit)="savePassword()" class="modal-form">
+          <div class="form-field">
+            <label>Nueva contraseña</label>
+            <input type="password" formControlName="newPassword" placeholder="Mínimo 6 caracteres" />
+          </div>
+          <div class="error-banner" *ngIf="editUserError">{{ editUserError }}</div>
+          <div class="modal-form-actions">
+            <button type="button" class="btn-secondary" (click)="closeEditUserModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="setPasswordForm.invalid || editUserLoading">
+              {{ editUserLoading ? 'Guardando...' : 'Cambiar contraseña' }}
+            </button>
+          </div>
+        </form>
+      </ng-container>
+
+      <!-- Rol -->
+      <ng-container *ngIf="editUserTab === 'role'">
+        <form [formGroup]="roleForm" (ngSubmit)="saveRole()" class="modal-form">
+          <div class="form-field">
+            <label>Rol</label>
+            <select formControlName="role">
+              <option value="Admin">Admin</option>
+              <option value="User">User</option>
+              <option value="Moderator">Moderator</option>
+            </select>
+          </div>
+          <div class="error-banner" *ngIf="editUserError">{{ editUserError }}</div>
+          <div class="modal-form-actions">
+            <button type="button" class="btn-secondary" (click)="closeEditUserModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="roleForm.invalid || editUserLoading">
+              {{ editUserLoading ? 'Guardando...' : 'Guardar rol' }}
+            </button>
+          </div>
+        </form>
+      </ng-container>
+
+    </div>
+  </ng-container>
 </app-modal>

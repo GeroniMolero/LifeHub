@@ -47,7 +47,10 @@ namespace LifeHub.Utilidades
                 .ForMember(d => d.Type, o => o.MapFrom(s => (DocumentType)s.Type));
 
             CreateMap<CreateDocumentDto, Document>();
-            CreateMap<UpdateDocumentDto, Document>();
+            CreateMap<UpdateDocumentDto, Document>()
+                .ForMember(d => d.CreativeSpaceId, o => o.Ignore())
+                .ForMember(d => d.UserId, o => o.Ignore());
+
 
             // Creative Space mappings
             CreateMap<CreativeSpace, CreativeSpaceDto>()
@@ -79,6 +82,11 @@ namespace LifeHub.Utilidades
                 .ForMember(d => d.CreatedByUserEmail, o => o.MapFrom(s =>
                     s.CreatedByUser != null ? s.CreatedByUser.Email : null))
                 .ReverseMap();
+
+            // ActivityLog mappings
+            CreateMap<ActivityLog, ActivityLogDto>()
+                .ForMember(d => d.UserEmail,    o => o.MapFrom(s => s.User != null ? s.User.Email : null))
+                .ForMember(d => d.UserFullName, o => o.MapFrom(s => s.User != null ? s.User.FullName : null));
 
             // MusicFile mappings
             CreateMap<MusicFile, MusicFileDto>().ReverseMap();

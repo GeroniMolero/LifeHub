@@ -82,6 +82,7 @@ END
                         UserName = adminEmail,
                         Email = adminEmail,
                         EmailConfirmed = true,
+                        IsActive = true,
                         FullName = "Administrador",
                         CreatedAt = DateTime.UtcNow
                     };
@@ -133,6 +134,7 @@ END
                             UserName = testUser.Email,
                             Email = testUser.Email,
                             EmailConfirmed = true,
+                            IsActive = true,
                             FullName = testUser.Name,
                             CreatedAt = DateTime.UtcNow
                         };

@@ -1,7 +1,26 @@
 <div class="sidebar-section">
   <div class="sidebar-section-header">
     <span class="sidebar-section-title">Documentos</span>
-    <button type="button" class="btn-icon" (click)="toggleCreateDocument.emit()" title="Nuevo documento">+</button>
+    <div class="sidebar-section-actions">
+      <button type="button" class="btn-icon" (click)="openImportPanel.emit()" title="Importar documento existente">↓</button>
+      <button type="button" class="btn-icon" (click)="toggleCreateDocument.emit()" title="Nuevo documento">+</button>
+    </div>
+  </div>
+
+  <div *ngIf="showImportPanel" class="import-panel">
+    <div *ngIf="loadingImportable" class="sidebar-muted">Cargando...</div>
+    <div *ngIf="!loadingImportable && importableDocuments.length === 0" class="sidebar-muted">
+      No tienes otros documentos disponibles.
+    </div>
+    <ul *ngIf="!loadingImportable && importableDocuments.length > 0" class="sidebar-doc-list import-list">
+      <li *ngFor="let doc of importableDocuments" (click)="importDocument.emit(doc)" title="Importar como copia">
+        <div class="sidebar-doc-info">
+          <span class="sidebar-doc-name">{{ doc.title }}</span>
+          <span class="sidebar-doc-meta">{{ getTypeText(doc.type) }}</span>
+        </div>
+        <span class="import-icon">+</span>
+      </li>
+    </ul>
   </div>
 
   <form *ngIf="showCreateDocument" [formGroup]="createDocumentForm" (ngSubmit)="createDocument.emit()" class="sidebar-form">

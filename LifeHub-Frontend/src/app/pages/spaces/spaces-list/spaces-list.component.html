@@ -174,20 +174,42 @@
   </div>
 
   <div class="grid" *ngIf="!loading && filteredSpaces.length > 0">
-    <article class="card" *ngFor="let space of filteredSpaces">
-      <h3>{{ space.name }}</h3>
-      <p>{{ space.description || 'Sin descripción' }}</p>
-      <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>
-
-      <div class="actions">
-        <button class="btn-secondary" type="button" (click)="toggleFavorite(space.id)">
-          {{ isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito' }}
-        </button>
-        <button class="btn-secondary" (click)="startEdit(space)">Editar</button>
-        <button class="btn-danger" (click)="deleteSpace(space.id)">Eliminar</button>
-        <a class="btn-primary" [routerLink]="['/spaces', space.id]">Abrir espacio</a>
+    <article class="card" *ngFor="let space of filteredSpaces" (click)="openSpace(space.id)"
+      [class.card-shared]="space.privacy === SpacePrivacy.Shared"
+      [class.card-private]="space.privacy === SpacePrivacy.Private">
+      <div class="card-header">
+        <h3>{{ space.name }}</h3>
+        <div class="card-actions" *ngIf="isOwner(space)" (click)="$event.stopPropagation()">
+          <button type="button" (click)="toggleFavorite(space.id)"
+            class="icon-action icon-action-favorite" [class.is-favorite]="isFavorite(space.id)"
+            [title]="isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito'"
+            [attr.aria-label]="isFavorite(space.id) ? 'Quitar favorito' : 'Marcar favorito'">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
+          <button type="button" (click)="startEdit(space)" class="icon-action icon-action-edit" title="Editar espacio" aria-label="Editar espacio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button type="button" (click)="deleteSpace(space.id)" class="icon-action icon-action-delete" title="Eliminar espacio" aria-label="Eliminar espacio">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Zm2-10h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z"/></svg>
+          </button>
+        </div>
       </div>
-
+      <div class="card-body">
+        <p>{{ space.description || 'Sin descripción' }}</p>
+      </div>
+      <div class="card-footer">
+        <span class="privacy-icon" [class.privacy-shared]="space.privacy === SpacePrivacy.Shared" aria-hidden="true">
+          <svg *ngIf="space.privacy === SpacePrivacy.Shared" viewBox="0 0 24 24" fill="none">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+          </svg>
+          <svg *ngIf="space.privacy === SpacePrivacy.Private" viewBox="0 0 24 24" fill="none">
+            <path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zM7 11V7a5 5 0 0 1 10 0v4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <small>{{ privacyText(space.privacy) }} · {{ space.updatedAt | date:'short' }}</small>
+      </div>
     </article>
   </div>
 </div>

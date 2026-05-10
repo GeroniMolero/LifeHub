@@ -162,6 +162,47 @@ Invoke-ApiTest -Id "T-AUTH-03" -Description "Registro email con formato invalido
     -Method POST -Url "/auth/register" -ExpectedStatus 400 `
     -Body @{ email="esto-no-es-email"; fullName="X"; password=$TestPass; confirmPassword=$TestPass }
 
+# Mover login admin aqui para poder activar el usuario de test antes de T-AUTH-04
+if ($AdminEmail -and $AdminPass) {
+    Invoke-ApiTest -Id "T-AUTH-08" -Description "Login admin (setup para tests admin)" `
+        -Method POST -Url "/auth/login" -ExpectedStatus 200 `
+        -Contains '"success":true' `
+        -Body @{ email=$AdminEmail; password=$AdminPass } `
+        -OnPass {
+            param($body)
+            $obj = $body | ConvertFrom-Json
+            $script:AdminToken = $obj.token
+        }
+} else {
+    Skip-Test -Id "T-AUTH-08" -Description "Login admin" -Reason "ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env"
+}
+
+# T-AUTH-09: el usuario recien registrado tiene IsActive=false, login debe ser 401
+Invoke-ApiTest -Id "T-AUTH-09" -Description "Login cuenta inactiva -> 401" `
+    -Method POST -Url "/auth/login" -ExpectedStatus 401 `
+    -Contains "Esta cuenta no" `
+    -Body @{ email=$TestEmail; password=$TestPass }
+
+# Helper: activar el usuario de test con admin antes de intentar login
+if ($script:AdminToken) {
+    try {
+        $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users" `
+            -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+            -UseBasicParsing -ErrorAction Stop
+        $usersArr = $usersResp.Content | ConvertFrom-Json
+        $testUser  = $usersArr | Where-Object { $_.email -eq $TestEmail } | Select-Object -First 1
+        if ($testUser) {
+            $script:TestUserId = $testUser.id
+            Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$($testUser.id)/toggle-active" `
+                -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+                -Body "{}" -UseBasicParsing -ErrorAction Stop | Out-Null
+            Write-Host "  [INFO] Usuario de test activado (id=$($testUser.id))" -ForegroundColor DarkGray
+        }
+    } catch {
+        Write-Host "  [WARN] No se pudo activar el usuario de test: $_" -ForegroundColor DarkYellow
+    }
+}
+
 Invoke-ApiTest -Id "T-AUTH-04" -Description "Login correcto - obtener token" `
     -Method POST -Url "/auth/login" -ExpectedStatus 200 `
     -Contains '"success":true' `
@@ -182,20 +223,6 @@ Invoke-ApiTest -Id "T-AUTH-06" -Description "Ruta protegida sin token -> 401" `
 Invoke-ApiTest -Id "T-AUTH-07" -Description "Ruta protegida con token invalido -> 401" `
     -Method GET -Url "/creativespaces" -ExpectedStatus 401 `
     -Token "este.token.esinvalido"
-
-if ($AdminEmail -and $AdminPass) {
-    Invoke-ApiTest -Id "T-AUTH-08" -Description "Login admin (setup para tests admin)" `
-        -Method POST -Url "/auth/login" -ExpectedStatus 200 `
-        -Contains '"success":true' `
-        -Body @{ email=$AdminEmail; password=$AdminPass } `
-        -OnPass {
-            param($body)
-            $obj = $body | ConvertFrom-Json
-            $script:AdminToken = $obj.token
-        }
-} else {
-    Skip-Test -Id "T-AUTH-08" -Description "Login admin" -Reason "ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env"
-}
 
 # --- BLOQUE 2: Espacios creativos ---
 
@@ -620,9 +647,87 @@ if ($script:AdminToken) {
     Invoke-ApiTest -Id "T-ADMIN-06" -Description "Listar usuarios (admin)" `
         -Method GET -Url "/users" -ExpectedStatus 200 `
         -Token $script:AdminToken
+
+    # Nuevos endpoints admin
+    Invoke-ApiTest -Id "T-ADMIN-07" -Description "GET /admin/users incluye campo usage" `
+        -Method GET -Url "/admin/users" -ExpectedStatus 200 `
+        -Contains '"usage"' `
+        -Token $script:AdminToken
+
+    Invoke-ApiTest -Id "T-ADMIN-08" -Description "GET /admin/users sin token -> 401" `
+        -Method GET -Url "/admin/users" -ExpectedStatus 401
+
+    if ($script:UserToken) {
+        Invoke-ApiTest -Id "T-ADMIN-09" -Description "GET /admin/users con token User -> 403" `
+            -Method GET -Url "/admin/users" -ExpectedStatus 403 `
+            -Token $script:UserToken
+    } else {
+        Skip-Test -Id "T-ADMIN-09" -Description "GET /admin/users con token User -> 403" -Reason "UserToken no disponible"
+    }
+
+    if ($script:TestUserId) {
+        Invoke-ApiTest -Id "T-ADMIN-10" -Description "Toggle activo/inactivo de usuario" `
+            -Method PUT -Url "/admin/users/$($script:TestUserId)/toggle-active" -ExpectedStatus 200 `
+            -Contains '"isActive"' `
+            -Token $script:AdminToken
+
+        $newEmail = "edited_$Timestamp@lifehub-auto.test"
+        Invoke-ApiTest -Id "T-ADMIN-11" -Description "Editar email de usuario desde admin" `
+            -Method PUT -Url "/admin/users/$($script:TestUserId)" -ExpectedStatus 200 `
+            -Token $script:AdminToken `
+            -Body @{ email=$newEmail; fullName="Test Editado" }
+
+        Invoke-ApiTest -Id "T-ADMIN-12" -Description "Editar email invalido -> 400" `
+            -Method PUT -Url "/admin/users/$($script:TestUserId)" -ExpectedStatus 400 `
+            -Token $script:AdminToken `
+            -Body @{ email="no-es-email"; fullName="X" }
+
+        Invoke-ApiTest -Id "T-ADMIN-13" -Description "Cambiar contrasena de usuario" `
+            -Method POST -Url "/admin/users/$($script:TestUserId)/set-password" -ExpectedStatus 204 `
+            -Token $script:AdminToken `
+            -Body @{ newPassword="NuevaClave123!" }
+
+        Invoke-ApiTest -Id "T-ADMIN-14" -Description "Cambiar rol a Moderator" `
+            -Method PUT -Url "/admin/users/$($script:TestUserId)/roles" -ExpectedStatus 200 `
+            -Contains '"roles"' `
+            -Token $script:AdminToken `
+            -Body @{ role="Moderator" }
+    } else {
+        "T-ADMIN-10","T-ADMIN-11","T-ADMIN-12","T-ADMIN-13","T-ADMIN-14" | ForEach-Object {
+            Skip-Test -Id $_ -Description "Test con TestUserId" -Reason "TestUserId no disponible"
+        }
+    }
+
+    Invoke-ApiTest -Id "T-ADMIN-15" -Description "Ver logs de actividad con paginacion" `
+        -Method GET -Url "/admin/activity-logs" -ExpectedStatus 200 `
+        -Contains '"totalCount"' `
+        -Token $script:AdminToken
+
+    Invoke-ApiTest -Id "T-ADMIN-16" -Description "Logs filtrados por entityType" `
+        -Method GET -Url "/admin/activity-logs?entityType=Document" -ExpectedStatus 200 `
+        -Contains '"items"' `
+        -Token $script:AdminToken
+
+    Invoke-ApiTest -Id "T-ADMIN-17" -Description "Backup sin token -> 401" `
+        -Method POST -Url "/admin/backup" -ExpectedStatus 401
+
+    if ($script:UserToken) {
+        Invoke-ApiTest -Id "T-ADMIN-18" -Description "Backup con token User -> 403" `
+            -Method POST -Url "/admin/backup" -ExpectedStatus 403 `
+            -Token $script:UserToken
+    } else {
+        Skip-Test -Id "T-ADMIN-18" -Description "Backup con token User -> 403" -Reason "UserToken no disponible"
+    }
+
+    Invoke-ApiTest -Id "T-ADMIN-19" -Description "Backup con token Admin -> 200" `
+        -Method POST -Url "/admin/backup" -ExpectedStatus 200 `
+        -Contains '"message"' `
+        -Token $script:AdminToken
 }
 else {
-    "T-ADMIN-03","T-ADMIN-04","T-ADMIN-05","T-ADMIN-06" | ForEach-Object {
+    "T-ADMIN-03","T-ADMIN-04","T-ADMIN-05","T-ADMIN-06","T-ADMIN-07","T-ADMIN-08","T-ADMIN-09",
+    "T-ADMIN-10","T-ADMIN-11","T-ADMIN-12","T-ADMIN-13","T-ADMIN-14","T-ADMIN-15",
+    "T-ADMIN-16","T-ADMIN-17","T-ADMIN-18","T-ADMIN-19" | ForEach-Object {
         Skip-Test -Id $_ -Description "Test admin" -Reason "AdminToken no disponible"
     }
 }

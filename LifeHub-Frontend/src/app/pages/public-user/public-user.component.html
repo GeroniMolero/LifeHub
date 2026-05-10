@@ -2,93 +2,168 @@
   <p *ngIf="loading" class="muted">Cargando perfil...</p>
   <p *ngIf="error" class="error">{{ error }}</p>
 
-  <div class="profile-wrapper" *ngIf="!loading && user && !showEdit">
+  <div class="profile-wrapper" *ngIf="!loading && user">
 
     <div class="profile-header">
-      <ng-container *ngIf="user.profilePictureUrl; else publicFallbackAvatar">
-        <img
-          class="avatar"
-          [src]="user.profilePictureUrl"
-          [alt]="user.fullName ? user.fullName + ' avatar' : 'Avatar de usuario'"
-        />
+
+      <!-- Avatar -->
+      <ng-container *ngIf="showEdit && isOwnProfile; else viewAvatar">
+        <img *ngIf="profileForm.get('profilePictureUrl')?.value; else editInitial"
+          class="avatar" [src]="profileForm.get('profilePictureUrl')?.value" alt="Avatar" />
+        <ng-template #editInitial>
+          <div class="avatar">{{ (user.fullName || 'U').charAt(0) | uppercase }}</div>
+        </ng-template>
       </ng-container>
-      <ng-template #publicFallbackAvatar>
-        <div class="avatar">{{ (user.fullName || 'U').charAt(0) | uppercase }}</div>
+      <ng-template #viewAvatar>
+        <img *ngIf="user.profilePictureUrl; else viewInitial"
+          class="avatar" [src]="user.profilePictureUrl"
+          [alt]="user.fullName ? user.fullName + ' avatar' : 'Avatar de usuario'" />
+        <ng-template #viewInitial>
+          <div class="avatar">{{ (user.fullName || 'U').charAt(0) | uppercase }}</div>
+        </ng-template>
       </ng-template>
 
-      <div class="profile-copy">
-        <h1>{{ user.fullName || 'Usuario LifeHub' }}</h1>
-        <p class="bio" *ngIf="user.bio; else noBio">{{ user.bio }}</p>
-        <ng-template #noBio>
-          <p class="bio muted">Sin biografía.</p>
-        </ng-template>
-      </div>
+      <!-- Info / form -->
+      <form *ngIf="showEdit && isOwnProfile; else viewProfile"
+        class="edit-header-form" [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()">
+        <input type="text" formControlName="fullName" placeholder="Nombre completo"
+          [class.is-invalid]="submittedProfile && profileForm.get('fullName')?.errors" />
+        <textarea formControlName="bio" placeholder="Tu bio" rows="2"></textarea>
+        <input type="url" formControlName="profilePictureUrl" placeholder="URL foto de perfil" />
+      </form>
+      <ng-template #viewProfile>
+        <div class="profile-copy">
+          <h1>{{ user.fullName || 'Usuario LifeHub' }}</h1>
+          <p class="bio" *ngIf="user.bio; else noBio">{{ user.bio }}</p>
+          <ng-template #noBio><p class="bio muted">Sin biografía.</p></ng-template>
+        </div>
+      </ng-template>
 
-      <div class="friendship-actions" *ngIf="!loadingFriendship && currentUserId && !isOwnProfile">
+      <!-- Friendship actions (solo en vista pública) -->
+      <div class="friendship-actions" *ngIf="!showEdit && !loadingFriendship && currentUserId && !isOwnProfile">
         <button type="button" class="btn btn-primary"
           *ngIf="friendshipState === 'none'"
-          (click)="sendFriendRequest()">
-          Añadir amigo
-        </button>
+          (click)="sendFriendRequest()">Añadir amigo</button>
         <button type="button" class="btn btn-primary"
           *ngIf="friendshipState === 'pending-received'"
-          (click)="acceptFriendRequest()">
-          Aceptar solicitud
-        </button>
-        <span class="friendship-status muted" *ngIf="friendshipState === 'pending-sent'">
-          Solicitud enviada
-        </span>
-        <span class="friendship-status friendship-status--accepted" *ngIf="friendshipState === 'accepted'">
-          Sois amigos
-        </span>
+          (click)="acceptFriendRequest()">Aceptar solicitud</button>
+        <span class="friendship-status muted" *ngIf="friendshipState === 'pending-sent'">Solicitud enviada</span>
+        <span class="friendship-status friendship-status--accepted" *ngIf="friendshipState === 'accepted'">Sois amigos</span>
         <button type="button" class="btn btn-danger"
           *ngIf="friendshipState === 'accepted'"
-          (click)="removeFriend()">
-          Eliminar amigo
-        </button>
+          (click)="removeFriend()">Eliminar amigo</button>
       </div>
+
     </div>
 
     <div class="content-grid">
 
+      <!-- Panel izquierdo: Documentos -->
       <div class="content-panel">
-        <section class="public-docs" *ngIf="publicDocuments.length > 0 || isOwnProfile">
-          <h2 class="section-title">{{ isOwnProfile ? 'Mis documentos públicos' : 'Documentos' }}</h2>
-          <p *ngIf="loadingDocs" class="muted">Cargando documentos...</p>
-          <p *ngIf="!loadingDocs && publicDocuments.length === 0 && isOwnProfile" class="muted">
-            No tienes documentos marcados como visibles. Actívalos desde "Editar perfil".
-          </p>
-          <div class="cards-stack" *ngIf="!loadingDocs && publicDocuments.length > 0">
-            <button *ngFor="let doc of publicDocuments | slice:0:3" type="button" class="space-card doc-preview-card" (click)="openDocPreview(doc)">
-              <img *ngIf="getDocThumb(doc)" [src]="getDocThumb(doc)" class="doc-card-thumb" alt="" />
-              <strong>{{ doc.title }}</strong>
-              <p>{{ doc.description || 'Sin descripción' }}</p>
-              <span class="doc-preview-hint">Clic para previsualizar</span>
-            </button>
-          </div>
+        <section *ngIf="publicDocuments.length > 0 || isOwnProfile">
+          <h2 class="section-title">{{ isOwnProfile ? 'Documentos públicos' : 'Documentos' }}</h2>
+
+          <!-- Vista pública -->
+          <ng-container *ngIf="!showEdit">
+            <p *ngIf="loadingDocs" class="muted">Cargando documentos...</p>
+            <p *ngIf="!loadingDocs && publicDocuments.length === 0 && isOwnProfile" class="muted">
+              No tienes documentos marcados como visibles. Actívalos en modo edición.
+            </p>
+            <div class="spaces-grid" *ngIf="!loadingDocs && publicDocuments.length > 0">
+              <button *ngFor="let doc of publicDocuments | slice:0:MAX_PROFILE_DOCS" type="button"
+                class="space-card doc-preview-card" (click)="openDocPreview(doc)">
+                <img *ngIf="getDocThumb(doc)" [src]="getDocThumb(doc)" class="doc-card-thumb" alt="" />
+                <strong>{{ doc.title }}</strong>
+                <p>{{ doc.description || 'Sin descripción' }}</p>
+                <span class="doc-preview-hint">Clic para previsualizar</span>
+              </button>
+            </div>
+          </ng-container>
+
+          <!-- Modo edición -->
+          <ng-container *ngIf="showEdit && isOwnProfile">
+            <p *ngIf="loadingAllPublishedDocs" class="muted">Cargando...</p>
+            <ng-container *ngIf="!loadingAllPublishedDocs">
+              <div class="spaces-grid" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="dropDoc($event)">
+                <div class="space-card edit-slot edit-slot--filled" cdkDrag *ngFor="let doc of editVisibleDocs">
+                  <button class="edit-slot-remove" type="button" (click)="removeDocFromProfile(doc)" title="Quitar del perfil">×</button>
+                  <strong>{{ doc.title }}</strong>
+                  <p>{{ doc.description || 'Sin descripción' }}</p>
+                </div>
+                <button type="button" class="space-card edit-slot edit-slot--empty"
+                  *ngFor="let _ of editDocEmptySlots"
+                  (click)="toggleDocPicker()">
+                  <span class="edit-slot-plus">+</span>
+                </button>
+              </div>
+              <div class="slot-picker" *ngIf="showDocPicker">
+                <ng-container *ngIf="editAvailableDocs.length === 0">
+                  <p class="muted slot-picker-empty">No tienes documentos publicados disponibles.</p>
+                  <p class="muted slot-picker-empty"><a routerLink="/documents">Publica un documento</a> para añadirlo aquí.</p>
+                </ng-container>
+                <button type="button" class="slot-picker-item" *ngFor="let doc of editAvailableDocs" (click)="addDocToProfile(doc)">
+                  <strong>{{ doc.title }}</strong>
+                  <span class="muted">{{ doc.description || 'Sin descripción' }}</span>
+                </button>
+              </div>
+            </ng-container>
+          </ng-container>
         </section>
       </div>
 
+      <!-- Panel derecho: Espacios -->
       <div class="content-panel content-panel--right">
-        <section class="public-spaces" *ngIf="publicSpaces.length > 0 || isOwnProfile">
-          <h2 class="section-title">{{ isOwnProfile ? 'Mis espacios públicos' : 'Espacios' }}</h2>
-          <p *ngIf="loadingSpaces" class="muted">Cargando espacios...</p>
-          <p *ngIf="!loadingSpaces && publicSpaces.length === 0 && isOwnProfile" class="muted">
-            No tienes espacios marcados como visibles. Actívalos desde "Editar perfil".
-          </p>
-          <div class="cards-stack" *ngIf="!loadingSpaces && publicSpaces.length > 0">
-            <a *ngFor="let space of publicSpaces | slice:0:3" class="space-card" [routerLink]="['/spaces', space.id]">
-              <strong>{{ space.name }}</strong>
-              <p>{{ space.description || 'Sin descripción' }}</p>
-            </a>
-          </div>
+        <section *ngIf="publicSpaces.length > 0 || isOwnProfile">
+          <h2 class="section-title">{{ isOwnProfile ? 'Espacios públicos' : 'Espacios' }}</h2>
+
+          <!-- Vista pública -->
+          <ng-container *ngIf="!showEdit">
+            <p *ngIf="loadingSpaces" class="muted">Cargando espacios...</p>
+            <p *ngIf="!loadingSpaces && publicSpaces.length === 0 && isOwnProfile" class="muted">
+              No tienes espacios marcados como visibles. Actívalos en modo edición.
+            </p>
+            <div class="cards-stack" *ngIf="!loadingSpaces && publicSpaces.length > 0">
+              <a *ngFor="let space of publicSpaces | slice:0:MAX_PROFILE_SPACES" class="space-card" [routerLink]="['/spaces', space.id]">
+                <strong>{{ space.name }}</strong>
+                <p>{{ space.description || 'Sin descripción' }}</p>
+              </a>
+            </div>
+          </ng-container>
+
+          <!-- Modo edición -->
+          <ng-container *ngIf="showEdit && isOwnProfile">
+            <p *ngIf="loadingAllSpaces" class="muted">Cargando...</p>
+            <ng-container *ngIf="!loadingAllSpaces">
+              <div class="cards-stack" cdkDropList (cdkDropListDropped)="dropSpace($event)">
+                <div class="space-card edit-slot edit-slot--filled" cdkDrag *ngFor="let space of editVisibleSpaces">
+                  <button class="edit-slot-remove" type="button" (click)="removeSpaceFromProfile(space)" title="Quitar del perfil">×</button>
+                  <strong>{{ space.name }}</strong>
+                  <p>{{ space.description || 'Sin descripción' }}</p>
+                </div>
+              </div>
+              <div class="spaces-edit-empty-slots">
+                <button type="button" class="space-card edit-slot edit-slot--empty"
+                  *ngFor="let _ of editSpaceEmptySlots"
+                  (click)="toggleSpacePicker()">
+                  <span class="edit-slot-plus">+</span>
+                </button>
+              </div>
+              <div class="slot-picker" *ngIf="showSpacePicker">
+                <p class="muted slot-picker-empty" *ngIf="editAvailableSpaces.length === 0">No hay más espacios disponibles.</p>
+                <button type="button" class="slot-picker-item" *ngFor="let space of editAvailableSpaces" (click)="addSpaceToProfile(space)">
+                  <strong>{{ space.name }}</strong>
+                  <span class="muted">{{ space.description || 'Sin descripción' }}</span>
+                </button>
+              </div>
+            </ng-container>
+          </ng-container>
         </section>
       </div>
 
     </div>
-
   </div>
 
+  <!-- Modal previsualización de documento -->
   <app-modal
     [title]="previewDoc?.title || ''"
     [visible]="!!previewDoc"
@@ -101,36 +176,8 @@
     <div class="doc-preview-body rendered-markdown" [innerHTML]="previewHtml"></div>
   </app-modal>
 
-  <div *ngIf="!loading && showEdit && isOwnProfile" class="edit-section">
-
-    <div class="edit-card">
-      <h2>Información del perfil</h2>
-      <form [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()">
-        <div class="form-group">
-          <label for="fullName">Nombre completo</label>
-          <input type="text" id="fullName" formControlName="fullName" placeholder="Tu nombre"
-            [class.is-invalid]="submittedProfile && profileForm.get('fullName')?.errors" />
-          <div *ngIf="submittedProfile && profileForm.get('fullName')?.errors" class="error-message">
-            <span *ngIf="profileForm.get('fullName')?.errors?.['required']">El nombre es requerido</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="bio">Bio</label>
-          <textarea id="bio" formControlName="bio" placeholder="Cuéntanos sobre ti" rows="4"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="profilePictureUrl">URL de foto de perfil</label>
-          <input type="url" id="profilePictureUrl" formControlName="profilePictureUrl" placeholder="https://..." />
-        </div>
-        <div class="profile-picture-preview" *ngIf="profileForm.get('profilePictureUrl')?.value as previewUrl">
-          <span class="muted">Previsualización:</span>
-          <img [src]="previewUrl" alt="Vista previa" />
-        </div>
-        <button type="submit" class="btn btn-primary" [disabled]="savingProfile">
-          {{ savingProfile ? 'Guardando...' : 'Guardar cambios' }}
-        </button>
-      </form>
-    </div>
+  <!-- Sección secundaria de edición: contraseña + zona de peligro -->
+  <div *ngIf="!loading && showEdit && isOwnProfile" class="edit-secondary">
 
     <div class="edit-card">
       <h2>Cambiar contraseña</h2>
@@ -164,59 +211,6 @@
           {{ savingPassword ? 'Cambiando...' : 'Cambiar contraseña' }}
         </button>
       </form>
-    </div>
-
-    <div class="edit-card">
-      <div class="edit-card-header">
-        <h2>Espacios en perfil público</h2>
-        <span class="limit-badge" [class.limit-badge--full]="profileVisibleSpacesCount >= MAX_PROFILE_SPACES">
-          {{ profileVisibleSpacesCount }}/{{ MAX_PROFILE_SPACES }}
-        </span>
-      </div>
-      <p class="muted" *ngIf="loadingAllSpaces">Cargando espacios...</p>
-      <p class="muted" *ngIf="!loadingAllSpaces && allSpaces.length === 0">Aún no tienes espacios creativos.</p>
-      <ul class="spaces-visibility-list" *ngIf="!loadingAllSpaces && allSpaces.length > 0">
-        <li *ngFor="let space of allSpaces" class="spaces-visibility-item">
-          <div class="spaces-visibility-info">
-            <strong>{{ space.name }}</strong>
-            <span class="muted">{{ space.description || 'Sin descripción' }}</span>
-          </div>
-          <label class="toggle" [class.toggle--disabled]="!space.isPublicProfileVisible && profileVisibleSpacesCount >= MAX_PROFILE_SPACES">
-            <input type="checkbox" [checked]="space.isPublicProfileVisible"
-              [disabled]="!space.isPublicProfileVisible && profileVisibleSpacesCount >= MAX_PROFILE_SPACES"
-              (change)="togglePublicVisibility(space)" />
-            <span class="toggle-track"></span>
-          </label>
-        </li>
-      </ul>
-    </div>
-
-    <div class="edit-card">
-      <div class="edit-card-header">
-        <h2>Documentos en perfil público</h2>
-        <span class="limit-badge" [class.limit-badge--full]="profileVisibleDocsCount >= MAX_PROFILE_DOCS">
-          {{ profileVisibleDocsCount }}/{{ MAX_PROFILE_DOCS }}
-        </span>
-      </div>
-      <p class="muted" *ngIf="loadingAllPublishedDocs">Cargando documentos...</p>
-      <p class="muted" *ngIf="!loadingAllPublishedDocs && allPublishedDocs.length === 0">
-        No tienes documentos publicados. Publica documentos desde la sección
-        <a routerLink="/documents">Documentos</a> para que aparezcan aquí.
-      </p>
-      <ul class="spaces-visibility-list" *ngIf="!loadingAllPublishedDocs && allPublishedDocs.length > 0">
-        <li *ngFor="let doc of allPublishedDocs" class="spaces-visibility-item">
-          <div class="spaces-visibility-info">
-            <strong>{{ doc.title }}</strong>
-            <span class="muted">{{ doc.description || 'Sin descripción' }}</span>
-          </div>
-          <label class="toggle" [class.toggle--disabled]="!doc.isProfileVisible && profileVisibleDocsCount >= MAX_PROFILE_DOCS">
-            <input type="checkbox" [checked]="doc.isProfileVisible"
-              [disabled]="!doc.isProfileVisible && profileVisibleDocsCount >= MAX_PROFILE_DOCS"
-              (change)="toggleDocumentProfileVisibility(doc)" />
-            <span class="toggle-track"></span>
-          </label>
-        </li>
-      </ul>
     </div>
 
     <div class="edit-card danger-zone">
