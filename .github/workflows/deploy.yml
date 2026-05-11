@@ -1,4 +1,4 @@
-name: Build & Deploy
+me: Build & Deploy
  
 on:
   push:
@@ -22,7 +22,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
- 
       - name: Filter paths
         id: filter
         uses: dorny/paths-filter@v3
@@ -41,20 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
- 
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
- 
       - name: Restore & build backend
         run: dotnet build LifeHub-Backend/LifeHub.csproj --configuration Release
- 
-      - name: Upload backend artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-build
-          path: LifeHub-Backend/bin/Release/
  
   build-frontend:
     needs: changes
@@ -64,25 +55,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
- 
       - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: LifeHub-Frontend/package-lock.json
- 
       - name: Install & build frontend
         working-directory: LifeHub-Frontend
         run: |
           npm ci
           npm run build
- 
-      - name: Upload frontend artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build
-          path: LifeHub-Frontend/dist/
  
   deploy:
     needs: [changes, build-backend, build-frontend]
@@ -91,9 +74,7 @@ jobs:
       (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
- 
+      - uses: actions/checkout@v4
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -102,6 +83,7 @@ jobs:
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           script: |
             cd /opt/lifehub
+            git checkout production
             git pull origin production
             docker compose up -d --build
             docker compose ps
