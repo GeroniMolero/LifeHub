@@ -16,6 +16,8 @@ export class RegisterComponent implements OnInit {
   loading = false;
   submitted = false;
   error = '';
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -34,6 +36,14 @@ export class RegisterComponent implements OnInit {
 
   get f() {
     return this.registerForm.controls;
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 
   onSubmit(): void {
