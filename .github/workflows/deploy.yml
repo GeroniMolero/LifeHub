@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - production
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: 'Build ALL services (ignore change detection)'
+        type: boolean
+        default: false
 
 jobs:
   deploy:
