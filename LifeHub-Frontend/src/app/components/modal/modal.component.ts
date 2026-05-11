@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 export class ModalComponent {
   @Input() title = '';
   @Input() visible = false;
+  @Input() maxWidth = '520px';
   @Output() closed = new EventEmitter<void>();
 
   close(): void {

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
+import { GuestGuard } from './guards/guest.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { SpaceWorkspaceComponent } from './pages/spaces/space-workspace/space-workspace.component';
 import { creativeSpaceResolver } from './resolvers/creative-space.resolver';
@@ -9,10 +10,12 @@ import { documentResolver } from './resolvers/document.resolver';
 export const routes: Routes = [
   {
     path: 'login',
+    canActivate: [GuestGuard],
     loadComponent: () => import('./pages/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
     path: 'register',
+    canActivate: [GuestGuard],
     loadComponent: () => import('./pages/auth/register/register.component').then(m => m.RegisterComponent)
   },
   {
@@ -65,7 +68,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
       },
       {
-        path: 'users/:id',
+        path: 'profile/:id',
         data: {
           headerTitle: 'Perfil público',
           headerDescription: 'Visualiza información básica de otro usuario'

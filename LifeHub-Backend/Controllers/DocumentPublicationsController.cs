@@ -28,6 +28,16 @@ namespace LifeHub.Controllers
             return ToActionResult(result);
         }
 
+        [HttpPatch("profile-visibility")]
+        public async Task<IActionResult> SetProfileVisibility(int documentId, [FromBody] bool isVisible)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null) return authError;
+
+            var result = await _publicationService.SetProfileVisibilityAsync(documentId, userId, isVisible);
+            return ToActionResult(result);
+        }
+
         [HttpPut]
         public async Task<IActionResult> UpsertPublication(int documentId, [FromBody] UpsertDocumentPublicationDto dto)
         {

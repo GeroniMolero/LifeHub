@@ -60,6 +60,7 @@ PROYECTO_COMPLETADO.md
 README-NUEVO.md
 notas-personales/
 TODO.md
+documentacion/PLAN_*.md
 
 #######################
 # IDEs y Editores
@@ -143,6 +144,11 @@ backups/
 # Informes de pruebas automáticas (generados por run-tests)
 #######################
 documentacion/RESULTADO_PRUEBAS_*.md
+
+#######################
+# Resultados de cobertura de código (generados por dotnet test)
+#######################
+TestResults*/
 
 #######################
 # Documentos binarios

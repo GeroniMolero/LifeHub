@@ -51,3 +51,124 @@
     gap: $space-4;
   }
 }
+
+.modal-tabs {
+  display: flex;
+  gap: $space-1;
+  background: $color-slate-100;
+  border-radius: $border-radius-lg;
+  padding: $space-1;
+  margin-bottom: $space-5;
+}
+
+.modal-tab-btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: $color-slate-600;
+  padding: $space-2 $space-4;
+  cursor: pointer;
+  font-weight: $font-weight-medium;
+  border-radius: $border-radius-md;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+  &.active {
+    background: $color-white;
+    color: $color-brand-900;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  }
+}
+
+.modal-tab-body {
+  min-height: 360px;
+}
+
+.modal-create-form {
+  display: grid;
+  gap: $space-4;
+}
+
+.form-group {
+  display: grid;
+  gap: $space-1;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+  }
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-md;
+}
+
+.checkbox {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.25rem;
+
+  input { width: auto; }
+}
+
+.modal-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-3;
+  margin-top: $space-2;
+}
+
+.error-message {
+  font-size: $font-size-sm;
+  color: $color-danger;
+}
+
+.permissions-tab {
+  display: grid;
+  gap: $space-3;
+}
+
+.permission-form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.permissions-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.permission-item {
+  border: 1px solid $color-border;
+  border-radius: $border-radius-lg;
+  padding: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  small {
+    display: block;
+    color: $color-text-secondary;
+  }
+}
+
+.loading, .empty {
+  margin: 0.75rem 0;
+  color: $color-text-secondary;
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+  border: 0;
+  border-radius: $border-radius-md;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.btn-primary { background: $color-brand-700; color: $color-white; }
+.btn-secondary { background: $color-slate-100; color: $color-slate-700; }
+.btn-danger { background: $color-danger; color: $color-white; }

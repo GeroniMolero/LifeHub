@@ -4,6 +4,8 @@
 
 **LifeHub** es un portal web completo desarrollado con **Angular** (frontend) y **.NET 8** (backend), diseñado como un entorno centralizado para herramientas útiles del día a día.
 
+Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicaciones Web (DAW).
+
 ## Características Principales
 
 ### Sistema de Autenticación
@@ -25,6 +27,7 @@
 - Panel de contactos con búsqueda de usuarios y solicitudes de amistad
 - Gestión de amigos (enviar/aceptar/rechazar/eliminar) desde el perfil público
 - Conversación directa con cualquier amigo (chat en tiempo real con SignalR)
+- Badge de mensajes no leídos por amigo en el panel Social
 - Feed de actividad de amigos (en desarrollo)
 
 
@@ -44,19 +47,23 @@
 # <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/5f80560b-4c61-467b-a726-9f7f17b7b2e7" />
 
 - Crear, editar, eliminar y descargar documentos
-- Editor de texto en línea
+- Editor de texto con **modo split** (código y preview en paralelo)
 - Diferentes tipos de documentos (notas, archivos, listas)
 - **Versionado automático**: cada guardado crea una snapshot de la versión anterior
 - Límite de 30 versiones por documento
 - Eliminación de versiones individuales (solo propietario)
 - Atribución: cada versión muestra quién la creó
+- **Publicación de documentos**: modal con control de visibilidad en perfil público, autor visible en la vista pública
 
 ### Perfil
 
 # <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/8e6061e8-ea45-4ff7-9c58-bc00c5dba8dc" />
 
-- Mostrar nombre, descripcion, imagen.
-- Añadir previsualización de hasta 2 espacios favoritos para mostrar en tu perfil.
+- Mostrar nombre, descripción e imagen.
+- Vista pública con grid de dos columnas: documentos publicados y espacios.
+- Marcar hasta 3 documentos y 3 espacios como visibles en el perfil.
+- Modal de previsualización de documentos con markdown renderizado, botones Ver y Descargar.
+- Badges de contador que se deshabilitan al alcanzar los límites configurados.
 
 ### Panel de administrador
 
@@ -91,8 +98,9 @@
 - AutoMapper para mapeo de DTOs
 - **SpaceAccessPolicy**: política centralizada de acceso a espacios y documentos
 - **IHtmlSanitizer / HtmlSanitizer**: sanitización de HTML inyectable (sin dependencias externas)
-- **BusinessRules**: constantes de negocio centralizadas (p.ej. límite de versiones)
+- **BusinessRules**: límites de negocio centralizados en `appsettings.json` y expuestos via `GET /api/config/limits`
 - Data Annotations en todos los DTOs de entrada + restricciones `HasMaxLength` en EF Core
+- Cabeceras de seguridad HTTP (`X-Content-Type-Options`, `X-Frame-Options`) y cabecera `Server` suprimida
 
 ### Frontend (Angular 19)
 - Standalone Components
@@ -101,6 +109,7 @@
 - Routing y Guards
 - Services para comunicación HTTP
 - Sistema global de notificaciones toast (éxito, error, info) con animaciones de entrada/salida, límite de 5 simultáneos y truncado de mensajes largos
+- `APP_INITIALIZER` para cargar los límites de negocio desde el backend al arrancar (`ConfigService`)
 
 ## Documentación técnica
 
@@ -249,20 +258,53 @@ Los backups se guardan en `backups/` con el formato `<DB_NAME>_<timestamp>.bak`.
 
 ## Pruebas
 
-La suite cubre **33 casos de prueba** sobre la API REST del backend, agrupados en seis módulos:
+Estado verificado a fecha **2026-05-10**:
+
+- Última ejecución de integración registrada: `documentacion/RESULTADO_PRUEBAS_20260510_195344.md`.
+- Resultado integración API: **60/60 PASS**, **0 FAIL**, **0 SKIP**.
+- Suite unitaria backend: **160 tests** (xUnit).
+- Suite unitaria frontend: **4 specs** (Jasmine/Karma).
+
+### Tests unitarios (sin servidor)
+
+La suite unitaria cubre **160 casos** de backend y **4 specs** de frontend:
+
+| Capa | Herramienta | Cobertura |
+|------|-------------|-----------|
+| Backend — 9 servicios | xUnit + EF Core InMemory | AllowedWebsite, CreativeSpace, Document, DocumentPublication, DocumentVersion, Friendship, Message, MusicFile, Recommendation, User |
+| Frontend | Jasmine / Karma | AdminService, AuthService, ConfigService, SpaceWorkspaceComponent |
+
+**Windows:**
+```powershell
+.\scripts\windows\run-unit-tests.ps1
+```
+
+**Linux / macOS:**
+```bash
+./scripts/linux/run-unit-tests.sh
+```
+
+No requiere servidor ni base de datos — se ejecutan en local en segundos.
+
+---
+
+### Tests de integración E2E (requieren servidor)
+
+La suite cubre **60 casos de prueba** sobre la API REST del backend, agrupados en siete módulos:
 
 | Módulo | Casos | Qué se verifica |
 |--------|-------|------------------|
-| AUTH | 8 | Registro, login, validación de campos, tokens inválidos |
+| AUTH | 9 | Registro, login, activación de usuario de pruebas, validación de campos, tokens inválidos |
 | DOCS | 9 | CRUD de documentos, versionado, control de acceso |
 | SPACES | 5 | CRUD de espacios creativos, validación de nombre |
 | COL | 3 | Permisos de colaboración (Viewer vs Editor), acceso a documentos compartidos |
-| ADMIN | 6 | Gestión de dominios permitidos (requiere rol Admin) |
-| SEGURIDAD | 2 | Acceso sin token y token manipulado |
+| PUBLICATIONS | 11 | Flujo completo de publicaciones, casos negativos (sin token, documento ajeno, tras despublicar) |
+| ADMIN | 19 | Acceso por rol, gestión de dominios, usuarios, backup y logs de actividad |
+| SEGURIDAD | 4 | Acceso sin token, token manipulado, cabeceras de seguridad HTTP |
 
 Los tests crean un usuario temporal propio y lo eliminan al finalizar — la base de datos queda limpia. Los tests de administrador requieren credenciales de admin en el `.env`.
 
-### Prerequisitos
+### Prerequisitos (tests E2E)
 
 - El backend debe estar en marcha (`http://localhost:5000`)
 - Las variables `ADMIN_EMAIL` y `ADMIN_PASSWORD` en el `.env` de la raíz (sin ellas, los tests de admin se omiten con SKIP)
@@ -284,6 +326,17 @@ Los tests crean un usuario temporal propio y lo eliminan al finalizar — la bas
 ```
 
 El informe se guarda en `documentacion/RESULTADO_PRUEBAS_<timestamp>.md` (archivo ignorado por git).
+
+### Cobertura actual y plan de ampliación
+
+Actualmente se valida bien la lógica de negocio backend y los flujos críticos de API. La cobertura frontend todavía está concentrada en servicios y seguridad de renderizado Markdown.
+
+Objetivo de incremento de cobertura (siguiente iteración):
+
+1. **Frontend unitario (prioridad alta):** ampliar specs en `guards`, `interceptors` y componentes clave de `pages/social`, `pages/profile` y `pages/spaces`.
+2. **Frontend integración (prioridad alta):** empezar a poblar `LifeHub-Frontend/test/integration` con flujos de login, creación/edición de espacios y publicación/despublicación de documentos.
+3. **Frontend E2E (prioridad media):** añadir escenarios de humo en `LifeHub-Frontend/test/e2e` para navegación principal y control de permisos.
+4. **Métrica de cobertura (prioridad media):** publicar porcentaje de líneas/ramas frontend en CI con umbral mínimo (por ejemplo, 60% inicial y subida progresiva por sprint).
 
 ### Ejecución interactiva (resultados en tiempo real en la terminal)
 
@@ -324,15 +377,20 @@ LifeHub/
 │   │   └── styles.scss       # Estilos globales
 │   └── angular.json          # Configuración Angular
 ├── documentacion/            # Plan de pruebas y documentación del proyecto
+├── LifeHub-Backend.Tests/    # Tests unitarios backend (xUnit)
+│   ├── Helpers/              # TestHelpers: contexto InMemory, UserManager, AutoMapper
+│   └── Services/             # ~160 tests sobre los 9 servicios de negocio
 ├── scripts/
 │   ├── windows/              # Scripts PowerShell (Windows)
 │   │   ├── backup-db.ps1
 │   │   ├── restore-db.ps1
-│   │   ├── run-tests.ps1             # Suite automatizada → genera informe .md
+│   │   ├── run-unit-tests.ps1        # Tests unitarios (sin servidor)
+│   │   ├── run-tests.ps1             # Suite E2E automatizada → genera informe .md
 │   │   └── run-tests-interactive.ps1 # Resultados en tiempo real en terminal
 │   └── linux/                # Scripts Bash (Linux / macOS)
 │       ├── backup-db.sh
 │       ├── restore-db.sh
+│       ├── run-unit-tests.sh
 │       ├── run-tests.sh
 │       └── run-tests-interactive.sh
 ├── docker-compose.dev.yml    # Stack de desarrollo (backend watch + SQL Edge)
@@ -347,6 +405,7 @@ LifeHub/
 - Validación en servidor (Data Annotations en DTOs) y cliente (Angular Reactive Forms)
 - Restricciones de longitud en base de datos (EF Core `HasMaxLength`)
 - Sanitización XSS en backend: `IHtmlSanitizer` elimina `<script>`, atributos `on*=` y URIs `javascript:` antes de persistir
+- Cabeceras HTTP de seguridad (`X-Content-Type-Options`, `X-Frame-Options`) y cabecera `Server` suprimida
 - Protección de rutas con Guards
 - No almacenamiento de contenido protegido por derechos de autor
 
@@ -374,7 +433,7 @@ LifeHub/
 
 ## Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo LICENSE para detalles.
+Todos los derechos reservados al autor — ver el archivo LICENSE para detalles.
 
 ## Contacto
 

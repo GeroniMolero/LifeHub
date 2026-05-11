@@ -80,15 +80,13 @@ input, textarea {
 }
 
 .btn-secondary {
-  background-color: $color-secondary;
-  color: $color-white;
+  background: $color-white;
+  color: $color-slate-700;
+  border: $border-width-base solid $color-brand-border-medium;
 
   &:hover:not(:disabled) {
-    background-color: $color-secondary-hover;
-  }
-
-  &:active {
-    background-color: $color-secondary-dark;
+    background: $color-brand-100;
+    border-color: $color-brand-700;
   }
 }
 
@@ -173,6 +171,16 @@ input, textarea {
   background-color: $color-info-light;
   color: $color-info-text;
   border-color: color.adjust($color-info-light, $lightness: -10%);
+}
+
+// ============================================================
+// FONDO DE PÁGINA DE PERFIL
+// ============================================================
+
+body.profile-page .layout-shell {
+  background:
+    linear-gradient(rgba(10, 16, 34, 0.18), rgba(10, 16, 34, 0.22)),
+    url('/assets/images/moinzon-mountains.png') center / cover no-repeat fixed !important;
 }
 
 /* Tooltip de usuario (nombre visible, email en title nativo) */

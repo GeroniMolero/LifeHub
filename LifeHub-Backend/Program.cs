@@ -12,6 +12,7 @@ using LifeHub.Services.MusicFiles;
 using LifeHub.Services.Messages;
 using LifeHub.Services.Users;
 using LifeHub.Services.AllowedWebsites;
+using LifeHub.Services.Admin;
 using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -20,6 +21,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using LifeHub.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// =============================
+// BUSINESS RULES CONFIG
+// =============================
+builder.Services.Configure<LifeHub.Utilidades.BusinessRules>(
+    builder.Configuration.GetSection("BusinessRules"));
 
 // =============================
 // DB CONTEXT
@@ -53,6 +60,7 @@ builder.Services.AddScoped<IMusicFileService, MusicFileService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAllowedWebsiteService, AllowedWebsiteService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 // =============================
 // SWAGGER + AUTH JWT
@@ -157,6 +165,8 @@ builder.Services.AddAuthorization(options =>
 // =============================
 builder.Services.AddSignalR();
 
+builder.WebHost.ConfigureKestrel(o => o.AddServerHeader = false);
+
 var app = builder.Build();
 
 // =============================
@@ -174,6 +184,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
+
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    ctx.Response.Headers["X-Frame-Options"] = "DENY";
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

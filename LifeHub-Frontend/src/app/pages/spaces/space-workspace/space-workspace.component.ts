@@ -4,22 +4,27 @@ import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs/operators';
 import { marked } from 'marked';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { CreativeSpace, SpacePrivacy, UpdateCreativeSpaceRequest } from '../../../models/creative-space.model';
+import { CreativeSpace, SpacePermission, SpacePermissionLevel, SpacePrivacy, UpdateCreativeSpaceRequest } from '../../../models/creative-space.model';
 import { CreateDocumentRequest, Document, DocumentType, UpdateDocumentRequest } from '../../../models/document.model';
 import { SpaceMediaReference } from '../../../models/space-media-reference.model';
+import { Friendship } from '../../../models/friendship.model';
+import { User } from '../../../models/auth.model';
 import { MEDIA_EMBED_ALLOWED_DOMAINS } from '../../../config/media-allowlist.config';
 import { AllowedWebsiteService } from '../../../services/allowed-website.service';
+import { AuthService } from '../../../services/auth.service';
 import { ConfirmationService } from '../../../services/confirmation.service';
 import { CreativeSpaceService } from '../../../services/creative-space.service';
 import { DocumentService } from '../../../services/document.service';
 import { DocumentVersionService } from '../../../services/document-version.service';
+import { FriendshipService } from '../../../services/friendship.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
 import { SpaceMediaSessionService } from '../../../services/space-media-session.service';
 import { ToastService } from '../../../services/toast.service';
-import { SpaceSettingsPanelComponent } from '../components/space-settings-panel/space-settings-panel.component';
+import { ModalComponent } from '../../../components/modal/modal.component';
 import { SpaceDocumentsSidebarComponent } from '../components/space-documents-sidebar/space-documents-sidebar.component';
 import { SpaceEditorMainComponent } from '../components/space-editor-main/space-editor-main.component';
 import { SpaceMediaSidebarComponent } from '../components/space-media-sidebar/space-media-sidebar.component';
@@ -37,7 +42,7 @@ interface VisualMediaLayout {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    SpaceSettingsPanelComponent,
+    ModalComponent,
     SpaceDocumentsSidebarComponent,
     SpaceEditorMainComponent,
     SpaceMediaSidebarComponent
@@ -52,7 +57,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   documents: Document[] = [];
   mediaReferences: SpaceMediaReference[] = [];
   selectedDocument: Document | null = null;
-  activeTab: 'code' | 'preview' = 'code';
+  activeTab: 'code' | 'preview' | 'split' = 'code';
 
   loading = true;
   loadingDocuments = false;
@@ -62,8 +67,20 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   renderedPreview = '';
 
   showCreateDocument = false;
+  showImportPanel = false;
+  importableDocuments: Document[] = [];
+  loadingImportable = false;
   showCreateMedia = false;
-  showEditSpace = false;
+  showSettingsModal = false;
+  settingsModalTab: 'edit' | 'permissions' = 'edit';
+  submittedEdit = false;
+  permissionForm: FormGroup | null = null;
+  permissions: SpacePermission[] = [];
+  permissionLoading = false;
+  acceptedFriendships: Friendship[] = [];
+  friendsLoading = false;
+  currentUserId = '';
+  readonly SpacePermissionLevel = SpacePermissionLevel;
   mediaTab: 'embed' | 'local' = 'embed';
 
   editSpaceForm!: FormGroup;
@@ -88,16 +105,45 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private sanitizer: DomSanitizer,
     private allowedWebsiteService: AllowedWebsiteService,
+    private authService: AuthService,
     private confirmationService: ConfirmationService,
     private creativeSpaceService: CreativeSpaceService,
     private documentService: DocumentService,
     private documentVersionService: DocumentVersionService,
+    private friendshipService: FriendshipService,
     private layoutHeaderStateService: LayoutHeaderStateService,
     private mediaSessionService: SpaceMediaSessionService,
     private toastService: ToastService
   ) {
     // Defense-in-depth: do not render raw HTML blocks/tags from markdown input.
     this.markdownRenderer.html = ({ text }) => this.escapeHtml(text);
+
+    // Only allow https:// links; block http:// and other schemes.
+    this.markdownRenderer.link = ({ href, title, text }) => {
+      if (!href?.startsWith('https://')) return text;
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer">${text}</a>`;
+    };
+
+    // Only render images from allowlisted domains.
+    this.markdownRenderer.image = ({ href, title, text }) => {
+      if (!this.isDomainAllowed(href ?? '')) {
+        return `<span class="blocked-image" title="Imagen bloqueada: dominio no permitido">[imagen bloqueada: ${text || href}]</span>`;
+      }
+      const titleAttr = title ? ` title="${title}"` : '';
+      return `<img src="${href}" alt="${text}"${titleAttr}>`;
+    };
+  }
+
+  private isDomainAllowed(url: string): boolean {
+    try {
+      const { hostname } = new URL(url);
+      return this.allowedEmbedDomains.some(
+        domain => hostname === domain || hostname.endsWith('.' + domain)
+      );
+    } catch {
+      return false;
+    }
   }
 
   ngOnInit(): void {
@@ -121,6 +167,10 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       content: ['']
     });
 
+    this.editDocumentForm.get('content')!.valueChanges
+      .pipe(debounceTime(50), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateRenderedPreview());
+
     this.createEmbedForm = this.fb.group({
       label: ['', Validators.required],
       url: ['', [Validators.required, Validators.pattern(/^https:\/\/.+/i)]]
@@ -138,6 +188,12 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         // Fallback: mantener allowlist local por defecto si el endpoint no está disponible.
       }
     });
+
+    this.authService.getCurrentUser()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(user => { this.currentUserId = user?.id || ''; });
+
+    this.loadAcceptedFriends();
 
     this.route.data
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -180,24 +236,36 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.draggingMedia = null;
   }
 
-  toggleEditSpace(): void {
-    this.showEditSpace = !this.showEditSpace;
-
-    if (this.showEditSpace && this.space) {
+  openSettingsModal(): void {
+    this.showSettingsModal = true;
+    this.settingsModalTab = 'edit';
+    this.submittedEdit = false;
+    if (this.space) {
       this.editSpaceForm.patchValue({
         name: this.space.name,
         description: this.space.description,
         privacy: this.space.privacy,
         isPublicProfileVisible: this.space.isPublicProfileVisible
       });
+      this.ensurePermissionForm();
     }
+  }
 
-    if (this.space) {
-      this.applySpaceState(this.space);
+  closeSettingsModal(): void {
+    this.showSettingsModal = false;
+    this.settingsModalTab = 'edit';
+    this.submittedEdit = false;
+  }
+
+  setSettingsModalTab(tab: 'edit' | 'permissions'): void {
+    this.settingsModalTab = tab;
+    if (tab === 'permissions' && this.space) {
+      this.loadPermissions(this.space.id);
     }
   }
 
   saveSpace(): void {
+    this.submittedEdit = true;
     if (!this.space || this.editSpaceForm.invalid) return;
 
     const payload: UpdateCreativeSpaceRequest = {
@@ -208,7 +276,8 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.error = '';
     this.creativeSpaceService.updateSpace(this.space.id, payload).subscribe({
       next: (updatedSpace) => {
-        this.showEditSpace = false;
+        this.showSettingsModal = false;
+        this.submittedEdit = false;
         this.applySpaceState(updatedSpace);
         this.loading = false;
       },
@@ -217,6 +286,79 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.loading = false;
       }
     });
+  }
+
+  shareSpace(): void {
+    if (!this.space || !this.permissionForm || this.permissionForm.invalid) return;
+
+    const userId = String(this.permissionForm.value.userId || '').trim();
+    const permissionLevel = Number(this.permissionForm.value.permissionLevel);
+
+    this.permissionLoading = true;
+    this.creativeSpaceService.shareSpace(this.space.id, { userId, permissionLevel }).subscribe({
+      next: permission => {
+        this.permissions = [permission, ...this.permissions.filter(p => p.userId !== permission.userId)];
+        this.space!.privacy = SpacePrivacy.Shared;
+        this.permissionForm!.patchValue({ userId: '', permissionLevel: SpacePermissionLevel.Viewer });
+        this.permissionLoading = false;
+      },
+      error: (err) => {
+        this.toastService.error(err?.error?.message || 'No se pudo compartir el espacio.');
+        this.permissionLoading = false;
+      }
+    });
+  }
+
+  removePermission(userId: string): void {
+    if (!this.space || !this.confirmationService.confirmAction('¿Seguro que quieres revocar el acceso de este usuario?')) return;
+
+    this.permissionLoading = true;
+    this.creativeSpaceService.removePermission(this.space.id, userId).subscribe({
+      next: () => {
+        this.permissions = this.permissions.filter(p => p.userId !== userId);
+        if (this.permissions.length === 0) {
+          this.space!.privacy = SpacePrivacy.Private;
+        }
+        this.permissionLoading = false;
+      },
+      error: (err) => {
+        this.toastService.error(err?.error?.message || 'No se pudo revocar el permiso.');
+        this.permissionLoading = false;
+      }
+    });
+  }
+
+  isOwner(): boolean {
+    return !!this.currentUserId && this.space?.ownerId === this.currentUserId;
+  }
+
+  get friendOptions(): User[] {
+    if (!this.currentUserId) return [];
+    const map = new Map<string, User>();
+    for (const friendship of this.acceptedFriendships) {
+      const friend = friendship.requesterId === this.currentUserId
+        ? friendship.receiver
+        : friendship.requester;
+      if (friend?.id && !map.has(friend.id)) {
+        map.set(friend.id, friend);
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      const nameA = (a.fullName || a.email || '').toLowerCase();
+      const nameB = (b.fullName || b.email || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }
+
+  permissionText(level: SpacePermissionLevel): string {
+    return level === SpacePermissionLevel.Editor ? 'Editor' : 'Lector';
+  }
+
+  friendOptionLabel(friend: User): string {
+    const name = (friend.fullName || '').trim();
+    const email = (friend.email || '').trim();
+    if (name && email) return `${name} - ${email}`;
+    return name || email || 'Usuario sin identificar';
   }
 
   toggleCreateDocument(): void {
@@ -265,9 +407,42 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.updateRenderedPreview();
   }
 
-  setActiveTab(tab: 'code' | 'preview'): void {
+  openImportPanel(): void {
+    this.showImportPanel = !this.showImportPanel;
+    if (!this.showImportPanel) return;
+
+    this.loadingImportable = true;
+    this.documentService.getDocuments().subscribe({
+      next: (docs) => {
+        this.importableDocuments = docs.filter(d =>
+          d.userId === this.currentUserId && d.creativeSpaceId !== this.space?.id
+        );
+        this.loadingImportable = false;
+      },
+      error: () => { this.loadingImportable = false; }
+    });
+  }
+
+  importDocument(doc: Document): void {
+    if (!this.space) return;
+    this.loadingImportable = true;
+    this.documentService.copyToSpace(doc.id, this.space.id).subscribe({
+      next: (copy) => {
+        this.documents = [copy, ...this.documents];
+        this.showImportPanel = false;
+        this.loadingImportable = false;
+        this.toastService.success('Documento importado al espacio.');
+      },
+      error: (err: any) => {
+        this.toastService.error(err?.error?.message ?? 'No se pudo importar el documento.');
+        this.loadingImportable = false;
+      }
+    });
+  }
+
+  setActiveTab(tab: 'code' | 'preview' | 'split'): void {
     this.activeTab = tab;
-    if (tab === 'preview') {
+    if (tab === 'preview' || tab === 'split') {
       this.updateRenderedPreview();
     }
   }
@@ -519,7 +694,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     if (!this.space) return;
 
     this.loadingDocuments = true;
-    this.documentService.getDocuments().subscribe({
+    this.documentService.getDocuments(this.space.id).subscribe({
       next: (documents) => {
         this.documents = documents;
         this.loadingDocuments = false;
@@ -599,17 +774,53 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         `Actualizado ${new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(space.updatedAt))}`
       ],
       actions: [
-        {
-          label: this.showEditSpace ? 'Cerrar ajustes' : 'Ajustes',
-          variant: 'ghost',
-          action: () => this.toggleEditSpace()
-        },
+        ...(this.isOwner() ? [{
+          label: 'Ajustes',
+          variant: 'ghost' as const,
+          action: () => this.openSettingsModal()
+        }] : []),
         {
           label: 'Volver a espacios',
-          variant: 'secondary',
+          variant: 'secondary' as const,
           route: '/spaces'
         }
       ]
+    });
+  }
+
+  private ensurePermissionForm(): void {
+    if (this.permissionForm) return;
+    this.permissionForm = this.fb.group({
+      userId: ['', Validators.required],
+      permissionLevel: [SpacePermissionLevel.Viewer, Validators.required]
+    });
+  }
+
+  private loadPermissions(spaceId: number): void {
+    this.permissionLoading = true;
+    this.creativeSpaceService.getPermissions(spaceId).subscribe({
+      next: permissions => {
+        this.permissions = permissions;
+        this.permissionLoading = false;
+      },
+      error: (err) => {
+        this.toastService.error(err?.error?.message || 'No se pudieron cargar los permisos.');
+        this.permissionLoading = false;
+      }
+    });
+  }
+
+  private loadAcceptedFriends(): void {
+    this.friendsLoading = true;
+    this.friendshipService.getAcceptedFriendships().subscribe({
+      next: friendships => {
+        this.acceptedFriendships = friendships;
+        this.friendsLoading = false;
+      },
+      error: (err) => {
+        this.toastService.error(err?.error?.message || 'No se pudo cargar la lista de amigos.');
+        this.friendsLoading = false;
+      }
     });
   }
 
@@ -624,10 +835,6 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     const html = this.renderMarkdownToHtml(content);
 
     this.renderedPreview = this.sanitizer.sanitize(SecurityContext.HTML, html) || '';
-  }
-
-  private looksLikeHtml(content: string): boolean {
-    return /<\/?[a-z][\s\S]*>/i.test(content);
   }
 
   private renderMarkdownToHtml(markdown: string): string {

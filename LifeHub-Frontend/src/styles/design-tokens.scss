@@ -238,6 +238,29 @@ $z-index-popover: 1060;
 $z-index-tooltip: 1070;
 
 // -----------------------------------------------------------
+// SPACE CARD VARIANTS (theming-ready via CSS custom properties)
+// -----------------------------------------------------------
+
+$color-space-private: #60ad9e;
+$color-space-shared:  #d3a46f;
+
+:root {
+  // Compartido
+  --space-shared-hover-bg:     #fdf6ed;
+  --space-shared-hover-border: #{$color-space-shared};
+  --space-shared-hover-shadow: 0 12px 30px rgba(211, 164, 111, 0.15);
+  --space-shared-icon-bg:      rgba(211, 164, 111, 0.14);
+  --space-shared-icon-stroke:  #b8864a;
+
+  // Privado
+  --space-private-hover-bg:     #f0f8f6;
+  --space-private-hover-border: #{$color-space-private};
+  --space-private-hover-shadow: 0 12px 30px rgba(96, 173, 158, 0.15);
+  --space-private-icon-bg:      rgba(96, 173, 158, 0.14);
+  --space-private-icon-stroke:  #4a9589;
+}
+
+// -----------------------------------------------------------
 // MIXINS ÚTILES
 // -----------------------------------------------------------
 

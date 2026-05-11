@@ -271,7 +271,7 @@ export class SocialComponent implements OnInit {
 
   friendProfileLink(friendship: Friendship): string[] {
     const u = this.friendFromFriendship(friendship);
-    return u?.id ? ['/users', u.id] : ['/users'];
+    return u?.id ? ['/profile', u.id] : ['/profile'];
   }
 
   friendPicture(friendship: Friendship): string | null {
@@ -279,7 +279,7 @@ export class SocialComponent implements OnInit {
   }
 
   userProfileLink(user: User): string[] {
-    return ['/users', user.id];
+    return ['/profile', user.id];
   }
 
   // ── Private ───────────────────────────────────────────────────────────────

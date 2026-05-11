@@ -47,6 +47,7 @@ namespace LifeHub.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 EmailConfirmed = true,
+                IsActive = false,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -70,6 +71,9 @@ namespace LifeHub.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
                 return Unauthorized(new AuthResponseDto { Success = false, Message = "Email o contraseña incorrectos" });
+
+            if (!user.IsActive)
+                return Unauthorized(new AuthResponseDto { Success = false, Message = "Esta cuenta no está activa." });
 
             var passwordCorrect = await _userManager.CheckPasswordAsync(user, model.Password);
             if (!passwordCorrect)
@@ -100,6 +104,8 @@ namespace LifeHub.Controllers
                     FullName = user.FullName,
                     ProfilePictureUrl = user.ProfilePictureUrl,
                     Bio = user.Bio,
+                    IsActive = user.IsActive,
+                    CreatedAt = user.CreatedAt,
                     Roles = roles.ToList(),
                     Claims = userClaims.Select(c => $"{c.Type}:{c.Value}").ToList()
                 }

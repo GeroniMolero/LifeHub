@@ -19,20 +19,28 @@
   width: 100%;
   max-width: 520px;
   animation: panel-in 0.15s ease;
+  overflow: hidden;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: $space-3;
   padding: $space-5 $space-6 $space-4;
-  border-bottom: $border-width-base solid $color-divider;
+  border-bottom: 3px solid $color-brand-700;
 
   h2 {
     margin: 0;
     font-size: $font-size-lg;
     color: $color-text-heading;
+    flex: 1;
   }
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
 }
 
 .modal-close {
@@ -45,18 +53,14 @@
   border-radius: $border-radius-base;
   background: transparent;
   color: $color-text-secondary;
+  font-size: 1.25rem;
+  line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
 
   &:hover {
     background: rgba(15, 23, 42, 0.06);
     color: $color-text-heading;
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-    fill: none;
   }
 }
 

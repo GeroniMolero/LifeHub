@@ -18,6 +18,14 @@ namespace LifeHub.Controllers
             _spaceService = spaceService;
         }
 
+        [HttpGet("public/{userId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPublicSpacesByUser(string userId)
+        {
+            var result = await _spaceService.GetPublicSpacesByUserAsync(userId);
+            return ToActionResult(result);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetCreativeSpaces()
         {

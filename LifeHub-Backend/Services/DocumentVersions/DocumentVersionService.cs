@@ -4,6 +4,7 @@ using LifeHub.DTOs;
 using LifeHub.Models;
 using LifeHub.Utilidades;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LifeHub.Services.DocumentVersions
 {
@@ -12,12 +13,14 @@ namespace LifeHub.Services.DocumentVersions
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly IActivityLogService _activityLogService;
+        private readonly BusinessRules _rules;
 
-        public DocumentVersionService(ApplicationDbContext context, IMapper mapper, IActivityLogService activityLogService)
+        public DocumentVersionService(ApplicationDbContext context, IMapper mapper, IActivityLogService activityLogService, IOptions<BusinessRules> rules)
         {
             _context = context;
             _mapper = mapper;
             _activityLogService = activityLogService;
+            _rules = rules.Value;
         }
 
         public async Task<ServiceResult<List<DocumentVersionDto>>> GetDocumentVersionsAsync(int documentId, string userId)
@@ -56,8 +59,8 @@ namespace LifeHub.Services.DocumentVersions
                 return ServiceResult<DocumentVersionDto>.Forbidden("No tienes permisos para crear versiones de este documento.");
 
             var versionCount = await _context.DocumentVersions.CountAsync(v => v.DocumentId == documentId);
-            if (versionCount >= BusinessRules.MaxDocumentVersions)
-                return ServiceResult<DocumentVersionDto>.BadRequest($"Este documento ha alcanzado el límite de {BusinessRules.MaxDocumentVersions} versiones. Elimina alguna versión antes de crear una nueva.");
+            if (versionCount >= _rules.MaxDocumentVersions)
+                return ServiceResult<DocumentVersionDto>.BadRequest($"Este documento ha alcanzado el límite de {_rules.MaxDocumentVersions} versiones. Elimina alguna versión antes de crear una nueva.");
 
             var lastVersion = await _context.DocumentVersions
                 .Where(v => v.DocumentId == documentId)

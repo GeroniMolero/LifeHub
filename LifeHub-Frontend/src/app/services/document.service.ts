@@ -12,8 +12,13 @@ export class DocumentService {
 
   constructor(private http: HttpClient) {}
 
-  getDocuments(): Observable<Document[]> {
-    return this.http.get<Document[]>(this.apiUrl);
+  getDocuments(spaceId?: number): Observable<Document[]> {
+    const params = spaceId != null ? `?spaceId=${spaceId}` : '';
+    return this.http.get<Document[]>(`${this.apiUrl}${params}`);
+  }
+
+  copyToSpace(documentId: number, targetSpaceId: number): Observable<Document> {
+    return this.http.post<Document>(`${this.apiUrl}/${documentId}/copy`, { targetSpaceId });
   }
 
   getDocument(id: number): Observable<Document> {
@@ -30,6 +35,14 @@ export class DocumentService {
 
   deleteDocument(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  getPublicDocumentsByUser(userId: string): Observable<Document[]> {
+    return this.http.get<Document[]>(`${this.apiUrl}/public/${userId}`);
+  }
+
+  setDocumentProfileVisibility(documentId: number, isVisible: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${documentId}/publication/profile-visibility`, isVisible);
   }
 
   static getTypeText(type?: DocumentType | string | number): string {

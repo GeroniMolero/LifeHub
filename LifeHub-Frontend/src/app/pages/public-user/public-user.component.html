@@ -1,58 +1,228 @@
 <section class="public-user-container">
-  <a class="back-link" routerLink="/social">← Volver a Social</a>
-
   <p *ngIf="loading" class="muted">Cargando perfil...</p>
   <p *ngIf="error" class="error">{{ error }}</p>
 
-  <article class="profile-card" *ngIf="!loading && user">
-    <ng-container *ngIf="user.profilePictureUrl; else publicFallbackAvatar">
-      <img
-        class="avatar"
-        [src]="user.profilePictureUrl"
-        [alt]="user.fullName ? user.fullName + ' avatar' : 'Avatar de usuario'"
-      />
-    </ng-container>
-    <ng-template #publicFallbackAvatar>
-      <div class="avatar">{{ (user.fullName || user.email || 'U').charAt(0) | uppercase }}</div>
-    </ng-template>
+  <div class="profile-wrapper" *ngIf="!loading && user">
 
-    <div class="profile-copy">
-      <h1>{{ user.fullName || 'Usuario LifeHub' }}</h1>
-      <p class="email">{{ user.email }}</p>
-      <p class="bio" *ngIf="user.bio; else noBio">{{ user.bio }}</p>
-      <ng-template #noBio>
-        <p class="bio muted">Este usuario no ha agregado una biografía.</p>
+    <div class="profile-header">
+
+      <!-- Avatar -->
+      <ng-container *ngIf="showEdit && isOwnProfile; else viewAvatar">
+        <img *ngIf="profileForm.get('profilePictureUrl')?.value; else editInitial"
+          class="avatar" [src]="profileForm.get('profilePictureUrl')?.value" alt="Avatar" />
+        <ng-template #editInitial>
+          <div class="avatar">{{ (user.fullName || 'U').charAt(0) | uppercase }}</div>
+        </ng-template>
+      </ng-container>
+      <ng-template #viewAvatar>
+        <img *ngIf="user.profilePictureUrl; else viewInitial"
+          class="avatar" [src]="user.profilePictureUrl"
+          [alt]="user.fullName ? user.fullName + ' avatar' : 'Avatar de usuario'" />
+        <ng-template #viewInitial>
+          <div class="avatar">{{ (user.fullName || 'U').charAt(0) | uppercase }}</div>
+        </ng-template>
       </ng-template>
 
-      <div class="friendship-actions" *ngIf="!loadingFriendship && currentUserId && currentUserId !== user.id">
+      <!-- Info / form -->
+      <form *ngIf="showEdit && isOwnProfile; else viewProfile"
+        class="edit-header-form" [formGroup]="profileForm" (ngSubmit)="onProfileSubmit()">
+        <input type="text" formControlName="fullName" placeholder="Nombre completo"
+          [class.is-invalid]="submittedProfile && profileForm.get('fullName')?.errors" />
+        <textarea formControlName="bio" placeholder="Tu bio" rows="2"></textarea>
+        <input type="url" formControlName="profilePictureUrl" placeholder="URL foto de perfil" />
+      </form>
+      <ng-template #viewProfile>
+        <div class="profile-copy">
+          <h1>{{ user.fullName || 'Usuario LifeHub' }}</h1>
+          <p class="bio" *ngIf="user.bio; else noBio">{{ user.bio }}</p>
+          <ng-template #noBio><p class="bio muted">Sin biografía.</p></ng-template>
+        </div>
+      </ng-template>
+
+      <!-- Friendship actions (solo en vista pública) -->
+      <div class="friendship-actions" *ngIf="!showEdit && !loadingFriendship && currentUserId && !isOwnProfile">
         <button type="button" class="btn btn-primary"
           *ngIf="friendshipState === 'none'"
-          (click)="sendFriendRequest()">
-          Añadir amigo
-        </button>
-
+          (click)="sendFriendRequest()">Añadir amigo</button>
         <button type="button" class="btn btn-primary"
           *ngIf="friendshipState === 'pending-received'"
-          (click)="acceptFriendRequest()">
-          Aceptar solicitud
-        </button>
-
-        <span class="friendship-status muted"
-          *ngIf="friendshipState === 'pending-sent'">
-          Solicitud enviada
-        </span>
-
-        <span class="friendship-status friendship-status--accepted"
-          *ngIf="friendshipState === 'accepted'">
-          Sois amigos
-        </span>
-
+          (click)="acceptFriendRequest()">Aceptar solicitud</button>
+        <span class="friendship-status muted" *ngIf="friendshipState === 'pending-sent'">Solicitud enviada</span>
+        <span class="friendship-status friendship-status--accepted" *ngIf="friendshipState === 'accepted'">Sois amigos</span>
         <button type="button" class="btn btn-danger"
           *ngIf="friendshipState === 'accepted'"
           (click)="removeFriend()">
-          Eliminar amigo
+          <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span>Eliminar amigo</span>
         </button>
       </div>
+
     </div>
-  </article>
+
+    <div class="content-grid">
+
+      <!-- Panel izquierdo: Documentos -->
+      <div class="content-panel">
+        <section *ngIf="publicDocuments.length > 0 || isOwnProfile">
+          <h2 class="section-title">{{ isOwnProfile ? 'Documentos públicos' : 'Documentos' }}</h2>
+
+          <!-- Vista pública -->
+          <ng-container *ngIf="!showEdit">
+            <p *ngIf="loadingDocs" class="muted">Cargando documentos...</p>
+            <p *ngIf="!loadingDocs && publicDocuments.length === 0 && isOwnProfile" class="muted">
+              No tienes documentos marcados como visibles. Actívalos en modo edición.
+            </p>
+            <div class="spaces-grid" *ngIf="!loadingDocs && publicDocuments.length > 0">
+              <button *ngFor="let doc of publicDocuments | slice:0:MAX_PROFILE_DOCS" type="button"
+                class="space-card doc-preview-card" (click)="openDocPreview(doc)">
+                <img *ngIf="getDocThumb(doc)" [src]="getDocThumb(doc)" class="doc-card-thumb" alt="" />
+                <strong>{{ doc.title }}</strong>
+                <p>{{ doc.description || 'Sin descripción' }}</p>
+                <span class="doc-preview-hint">Clic para previsualizar</span>
+              </button>
+            </div>
+          </ng-container>
+
+          <!-- Modo edición -->
+          <ng-container *ngIf="showEdit && isOwnProfile">
+            <p *ngIf="loadingAllPublishedDocs" class="muted">Cargando...</p>
+            <ng-container *ngIf="!loadingAllPublishedDocs">
+              <div class="spaces-grid" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="dropDoc($event)">
+                <div class="space-card edit-slot edit-slot--filled" cdkDrag *ngFor="let doc of editVisibleDocs">
+                  <button class="edit-slot-remove" type="button" (click)="removeDocFromProfile(doc)" title="Quitar del perfil">×</button>
+                  <strong>{{ doc.title }}</strong>
+                  <p>{{ doc.description || 'Sin descripción' }}</p>
+                </div>
+                <button type="button" class="space-card edit-slot edit-slot--empty"
+                  *ngFor="let _ of editDocEmptySlots"
+                  (click)="toggleDocPicker()">
+                  <span class="edit-slot-plus">+</span>
+                </button>
+              </div>
+              <div class="slot-picker" *ngIf="showDocPicker">
+                <ng-container *ngIf="editAvailableDocs.length === 0">
+                  <p class="muted slot-picker-empty">No tienes documentos publicados disponibles.</p>
+                  <p class="muted slot-picker-empty"><a routerLink="/documents">Publica un documento</a> para añadirlo aquí.</p>
+                </ng-container>
+                <button type="button" class="slot-picker-item" *ngFor="let doc of editAvailableDocs" (click)="addDocToProfile(doc)">
+                  <strong>{{ doc.title }}</strong>
+                  <span class="muted">{{ doc.description || 'Sin descripción' }}</span>
+                </button>
+              </div>
+            </ng-container>
+          </ng-container>
+        </section>
+      </div>
+
+      <!-- Panel derecho: Espacios -->
+      <div class="content-panel content-panel--right">
+        <section *ngIf="publicSpaces.length > 0 || isOwnProfile">
+          <h2 class="section-title">{{ isOwnProfile ? 'Espacios públicos' : 'Espacios' }}</h2>
+
+          <!-- Vista pública -->
+          <ng-container *ngIf="!showEdit">
+            <p *ngIf="loadingSpaces" class="muted">Cargando espacios...</p>
+            <p *ngIf="!loadingSpaces && publicSpaces.length === 0 && isOwnProfile" class="muted">
+              No tienes espacios marcados como visibles. Actívalos en modo edición.
+            </p>
+            <div class="cards-stack" *ngIf="!loadingSpaces && publicSpaces.length > 0">
+              <a *ngFor="let space of publicSpaces | slice:0:MAX_PROFILE_SPACES" class="space-card" [routerLink]="['/spaces', space.id]">
+                <strong>{{ space.name }}</strong>
+                <p>{{ space.description || 'Sin descripción' }}</p>
+              </a>
+            </div>
+          </ng-container>
+
+          <!-- Modo edición -->
+          <ng-container *ngIf="showEdit && isOwnProfile">
+            <p *ngIf="loadingAllSpaces" class="muted">Cargando...</p>
+            <ng-container *ngIf="!loadingAllSpaces">
+              <div class="cards-stack" cdkDropList (cdkDropListDropped)="dropSpace($event)">
+                <div class="space-card edit-slot edit-slot--filled" cdkDrag *ngFor="let space of editVisibleSpaces">
+                  <button class="edit-slot-remove" type="button" (click)="removeSpaceFromProfile(space)" title="Quitar del perfil">×</button>
+                  <strong>{{ space.name }}</strong>
+                  <p>{{ space.description || 'Sin descripción' }}</p>
+                </div>
+              </div>
+              <div class="spaces-edit-empty-slots">
+                <button type="button" class="space-card edit-slot edit-slot--empty"
+                  *ngFor="let _ of editSpaceEmptySlots"
+                  (click)="toggleSpacePicker()">
+                  <span class="edit-slot-plus">+</span>
+                </button>
+              </div>
+              <div class="slot-picker" *ngIf="showSpacePicker">
+                <p class="muted slot-picker-empty" *ngIf="editAvailableSpaces.length === 0">No hay más espacios disponibles.</p>
+                <button type="button" class="slot-picker-item" *ngFor="let space of editAvailableSpaces" (click)="addSpaceToProfile(space)">
+                  <strong>{{ space.name }}</strong>
+                  <span class="muted">{{ space.description || 'Sin descripción' }}</span>
+                </button>
+              </div>
+            </ng-container>
+          </ng-container>
+        </section>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal previsualización de documento -->
+  <app-modal
+    [title]="previewDoc?.title || ''"
+    [visible]="!!previewDoc"
+    [maxWidth]="'820px'"
+    (closed)="closeDocPreview()">
+    <div modal-header-actions>
+      <a class="btn btn-primary btn-sm" [href]="'/public/documents/' + previewDoc?.id" target="_blank" rel="noopener">Ver documento</a>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="downloadDoc(previewDoc!)">Descargar</button>
+    </div>
+    <div class="doc-preview-body rendered-markdown" [innerHTML]="previewHtml"></div>
+  </app-modal>
+
+  <!-- Sección secundaria de edición: contraseña + zona de peligro -->
+  <div *ngIf="!loading && showEdit && isOwnProfile" class="edit-secondary">
+
+    <div class="edit-card">
+      <h2>Cambiar contraseña</h2>
+      <form [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()">
+        <div class="form-group">
+          <label for="currentPassword">Contraseña actual</label>
+          <input type="password" id="currentPassword" formControlName="currentPassword"
+            [class.is-invalid]="submittedPassword && passwordForm.get('currentPassword')?.errors" />
+          <div *ngIf="submittedPassword && passwordForm.get('currentPassword')?.errors" class="error-message">
+            <span *ngIf="passwordForm.get('currentPassword')?.errors?.['required']">La contraseña actual es requerida</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="newPassword">Nueva contraseña</label>
+          <input type="password" id="newPassword" formControlName="newPassword"
+            [class.is-invalid]="submittedPassword && passwordForm.get('newPassword')?.errors" />
+          <div *ngIf="submittedPassword && passwordForm.get('newPassword')?.errors" class="error-message">
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['required']">La nueva contraseña es requerida</span>
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">Mínimo 6 caracteres</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar contraseña</label>
+          <input type="password" id="confirmPassword" formControlName="confirmPassword"
+            [class.is-invalid]="submittedPassword && passwordForm.get('confirmPassword')?.errors" />
+          <div *ngIf="submittedPassword && passwordForm.get('confirmPassword')?.errors" class="error-message">
+            <span *ngIf="passwordForm.get('confirmPassword')?.errors?.['required']">Confirma tu nueva contraseña</span>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" [disabled]="savingPassword">
+          {{ savingPassword ? 'Cambiando...' : 'Cambiar contraseña' }}
+        </button>
+      </form>
+    </div>
+
+    <div class="edit-card danger-zone">
+      <h2>Zona de peligro</h2>
+      <p class="muted">Eliminar tu cuenta es una acción irreversible. Se borrarán todos tus datos permanentemente.</p>
+      <button type="button" class="btn btn-danger" (click)="deleteAccount()">Eliminar mi cuenta</button>
+    </div>
+
+  </div>
 </section>

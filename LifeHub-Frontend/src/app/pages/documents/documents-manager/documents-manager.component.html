@@ -129,6 +129,7 @@
                   </svg>
                 </button>
                 <button
+                  *ngIf="doc.userId === currentUserId"
                   type="button"
                   (click)="deleteDocument(doc.id)"
                   class="icon-action icon-action-delete"

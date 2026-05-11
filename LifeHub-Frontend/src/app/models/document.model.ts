@@ -8,6 +8,7 @@ export interface Document {
   content: string;
   type: DocumentType;
   isPublic?: boolean;
+  isProfileVisible?: boolean;
   publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;

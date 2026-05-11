@@ -18,14 +18,34 @@ namespace LifeHub.Controllers
             _documentService = documentService;
         }
 
+        [HttpGet("public/{userId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPublicDocumentsByUser(string userId)
+        {
+            var result = await _documentService.GetPublicDocumentsByUserAsync(userId);
+            return ToActionResult(result);
+        }
+
         [HttpGet]
-        public async Task<IActionResult> GetDocuments()
+        public async Task<IActionResult> GetDocuments([FromQuery] int? spaceId = null)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
             if (authError != null) return authError;
 
-            var result = await _documentService.GetDocumentsAsync(userId, HasPermission("documents.view.all"));
+            var result = await _documentService.GetDocumentsAsync(userId, HasPermission("documents.view.all"), spaceId);
             return ToActionResult(result);
+        }
+
+        [HttpPost("{id}/copy")]
+        public async Task<IActionResult> CopyToSpace(int id, [FromBody] CopyDocumentDto dto)
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null) return authError;
+
+            var result = await _documentService.CopyToSpaceAsync(id, userId, dto.TargetSpaceId);
+            if (!result.IsSuccess) return ToActionResult(result);
+
+            return Created($"api/documents/{result.Value!.Id}", result.Value);
         }
 
         [HttpGet("{id}")]

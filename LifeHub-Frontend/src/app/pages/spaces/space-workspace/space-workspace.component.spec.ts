@@ -1,20 +1,26 @@
+import { TestBed } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of } from 'rxjs';
 
-import { SpaceWorkspaceComponent } from '../../../src/app/pages/spaces/space-workspace/space-workspace.component';
+import { SpaceWorkspaceComponent } from './space-workspace.component';
 
 describe('SpaceWorkspaceComponent markdown security', () => {
   const createComponent = (): SpaceWorkspaceComponent => {
-    return new SpaceWorkspaceComponent(
+    return TestBed.runInInjectionContext(() => new SpaceWorkspaceComponent(
       {} as any,
       new FormBuilder(),
       { sanitize: (_context: any, value: string | null) => value } as any,
       { getEmbedAllowlist: () => of([]) } as any,
+      { getCurrentUser: () => of(null) } as any,
       {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { getAcceptedFriendships: () => of([]) } as any,
       {} as any,
       {} as any,
       {} as any
-    );
+    ));
   };
 
   it('escapes raw HTML blocks', () => {
@@ -26,13 +32,14 @@ describe('SpaceWorkspaceComponent markdown security', () => {
     expect(rendered).not.toContain('<script>');
   });
 
-  it('neutralizes javascript links', () => {
+  it('strips non-https links, leaving only link text', () => {
     const component = createComponent();
 
     const rendered = (component as any).renderMarkdownToHtml('[click](javascript:alert(1))') as string;
 
-    expect(rendered).toContain('href="#"');
+    expect(rendered).toContain('click');
     expect(rendered).not.toContain('href="javascript:');
+    expect(rendered).not.toContain('<a ');
   });
 
   it('keeps fenced code rendering', () => {

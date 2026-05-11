@@ -48,6 +48,9 @@
   font-size: $font-size-2xl;
   color: $color-brand-900;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .header-kicker {
@@ -57,6 +60,9 @@
   color: $color-slate-600;
   display: block;
   font-size: $space-header-kicker;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .header-meta {
@@ -123,7 +129,8 @@
 
 .header-action.secondary:hover,
 .header-action.ghost:hover {
-  background: $color-brand-050;
+  background: $color-brand-100;
+  border-color: $color-brand-700;
 }
 
 @media (max-width: 960px) {

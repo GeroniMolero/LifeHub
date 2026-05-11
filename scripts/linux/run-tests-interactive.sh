@@ -37,35 +37,38 @@ echo "Modulos disponibles:"
 echo "  [1] AUTH             (8 tests)"
 echo "  [2] ESPACIOS         (5 tests)"
 echo "  [3] DOCUMENTOS       (9 tests)"
-echo "  [4] COLABORACION     (3 tests)"
-echo "  [5] PANEL ADMIN      (6 tests)"
-echo "  [6] SEGURIDAD        (2 tests)"
+echo "  [4] PUBLICACIONES    (11 tests)"
+echo "  [5] COLABORACION     (3 tests)"
+echo "  [6] PANEL ADMIN      (6 tests)"
+echo "  [7] SEGURIDAD        (4 tests)"
 echo "  [A] TODOS"
 echo ""
 read -rp "Seleccion  (ej: 1 3  o  A para todos): " sel_input
 sel_upper=$(echo "$sel_input" | tr '[:lower:]' '[:upper:]')
 
-DO_AUTH=false; DO_SPACE=false; DO_DOC=false; DO_COL=false; DO_ADMIN=false; DO_SEC=false
+DO_AUTH=false; DO_SPACE=false; DO_DOC=false; DO_PUB=false; DO_COL=false; DO_ADMIN=false; DO_SEC=false
 
 if [ -z "$sel_upper" ] || [ "$sel_upper" = "A" ]; then
-    DO_AUTH=true; DO_SPACE=true; DO_DOC=true; DO_COL=true; DO_ADMIN=true; DO_SEC=true
+    DO_AUTH=true; DO_SPACE=true; DO_DOC=true; DO_PUB=true; DO_COL=true; DO_ADMIN=true; DO_SEC=true
 else
     echo "$sel_upper" | grep -q "1" && DO_AUTH=true
     echo "$sel_upper" | grep -q "2" && DO_SPACE=true
     echo "$sel_upper" | grep -q "3" && DO_DOC=true
-    echo "$sel_upper" | grep -q "4" && DO_COL=true
-    echo "$sel_upper" | grep -q "5" && DO_ADMIN=true
-    echo "$sel_upper" | grep -q "6" && DO_SEC=true
+    echo "$sel_upper" | grep -q "4" && DO_PUB=true
+    echo "$sel_upper" | grep -q "5" && DO_COL=true
+    echo "$sel_upper" | grep -q "6" && DO_ADMIN=true
+    echo "$sel_upper" | grep -q "7" && DO_SEC=true
 fi
 
 NEEDS_USER=false; NEEDS_ADMIN=false
-($DO_SPACE || $DO_DOC || $DO_COL || $DO_ADMIN || $DO_SEC) && NEEDS_USER=true
+($DO_SPACE || $DO_DOC || $DO_PUB || $DO_COL || $DO_ADMIN || $DO_SEC) && NEEDS_USER=true
 ($DO_COL || $DO_ADMIN) && NEEDS_ADMIN=true
 
 SELECTED=""
 $DO_AUTH  && SELECTED="${SELECTED:+$SELECTED, }AUTH"
 $DO_SPACE && SELECTED="${SELECTED:+$SELECTED, }ESPACIOS"
 $DO_DOC   && SELECTED="${SELECTED:+$SELECTED, }DOCUMENTOS"
+$DO_PUB   && SELECTED="${SELECTED:+$SELECTED, }PUBLICACIONES"
 $DO_COL   && SELECTED="${SELECTED:+$SELECTED, }COLABORACION"
 $DO_ADMIN && SELECTED="${SELECTED:+$SELECTED, }ADMIN"
 $DO_SEC   && SELECTED="${SELECTED:+$SELECTED, }SEGURIDAD"
@@ -113,6 +116,7 @@ echo ""
 
 USER_TOKEN=""; ADMIN_TOKEN=""
 SPACE_ID=""; DOC_ID=""; VERSION_ID=""; WEBSITE_ID=""
+PUB_DOC_ID=""; UNPUB_DOC_ID=""
 
 PASS_COUNT=0; FAIL_COUNT=0; SKIP_COUNT=0; TOTAL=0
 ALL_IDS=(); ALL_DESCS=(); ALL_EXPECTED=(); ALL_ACTUAL=(); ALL_STATUS=(); ALL_SECTION=()
@@ -317,7 +321,94 @@ if $DO_DOC; then
     fi
 fi
 
-# ── BLOQUE 4: COLABORACION ────────────────────────────────────────────────────
+# ── BLOQUE 4: PUBLICACIONES ───────────────────────────────────────────────────
+
+if $DO_PUB; then
+    section "PUBLICACIONES DE DOCUMENTOS"
+    if [ -z "$USER_TOKEN" ]; then
+        for tid in T-PUB-01 T-PUB-02 T-PUB-03 T-PUB-04 T-PUB-05 T-PUB-06 T-PUB-07 T-PUB-08 T-PUB-09 T-PUB-10 T-PUB-11; do
+            skip_test "$tid" "Test de publicacion" "UserToken no disponible"
+        done
+    else
+        _pub_resp=$(curl -s -X POST "$BASE_URL/documents" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $USER_TOKEN" \
+            -d "{\"title\":\"PubTest-$TIMESTAMP\",\"content\":\"# Doc publicado\nContenido de prueba.\",\"description\":\"\"}" 2>/dev/null)
+        PUB_DOC_ID=$(json_val "id" "$_pub_resp")
+
+        _unpub_resp=$(curl -s -X POST "$BASE_URL/documents" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $USER_TOKEN" \
+            -d "{\"title\":\"UnpubTest-$TIMESTAMP\",\"content\":\"privado\",\"description\":\"\"}" 2>/dev/null)
+        UNPUB_DOC_ID=$(json_val "id" "$_unpub_resp")
+
+        if [ -n "$PUB_DOC_ID" ]; then
+            invoke_api_test "T-PUB-01" "Consultar publicacion de documento propio -> 200" GET "/documents/$PUB_DOC_ID/publication" \
+                "" "$USER_TOKEN" "200" '"isPublic"' || true
+            invoke_api_test "T-PUB-02" "Publicar documento (isPublic=true) -> 200" PUT "/documents/$PUB_DOC_ID/publication" \
+                "{\"isPublic\":true,\"publicTitle\":\"PubTest-$TIMESTAMP\",\"publicDescription\":\"\",\"author\":\"Autor AutoTest\",\"mediaReferences\":[],\"externalLinks\":[]}" \
+                "$USER_TOKEN" "200" '"isPublic":true' || true
+            invoke_api_test "T-PUB-03" "Documento publicado accesible sin autenticacion -> 200" GET "/public/documents/$PUB_DOC_ID" \
+                "" "" "200" '"documentId"' || true
+            invoke_api_test "T-PUB-06" "Publicar con enlace externo no permitido -> 400" PUT "/documents/$PUB_DOC_ID/publication" \
+                "{\"isPublic\":false,\"publicTitle\":\"\",\"publicDescription\":\"\",\"author\":\"\",\"mediaReferences\":[],\"externalLinks\":[\"https://autotest-blocked-domain.invalid/page\"]}" \
+                "$USER_TOKEN" "400" || true
+            invoke_api_test "T-PUB-08" "PUT publicacion sin token -> 401" PUT "/documents/$PUB_DOC_ID/publication" \
+                "{\"isPublic\":true}" "" "401" || true
+            invoke_api_test "T-PUB-09" "GET publicacion sin token -> 401" GET "/documents/$PUB_DOC_ID/publication" \
+                "" "" "401" || true
+        else
+            for tid in T-PUB-01 T-PUB-02 T-PUB-03 T-PUB-06 T-PUB-08 T-PUB-09; do
+                skip_test "$tid" "Test de publicacion" "PUB_DOC_ID no disponible"
+            done
+        fi
+
+        if [ -n "$UNPUB_DOC_ID" ]; then
+            invoke_api_test "T-PUB-04" "Documento no publicado no accesible sin auth -> 404" GET "/public/documents/$UNPUB_DOC_ID" \
+                "" "" "404" || true
+        else
+            skip_test "T-PUB-04" "Documento no publicado no accesible sin auth" "UNPUB_DOC_ID no disponible"
+        fi
+
+        invoke_api_test "T-PUB-05" "Publicacion de documento inexistente/ajeno -> 404" GET "/documents/99999/publication" \
+            "" "$USER_TOKEN" "404" || true
+        invoke_api_test "T-PUB-07" "Embed allowlist publica sin autenticacion -> 200" GET "/embed-allowlist" \
+            "" "" "200" || true
+
+        if [ -n "$ADMIN_TOKEN" ]; then
+            PUB10_DOC_ID=""
+            _p10_resp=$(curl -s -X POST "$BASE_URL/documents" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $ADMIN_TOKEN" \
+                -d "{\"title\":\"PubTest-Admin-$TIMESTAMP\",\"content\":\"doc admin pub test\",\"description\":\"\"}" 2>/dev/null)
+            PUB10_DOC_ID=$(json_val "id" "$_p10_resp")
+            if [ -n "$PUB10_DOC_ID" ]; then
+                invoke_api_test "T-PUB-10" "Publicar documento ajeno -> 404" PUT "/documents/$PUB10_DOC_ID/publication" \
+                    "{\"isPublic\":true,\"publicTitle\":\"\",\"publicDescription\":\"\",\"author\":\"\",\"mediaReferences\":[],\"externalLinks\":[]}" \
+                    "$USER_TOKEN" "404" || true
+                curl -s -X DELETE "$BASE_URL/documents/$PUB10_DOC_ID" \
+                    -H "Authorization: Bearer $ADMIN_TOKEN" > /dev/null 2>&1
+            else
+                skip_test "T-PUB-10" "Publicar documento ajeno -> 404" "No se pudo crear documento de admin"
+            fi
+        else
+            skip_test "T-PUB-10" "Publicar documento ajeno -> 404" "AdminToken no disponible"
+        fi
+
+        if [ -n "$PUB_DOC_ID" ]; then
+            curl -s -X PUT "$BASE_URL/documents/$PUB_DOC_ID/publication" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $USER_TOKEN" \
+                -d "{\"isPublic\":false,\"publicTitle\":\"\",\"publicDescription\":\"\",\"author\":\"\",\"mediaReferences\":[],\"externalLinks\":[]}" > /dev/null 2>&1
+            invoke_api_test "T-PUB-11" "Documento despublicado no accesible sin auth -> 404" GET "/public/documents/$PUB_DOC_ID" \
+                "" "" "404" || true
+        else
+            skip_test "T-PUB-11" "Documento despublicado no accesible sin auth" "PUB_DOC_ID no disponible"
+        fi
+    fi
+fi
+
+# ── BLOQUE 5: COLABORACION ────────────────────────────────────────────────────
 
 if $DO_COL; then
     section "COLABORACION EN ESPACIOS COMPARTIDOS"
@@ -430,11 +521,47 @@ if $DO_SEC; then
     else
         skip_test "T-SEC-02" "Token User en endpoint Admin" "Tokens no disponibles"
     fi
+
+    _sec_headers=$(curl -sI "${BASE_URL}/embed-allowlist" 2>/dev/null)
+    _sec_pass=true
+    echo "$_sec_headers" | grep -qi "^x-content-type-options: nosniff" || _sec_pass=false
+    echo "$_sec_headers" | grep -qi "^x-frame-options: deny" || _sec_pass=false
+    ALL_IDS+=("T-SEC-03"); ALL_DESCS+=("Cabeceras de seguridad presentes (nosniff + no-frame)")
+    ALL_EXPECTED+=("presentes"); ALL_ACTUAL+=("$(if $_sec_pass; then echo 'ok'; else echo 'faltan'; fi)")
+    ALL_SECTION+=("$CURRENT_SECTION"); TOTAL=$((TOTAL + 1))
+    if $_sec_pass; then
+        ALL_STATUS+=("PASS"); PASS_COUNT=$((PASS_COUNT + 1))
+        echo "  [OK  ] T-SEC-03 - Cabeceras de seguridad presentes (nosniff + no-frame)  (esperado presentes, real ok)"
+    else
+        ALL_STATUS+=("FAIL"); FAIL_COUNT=$((FAIL_COUNT + 1))
+        FAIL_IDS+=("T-SEC-03"); FAIL_DESCS+=("Cabeceras de seguridad presentes"); FAIL_EXPECTED+=("presentes"); FAIL_ACTUAL+=("faltan")
+        echo "  [FAIL] T-SEC-03 - Cabeceras de seguridad presentes  (esperado presentes, real faltan)"
+    fi
+
+    _server_header=$(curl -sI "${BASE_URL}/embed-allowlist" 2>/dev/null | grep -i "^server:" | tr -d '\r')
+    ALL_IDS+=("T-SEC-04"); ALL_DESCS+=("Cabecera Server no revela tecnologia")
+    ALL_EXPECTED+=("ausente"); ALL_SECTION+=("$CURRENT_SECTION"); TOTAL=$((TOTAL + 1))
+    if [ -z "$_server_header" ]; then
+        ALL_ACTUAL+=("ausente"); ALL_STATUS+=("PASS"); PASS_COUNT=$((PASS_COUNT + 1))
+        echo "  [OK  ] T-SEC-04 - Cabecera Server no revela tecnologia  (esperado ausente, real ausente)"
+    else
+        ALL_ACTUAL+=("expuesto"); ALL_STATUS+=("FAIL"); FAIL_COUNT=$((FAIL_COUNT + 1))
+        FAIL_IDS+=("T-SEC-04"); FAIL_DESCS+=("Cabecera Server no revela tecnologia"); FAIL_EXPECTED+=("ausente"); FAIL_ACTUAL+=("expuesto")
+        echo "  [FAIL] T-SEC-04 - Cabecera Server no revela tecnologia  (esperado ausente, real expuesto)"
+    fi
 fi
 
 # ── LIMPIEZA ───────────────────────────────────────────────────────────────────
 
 section "LIMPIEZA"
+if [ -n "$PUB_DOC_ID" ] && [ -n "$USER_TOKEN" ]; then
+    curl -s -o /dev/null -X DELETE -H "Authorization: Bearer $USER_TOKEN" \
+        "$BASE_URL/documents/$PUB_DOC_ID" 2>/dev/null && echo "  Documento PubTest $PUB_DOC_ID eliminado." || true
+fi
+if [ -n "$UNPUB_DOC_ID" ] && [ -n "$USER_TOKEN" ]; then
+    curl -s -o /dev/null -X DELETE -H "Authorization: Bearer $USER_TOKEN" \
+        "$BASE_URL/documents/$UNPUB_DOC_ID" 2>/dev/null && echo "  Documento UnpubTest $UNPUB_DOC_ID eliminado." || true
+fi
 if [ -n "$SPACE_ID" ] && [ -n "$USER_TOKEN" ]; then
     curl -s -o /dev/null -X DELETE -H "Authorization: Bearer $USER_TOKEN" \
         "$BASE_URL/creativespaces/$SPACE_ID" 2>/dev/null && echo "  Espacio $SPACE_ID eliminado." || true
@@ -465,7 +592,7 @@ echo "==========================================="
 
 OUTPUT_PATH="$OUTPUT_DIR/RESULTADO_PRUEBAS_$TIMESTAMP.md"
 FECHA_STR=$(date +"%Y-%m-%d %H:%M:%S")
-SECTIONS_ORDER=("AUTH" "ESPACIOS CREATIVOS" "DOCUMENTOS Y VERSIONES" "COLABORACION EN ESPACIOS COMPARTIDOS" "PANEL DE ADMINISTRACION" "SEGURIDAD")
+SECTIONS_ORDER=("AUTH" "ESPACIOS CREATIVOS" "DOCUMENTOS Y VERSIONES" "PUBLICACIONES DE DOCUMENTOS" "COLABORACION EN ESPACIOS COMPARTIDOS" "PANEL DE ADMINISTRACION" "SEGURIDAD")
 
 {
     echo "# Informe de Pruebas -- LifeHub (interactivo)"

@@ -17,11 +17,16 @@ export class SpaceDocumentsSidebarComponent {
   @Input({ required: true }) createDocumentForm!: FormGroup;
   @Input({ required: true }) loadingDocuments = false;
   @Input({ required: true }) documents: Document[] = [];
+  @Input({ required: true }) showImportPanel = false;
+  @Input({ required: true }) importableDocuments: Document[] = [];
+  @Input({ required: true }) loadingImportable = false;
   @Input() selectedDocument: Document | null = null;
 
   @Output() toggleCreateDocument = new EventEmitter<void>();
   @Output() createDocument = new EventEmitter<void>();
   @Output() selectDocument = new EventEmitter<Document>();
+  @Output() openImportPanel = new EventEmitter<void>();
+  @Output() importDocument = new EventEmitter<Document>();
 
   readonly DocumentType = DocumentType;
 

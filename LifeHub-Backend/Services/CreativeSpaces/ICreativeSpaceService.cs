@@ -5,6 +5,7 @@ namespace LifeHub.Services.CreativeSpaces
     public interface ICreativeSpaceService
     {
         Task<ServiceResult<List<CreativeSpaceDto>>> GetCreativeSpacesAsync(string userId);
+        Task<ServiceResult<List<CreativeSpaceDto>>> GetPublicSpacesByUserAsync(string targetUserId);
         Task<ServiceResult<CreativeSpaceDto>> GetCreativeSpaceAsync(int id, string userId);
         Task<ServiceResult<CreativeSpaceDto>> CreateCreativeSpaceAsync(string userId, CreateCreativeSpaceDto dto, string ipAddress);
         Task<ServiceResult<CreativeSpaceDto>> UpdateCreativeSpaceAsync(int id, string userId, UpdateCreativeSpaceDto dto, string ipAddress);

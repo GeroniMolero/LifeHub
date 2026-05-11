@@ -127,6 +127,9 @@ namespace LifeHub.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -289,6 +292,9 @@ namespace LifeHub.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Author")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -298,6 +304,9 @@ namespace LifeHub.Migrations
                     b.Property<string>("ExternalLinksJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsProfileVisible")
+                        .HasColumnType("bit");
 
                     b.Property<string>("MediaReferencesJson")
                         .IsRequired()

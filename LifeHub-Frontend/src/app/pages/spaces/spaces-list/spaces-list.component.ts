@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CreativeSpace,
@@ -17,11 +17,12 @@ import { FriendshipService } from '../../../services/friendship.service';
 import { User } from '../../../models/auth.model';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
 import { ToastService } from '../../../services/toast.service';
+import { ModalComponent } from '../../../components/modal/modal.component';
 
 @Component({
   selector: 'app-spaces-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ModalComponent],
   templateUrl: './spaces-list.component.html',
   styleUrls: ['./spaces-list.component.scss']
 })
@@ -29,15 +30,13 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   spaces: CreativeSpace[] = [];
-  searchTerm = '';
-  favoriteFilter: 'all' | 'favorites' | 'non-favorites' = 'all';
-  permissionFilter: 'all' | 'shared' | 'private' = 'all';
-  dateSort: 'updated-desc' | 'updated-asc' = 'updated-desc';
+  filterForm!: FormGroup;
+  showFiltersDropdown = false;
   createForm!: FormGroup;
   editForm!: FormGroup;
   editingId: number | null = null;
+  editModalTab: 'edit' | 'permissions' = 'edit';
   currentUserId = '';
-  openPermissionsSpaceId: number | null = null;
   permissionForms: { [spaceId: number]: FormGroup } = {};
   permissionsBySpace: { [spaceId: number]: SpacePermission[] } = {};
   permissionLoadingBySpace: { [spaceId: number]: boolean } = {};
@@ -60,23 +59,31 @@ export class SpacesListComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private friendshipService: FriendshipService,
     private layoutHeaderStateService: LayoutHeaderStateService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private router: Router
   ) {}
 
+  openSpace(id: number): void {
+    this.router.navigate(['/spaces', id]);
+  }
+
   ngOnInit(): void {
+    this.filterForm = this.fb.group({
+      search:    [''],
+      favorites: ['all'],
+      privacy:   ['all'],
+      sort:      ['updated-desc']
+    });
+
     this.createForm = this.fb.group({
       name: ['', Validators.required],
       description: [''],
-      privacy: [SpacePrivacy.Private],
-      isFavorite: [false],
       isPublicProfileVisible: [false]
     });
 
     this.editForm = this.fb.group({
       name: ['', Validators.required],
       description: [''],
-      privacy: [SpacePrivacy.Private],
-      isFavorite: [false],
       isPublicProfileVisible: [false]
     });
 
@@ -93,6 +100,11 @@ export class SpacesListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.layoutHeaderStateService.clearOverride();
+  }
+
+  get editingSpace(): CreativeSpace | null {
+    if (this.editingId === null) return null;
+    return this.spaces.find(s => s.id === this.editingId) ?? null;
   }
 
   get friendOptions(): User[] {
@@ -117,33 +129,43 @@ export class SpacesListComponent implements OnInit, OnDestroy {
   }
 
   get filteredSpaces(): CreativeSpace[] {
-    const term = this.searchTerm.trim().toLowerCase();
+    const search    = String(this.filterForm?.get('search')?.value    ?? '').trim().toLowerCase();
+    const favorites = String(this.filterForm?.get('favorites')?.value ?? 'all');
+    const privacy   = String(this.filterForm?.get('privacy')?.value   ?? 'all');
+    const sort      = String(this.filterForm?.get('sort')?.value      ?? 'updated-desc');
 
     const filtered = this.spaces.filter(space => {
-      const matchesName = !term || space.name.toLowerCase().includes(term);
+      if (search && !space.name.toLowerCase().includes(search)) return false;
       const isFav = this.isFavorite(space.id);
-      const matchesFavorite = this.favoriteFilter === 'all'
-        || (this.favoriteFilter === 'favorites' && isFav)
-        || (this.favoriteFilter === 'non-favorites' && !isFav);
-      const matchesPermission = this.permissionFilter === 'all'
-        || (this.permissionFilter === 'shared' && space.privacy === SpacePrivacy.Shared)
-        || (this.permissionFilter === 'private' && space.privacy === SpacePrivacy.Private);
-
-      return matchesName && matchesFavorite && matchesPermission;
+      if (favorites === 'favorites'     && !isFav) return false;
+      if (favorites === 'non-favorites' &&  isFav) return false;
+      if (privacy === 'shared'  && space.privacy !== SpacePrivacy.Shared)  return false;
+      if (privacy === 'private' && space.privacy !== SpacePrivacy.Private) return false;
+      return true;
     });
 
     return filtered.sort((a, b) => {
       const aDate = new Date(a.updatedAt).getTime();
       const bDate = new Date(b.updatedAt).getTime();
-      return this.dateSort === 'updated-asc' ? aDate - bDate : bDate - aDate;
+      return sort === 'updated-asc' ? aDate - bDate : bDate - aDate;
     });
   }
 
+  get hasActiveFilters(): boolean {
+    if (!this.filterForm) return false;
+    const { search, favorites, privacy, sort } = this.filterForm.getRawValue();
+    return !!String(search ?? '').trim()
+      || favorites !== 'all'
+      || privacy   !== 'all'
+      || sort      !== 'updated-desc';
+  }
+
   clearFilters(): void {
-    this.searchTerm = '';
-    this.favoriteFilter = 'all';
-    this.permissionFilter = 'all';
-    this.dateSort = 'updated-desc';
+    this.filterForm.reset({ search: '', favorites: 'all', privacy: 'all', sort: 'updated-desc' });
+  }
+
+  toggleFiltersDropdown(): void {
+    this.showFiltersDropdown = !this.showFiltersDropdown;
   }
 
   toggleCreate(): void {
@@ -157,18 +179,16 @@ export class SpacesListComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     this.error = '';
-    this.creativeSpaceService.createSpace(this.createForm.value).subscribe({
+    this.creativeSpaceService.createSpace({
+      ...this.createForm.value,
+      privacy: SpacePrivacy.Private,
+      isFavorite: false
+    }).subscribe({
       next: (space) => {
         this.spaces = [space, ...this.spaces];
         this.showCreate = false;
         this.submittedCreate = false;
-        this.createForm.reset({
-          name: '',
-          description: '',
-          privacy: SpacePrivacy.Private,
-          isFavorite: false,
-          isPublicProfileVisible: false
-        });
+        this.createForm.reset({ name: '', description: '', isPublicProfileVisible: false });
         this.setHeaderState();
         this.loading = false;
       },
@@ -181,12 +201,22 @@ export class SpacesListComponent implements OnInit, OnDestroy {
 
   startEdit(space: CreativeSpace): void {
     this.editingId = space.id;
+    this.editModalTab = 'edit';
     this.editForm.patchValue(space);
   }
 
   cancelEdit(): void {
     this.editingId = null;
+    this.editModalTab = 'edit';
     this.submittedEdit = false;
+  }
+
+  setEditModalTab(tab: 'edit' | 'permissions'): void {
+    this.editModalTab = tab;
+    if (tab === 'permissions' && this.editingId !== null) {
+      this.ensurePermissionForm(this.editingId);
+      this.loadPermissions(this.editingId);
+    }
   }
 
   saveEdit(spaceId: number): void {
@@ -195,7 +225,12 @@ export class SpacesListComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     this.error = '';
-    this.creativeSpaceService.updateSpace(spaceId, this.editForm.value).subscribe({
+    const current = this.spaces.find(s => s.id === spaceId);
+    this.creativeSpaceService.updateSpace(spaceId, {
+      ...this.editForm.value,
+      privacy: current?.privacy ?? SpacePrivacy.Private,
+      isFavorite: current?.isFavorite ?? false
+    }).subscribe({
       next: (updated) => {
         this.spaces = this.spaces.map(space => space.id === spaceId ? updated : space);
         this.editingId = null;
@@ -256,19 +291,6 @@ export class SpacesListComponent implements OnInit, OnDestroy {
     });
   }
 
-  togglePermissions(space: CreativeSpace): void {
-    if (!this.isOwner(space)) return;
-
-    if (this.openPermissionsSpaceId === space.id) {
-      this.openPermissionsSpaceId = null;
-      return;
-    }
-
-    this.openPermissionsSpaceId = space.id;
-    this.ensurePermissionForm(space.id);
-    this.loadPermissions(space.id);
-  }
-
   shareSpace(space: CreativeSpace): void {
     const form = this.permissionForms[space.id];
     if (!form || form.invalid) return;
@@ -306,8 +328,12 @@ export class SpacesListComponent implements OnInit, OnDestroy {
 
     this.creativeSpaceService.removePermission(space.id, userId).subscribe({
       next: () => {
-        this.permissionsBySpace[space.id] = (this.permissionsBySpace[space.id] || [])
-          .filter(item => item.userId !== userId);
+        const remaining = (this.permissionsBySpace[space.id] || []).filter(item => item.userId !== userId);
+        this.permissionsBySpace[space.id] = remaining;
+        if (remaining.length === 0) {
+          space.privacy = SpacePrivacy.Private;
+          this.spaces = [...this.spaces];
+        }
         this.permissionLoadingBySpace[space.id] = false;
       },
       error: (err) => {

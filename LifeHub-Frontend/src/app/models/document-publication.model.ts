@@ -12,6 +12,7 @@ export interface DocumentPublication {
   publishedAt?: string;
   publicTitle?: string;
   publicDescription?: string;
+  author?: string;
   mediaReferences: MediaReference[];
   externalLinks: string[];
   createdAt?: string;
@@ -22,6 +23,7 @@ export interface UpsertDocumentPublicationRequest {
   isPublic: boolean;
   publicTitle?: string;
   publicDescription?: string;
+  author?: string;
   mediaReferences: MediaReference[];
   externalLinks: string[];
 }
@@ -31,6 +33,7 @@ export interface PublicDocumentView {
   title: string;
   description: string;
   content: string;
+  author?: string;
   publishedAt?: string;
   mediaReferences: MediaReference[];
   externalLinks: string[];
