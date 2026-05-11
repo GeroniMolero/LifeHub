@@ -73,6 +73,7 @@ jobs:
       always() &&
       (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - name: Deploy to server
