@@ -104,12 +104,13 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
         with:
           host: ${{ secrets.PROD_SERVER_HOST }}
           username: root
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          envs: GITHUB_TOKEN,DB_PASSWORD,JWT_KEY,ADMIN_PASSWORD,GHCR_PAT
+          envs: GITHUB_TOKEN,DB_PASSWORD,JWT_KEY,ADMIN_PASSWORD,ADMIN_EMAIL,GHCR_PAT
           script: |
             REPO_URL="https://${{ secrets.GHCR_PAT }}@github.com/${{ github.repository }}.git"
  
@@ -141,7 +142,7 @@ jobs:
             printf 'SQLCMD_PATH=/opt/mssql-tools18/bin/sqlcmd\n' >> .env
             printf 'SQLCMD_OPTS=-No\n' >> .env
             printf 'JWT_KEY=%s\n' "$JWT_KEY" >> .env
-            printf 'ADMIN_EMAIL=gero@lifehub.es\n' >> .env
+            printf 'ADMIN_EMAIL=%s\n' "$ADMIN_EMAIL" >> .env
             printf 'ADMIN_PASSWORD=%s\n' "$ADMIN_PASSWORD" >> .env
  
             chmod 600 .env
