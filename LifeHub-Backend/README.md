@@ -127,6 +127,7 @@ Extiende `ClaimsPrincipal` con `GetUserId()` para extraer el identificador de us
 - Autorización por roles (`Admin`) y por política de acceso a espacios
 - **Política `CanViewAdmin`** combinada: acepta el rol `Admin` o un claim de permiso específico, lo que permite delegar acceso sin elevar el rol completo
 - **SignalR autenticado sin exponer el token en la URL**: el token JWT se transmite via cookie para las conexiones WebSocket, evitando que quede registrado en logs de servidor o historial del navegador
+- **Rate limiting en autenticación**: los endpoints de registro y login aplican ventanas de límite de peticiones para mitigar ataques de fuerza bruta
 
 ## Endpoints principales
 
@@ -157,7 +158,7 @@ Extiende `ClaimsPrincipal` con `GetUserId()` para extraer el identificador de us
 - `DELETE /api/creativespaces/{id}/permissions/{userId}`
 
 ### Documentos
-- `GET /api/documents`
+- `GET /api/documents?page=1&pageSize=20` — paginado; devuelve `PaginatedResult<DocumentDto>`
 - `GET /api/documents/{id}`
 - `POST /api/documents`
 - `PUT /api/documents/{id}`
@@ -168,7 +169,7 @@ Extiende `ClaimsPrincipal` con `GetUserId()` para extraer el identificador de us
 - `DELETE /api/documentversions/{id}`
 
 ### Mensajes
-- `GET /api/messages/conversation/{userId}`
+- `GET /api/messages/conversation/{userId}?page=1&pageSize=50` — paginado; devuelve `PaginatedResult<MessageDto>` ordenado cronológicamente
 - `POST /api/messages`
 - `PUT /api/messages/{id}/mark-read`
 - `GET /api/messages/unread`
@@ -187,6 +188,7 @@ Extiende `ClaimsPrincipal` con `GetUserId()` para extraer el identificador de us
 - `DELETE /api/musicfiles/{id}`
 
 ### Administración
+- `GET /api/admin/users?page=1&pageSize=20` — paginado; devuelve `PaginatedResult<AdminUserDto>`
 - `GET /api/allowedwebsites`
 - `POST /api/allowedwebsites`
 - `DELETE /api/allowedwebsites/{id}`
