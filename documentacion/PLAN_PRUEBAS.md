@@ -165,14 +165,15 @@
 
 | Bloque | Tests | OK | FAIL | SKIP |
 |--------|-------|----|------|------|
-| AUTH | 9 | 9 | 0 | 0 |
+| AUTH | 10 | 10 | 0 | 0 |
 | Espacios creativos | 5 | 5 | 0 | 0 |
-| Documentos y versiones | 9 | 9 | 0 | 0 |
+| Documentos y versiones | 10 | 10 | 0 | 0 |
 | Colaboración en espacios | 3 | 3 | 0 | 0 |
 | Publicaciones | 11 | 11 | 0 | 0 |
-| Panel de administración | 20 | 20 | 0 | 0 |
+| Panel de administración | 21 | 21 | 0 | 0 |
+| Mensajes | 3 | 3 | 0 | 0 |
 | Seguridad | 6 | 6 | 0 | 0 |
-| **TOTAL** | **63** | **63** | **0** | **0** |
+| **TOTAL** | **69** | **69** | **0** | **0** |
 
 ### Tests unitarios frontend — Jasmine (09-05-2026)
 
@@ -201,3 +202,4 @@
 | INC-09 | 12-05-2026 | La cabecera `Server` de las respuestas HTTP del frontend revelaba la versión de nginx. La imagen Docker del frontend usaba `nginx:alpine` (nginx oficial), que no soporta el módulo `headers-more` de Alpine y no permitía eliminar la cabecera. Corregido cambiando la imagen base a `alpine:3.21` con `nginx` y `nginx-mod-http-headers-more` propios del paquete Alpine, y añadiendo `more_clear_headers Server;` en `nginx.conf`. Test `T-SEC-04` pasa correctamente. | Resuelta |
 | INC-10 | 12-05-2026 | Test `T-SEC-06` (IDOR: acceso a espacio privado ajeno) fallaba con estado esperado 404 pero el endpoint devuelve 403 cuando se intenta acceder a un espacio privado de otro usuario. El comportamiento del backend es correcto: devuelve 403 Forbidden (el recurso existe pero el acceso está denegado). Corregido ajustando el estado esperado del test a 403. | Resuelta |
 | INC-11 | 12-05-2026 | `DELETE /users/{id}` devolvía HTTP 500 al eliminar un usuario que tenía registros relacionados con restricciones FK `ON DELETE NO ACTION` (SpacePermissions, Friendships, Messages, RecommendationRatings, DocumentVersions y DocumentPublications en documentos ajenos). Corregido añadiendo el método `CleanupUserRelationsAsync` en `UserService` que elimina explícitamente esos registros antes de llamar a `UserManager.DeleteAsync`. Test `T-ADMIN-20` añadido para cubrir este escenario; el endpoint devuelve 204 No Content. | Resuelta |
+| INC-12 a INC-19 | 12-05-2026 12:51 | Ocho tests de autenticación y seguridad devolvieron HTTP 500 de forma simultánea. Causa raíz: dos pipelines de despliegue se lanzaron en paralelo al hacer push de dos commits a la vez, lo que dejó el contenedor de base de datos detenido. Los endpoints que no requieren BD seguían respondiendo correctamente (HTTP 400/401), confirmando que el backend estaba en marcha pero sin acceso a datos. Resuelto relanzando el último pipeline. **69/69 PASS** tras el redespliegue. | Resuelta |
