@@ -1,51 +1,144 @@
-name: Deploy to Hetzner
-
+name: Build & Deploy
+ 
 on:
   push:
     branches:
       - production
-
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: 'Build & deploy ALL (ignore change detection)'
+        type: boolean
+        default: false
+ 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: geronimolero/lifehub
+ 
+permissions:
+  contents: read
+  packages: write
+ 
 jobs:
-  deploy:
-    name: Build & Deploy
+  changes:
     runs-on: ubuntu-latest
-
+    outputs:
+      build_backend: ${{ steps.filter.outputs.backend }}
+      build_frontend: ${{ steps.filter.outputs.frontend }}
+      force_all: ${{ github.event.inputs.force_all }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # ── Backend build check ────────────────────────────────────────────────
-      - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v4
         with:
-          dotnet-version: "8.0.x"
-
-      - name: Restore & build backend
-        run: dotnet build LifeHub-Backend/LifeHub.csproj --configuration Release
-
-      # ── Frontend build check ───────────────────────────────────────────────
-      - name: Setup Node 20
-        uses: actions/setup-node@v4
+          fetch-depth: 2
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
         with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: LifeHub-Frontend/package-lock.json
-
-      - name: Install & build frontend
-        working-directory: LifeHub-Frontend
-        run: |
-          npm ci
-          npm run build
-
-      # ── Deploy via SSH ─────────────────────────────────────────────────────
+          filters: |
+            backend:
+              - 'LifeHub-Backend/**'
+            frontend:
+              - 'LifeHub-Frontend/**'
+ 
+  build-backend:
+    needs: changes
+    if: |
+      needs.changes.outputs.force_all == 'true' ||
+      needs.changes.outputs.build_backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./LifeHub-Backend
+          file: ./LifeHub-Backend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend:latest
+          platforms: linux/amd64
+ 
+  build-frontend:
+    needs: changes
+    if: |
+      needs.changes.outputs.force_all == 'true' ||
+      needs.changes.outputs.build_frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./LifeHub-Frontend
+          file: ./LifeHub-Frontend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
+          platforms: linux/amd64
+ 
+  deploy:
+    needs: [changes, build-backend, build-frontend]
+    if: |
+      always() &&
+      (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.PROD_SERVER_HOST }}
           username: root
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          envs: GITHUB_TOKEN,DB_PASSWORD,JWT_KEY,ADMIN_PASSWORD,GHCR_PAT
           script: |
+            REPO_URL="https://${{ secrets.GHCR_PAT }}@github.com/${{ github.repository }}.git"
+ 
+            if [ ! -d "/opt/lifehub" ]; then
+              mkdir -p /opt/lifehub
+              git clone "$REPO_URL" /opt/lifehub
+            fi
+ 
             cd /opt/lifehub
-            git pull origin production
-            docker compose up -d --build
+            git checkout production
+            git pull "$REPO_URL" production
+ 
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+ 
+            > .env
+            printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD" >> .env
+            printf 'DB_NAME=LifeHubDB\n' >> .env
+            printf 'DB_USER=sa\n' >> .env
+            printf 'DB_HOST=sqlserver\n' >> .env
+            printf 'MSSQL_PID=Express\n' >> .env
+            printf 'SQL_CONTAINER=lifehub-sqlserver\n' >> .env
+            printf 'BACKEND_CONTAINER=lifehub-backend\n' >> .env
+            printf 'FRONTEND_CONTAINER=lifehub-frontend\n' >> .env
+            printf 'BACKEND_PORT=8080\n' >> .env
+            printf 'PUBLIC_PORT=80\n' >> .env
+            printf 'ASPNETCORE_ENVIRONMENT=Production\n' >> .env
+            printf 'SQLCMD_PATH=/opt/mssql-tools18/bin/sqlcmd\n' >> .env
+            printf 'SQLCMD_OPTS=-No\n' >> .env
+            printf 'JWT_KEY=%s\n' "$JWT_KEY" >> .env
+            printf 'ADMIN_EMAIL=gero@lifehub.es\n' >> .env
+            printf 'ADMIN_PASSWORD=%s\n' "$ADMIN_PASSWORD" >> .env
+ 
+            chmod 600 .env
+ 
+            docker compose pull
+            docker compose up -d
             docker compose ps
