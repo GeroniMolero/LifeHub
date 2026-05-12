@@ -89,7 +89,7 @@ SpaceAccessPolicy.CanEditDocument(doc, userId)
 
 ### Strategy pattern — `IHtmlSanitizer`
 
-Interfaz inyectable para sanitización de HTML antes de persistir contenido. La implementación `HtmlSanitizer` elimina etiquetas `<script>`, atributos de evento (`on*=`) y URIs `javascript:`. Al ser una interfaz, es sustituible en tests sin dependencias externas.
+Interfaz inyectable para sanitización de HTML antes de persistir contenido. La implementación `HtmlSanitizer` sanitiza el contenido HTML antes de persistir. Al ser una interfaz, es sustituible en tests sin dependencias externas.
 
 ### Constantes de negocio — `BusinessRules`
 
@@ -101,16 +101,32 @@ Extiende `ClaimsPrincipal` con `GetUserId()` para extraer el identificador de us
 
 ## Validación
 
-- **DTOs de entrada**: Data Annotations (`[Required]`, `[MaxLength]`, `[StringLength]`, etc.)
+- **DTOs de entrada**: Data Annotations (`[Required]`, `[MaxLength]`, `[StringLength]`, `[EmailAddress]`, etc.)
 - **Base de datos**: restricciones `HasMaxLength` en EF Core para todas las columnas de texto
 - **Frontend**: Reactive Forms con validación cliente (Angular)
+- **Cuotas de negocio**: comprobadas en la capa de servicio antes de persistir (máximo de documentos, espacios, versiones, publicaciones y elementos visibles en perfil por usuario)
+
+## Registro de actividad
+
+- **Fire-and-forget**: los logs de actividad se persisten de forma asíncrona y no bloqueante — un fallo de logging se registra como warning pero no interrumpe el flujo de la operación
+- **Integridad del historial**: la FK de `ActivityLogs.UserId` usa `DeleteBehavior.SetNull`, de modo que los registros de actividad se conservan aunque se elimine la cuenta del usuario que los generó
+
+## Base de datos — decisiones de diseño
+
+- **`DeleteBehavior.NoAction`** en relaciones donde el borrado en cascada sería destructivo (amistades, mensajes, permisos de espacios, versiones de documentos en espacios ajenos) — la limpieza es explícita y controlada en `UserService`
+- **`DeleteBehavior.SetNull`** en `ActivityLogs` para preservar el historial de auditoría
+- **Índices compuestos** en las columnas de búsqueda más frecuentes: `(RequesterId, ReceiverId)` en Friendships, `(CreativeSpaceId, UserId)` en SpacePermissions, `(DocumentId, VersionNumber)` en DocumentVersions, `(UserId, CreatedAt)` en ActivityLogs
+- **Agregación desnormalizada** en `Recommendation`: `AverageRating` y `TotalRatings` se almacenan directamente en la entidad para evitar recálculos en cada lectura
 
 ## Seguridad
 
 - Autenticación JWT — token generado en login, validado en cada petición
+- **`EnsureActiveSessionAsync()`**: antes de operaciones sensibles, se verifica que el usuario sigue existiendo en base de datos — permite revocar el acceso de forma inmediata sin necesidad de esperar a que el token expire
 - Hash de contraseñas con ASP.NET Core Identity
 - Sanitización XSS en backend antes de persistir contenido HTML
 - Autorización por roles (`Admin`) y por política de acceso a espacios
+- **Política `CanViewAdmin`** combinada: acepta el rol `Admin` o un claim de permiso específico, lo que permite delegar acceso sin elevar el rol completo
+- **SignalR autenticado sin exponer el token en la URL**: el token JWT se transmite via cookie para las conexiones WebSocket, evitando que quede registrado en logs de servidor o historial del navegador
 
 ## Endpoints principales
 

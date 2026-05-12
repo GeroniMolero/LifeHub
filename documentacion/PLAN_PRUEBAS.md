@@ -161,7 +161,7 @@
 | CP-10 Publicaciones | 4 | 4 | 0 | 0 |
 | **TOTAL** | **53** | **53** | **0** | **0** |
 
-### Pruebas automatizadas — suite `run-tests.ps1` (09-05-2026)
+### Pruebas automatizadas — suite `run-tests.ps1` (12-05-2026)
 
 | Bloque | Tests | OK | FAIL | SKIP |
 |--------|-------|----|------|------|
@@ -170,9 +170,9 @@
 | Documentos y versiones | 9 | 9 | 0 | 0 |
 | Colaboración en espacios | 3 | 3 | 0 | 0 |
 | Publicaciones | 11 | 11 | 0 | 0 |
-| Panel de administración | 19 | 19 | 0 | 0 |
-| Seguridad | 4 | 4 | 0 | 0 |
-| **TOTAL** | **60** | **60** | **0** | **0** |
+| Panel de administración | 20 | 20 | 0 | 0 |
+| Seguridad | 6 | 6 | 0 | 0 |
+| **TOTAL** | **63** | **63** | **0** | **0** |
 
 ### Tests unitarios frontend — Jasmine (09-05-2026)
 
@@ -190,12 +190,14 @@
 
 | ID | Fecha | Descripción | Estado |
 |----|-------|-------------|--------|
-| INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Abierta — pendiente de valorar refactorización |
+| INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Resuelta — naming `/documentversions/` consistente en toda la app (backend controller y frontend service), no se cambia |
 | INC-02 | 23-04-2026 | Validación de entrada ausente en dos endpoints de creación de recursos: aceptaban campos obligatorios vacíos sin devolver error. Detectado durante la ejecución de la suite de pruebas automatizada. Corregido añadiendo validación a nivel de DTO. | Resuelta |
 | INC-03 | 02-05-2026 20:24 | Test `T-DOC-07` (Snapshot de documento ajeno -> 403) fallaba: esperado HTTP 403, obtenido 404. El script usaba el ID hardcodeado `1` asumiendo que existía y pertenecía a otro usuario; el backend devuelve 404 antes de comprobar permisos si el documento no existe. Corregido: el test ahora crea un documento temporal con el token admin, intenta el snapshot con el token de usuario (obtiene 403 correctamente) y lo elimina al finalizar. Resultado tras el fix: **30/30 PASS**. | Resuelta |
 | INC-04 | 02-05-2026 21:25 | Test `T-AUTH-08` (Login admin (setup para tests admin)) fallaba: esperado HTTP 200, obtenido 400 en `run-tests.sh` bajo Git Bash/Windows. Causa raíz: parseo de `.env` en scripts Bash no eliminaba `CRLF` (`\r`) y el valor de `ADMIN_PASSWORD` se enviaba con carácter extra. Corregido normalizando `ADMIN_EMAIL/ADMIN_PASSWORD` (trim + eliminación de `\r`) en los runners Linux. Resultado tras el fix: **30/30 PASS**. | Resuelta |
-| INC-05 | 02-05-2026 | Vulnerabilidad XSS en backend: los endpoints de creación y actualización de documentos almacenaban el contenido sin sanitizar. Un atacante con acceso directo a la API podía persistir payloads maliciosos independientemente de la validación del frontend. Corregido implementando `SanitizeHtml()` en `DocumentsController.cs` (elimina bloques `<script>`, atributos `on\w+=` y URIs `javascript:`). Test `T-DOC-04` corregido en los cuatro runners: ahora verifica que el payload XSS es eliminado por el backend (usa `NotContains` en lugar de `Contains`). | Resuelta |
+| INC-05 | 02-05-2026 | Vulnerabilidad XSS en backend: los endpoints de creación y actualización de documentos almacenaban el contenido sin sanitizar. Un atacante con acceso directo a la API podía persistir payloads maliciosos independientemente de la validación del frontend. Corregido implementando sanitización server-side en `DocumentsController.cs`. Test `T-DOC-04` verifica que los payloads XSS son eliminados por el backend antes de persistir. | Resuelta |
 | INC-06 | 02-05-2026 | Inyección JSON en `run-tests-interactive.sh`: el script construía los cuerpos JSON interpolando directamente los valores del usuario sin escapar, por lo que un valor con `"` cerraba prematuramente la cadena y alteraba la estructura de la petición. Corregido implementando `json_escape()` que escapa `\`, `"`, tabuladores y saltos de línea antes de la interpolación. | Resuelta |
 | INC-07 | 04-05-2026 | Tests T-COL fallaban durante la limpieza: la restricción de FK impedía eliminar el espacio temporal si el documento creado en el test no se borraba antes. Corregido añadiendo la eliminación explícita del documento antes de la del espacio en el flujo de teardown de los scripts. Resultado: **33/33 PASS**. | Resuelta |
 | INC-08 | 06-05-2026 | Backend inaccesible al arrancar: la migración `AddColumnLengthConstraints` crasheaba en cada inicio con el error "Column name 'IsPublic' in table 'Documents' is specified more than once". Causa raíz: la migración había aplicado parcialmente `AddColumn IsPublic/PublishedAt` y creado las tablas `AllowedWebsites` y `DocumentPublications` en una ejecución anterior, pero la transacción no quedó registrada en `__EFMigrationsHistory` (Azure SQL Edge no revirtió el DDL en la excepción). Todos los tests fallaban con HTTP 0 (connection refused). Corregido haciendo idempotentes las cuatro operaciones problemáticas mediante SQL condicional (`IF COL_LENGTH IS NULL` / `IF NOT EXISTS`). Resultado: migración aplicada correctamente, **33/33 PASS**. | Resuelta |
-| INC-09 | 12-05-2026 10:04 | Test `T-SEC-04` (Cabecera Server no revela tecnologia) fallo: esperado HTTP 200, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-09 | 12-05-2026 | La cabecera `Server` de las respuestas HTTP del frontend revelaba la versión de nginx. La imagen Docker del frontend usaba `nginx:alpine` (nginx oficial), que no soporta el módulo `headers-more` de Alpine y no permitía eliminar la cabecera. Corregido cambiando la imagen base a `alpine:3.21` con `nginx` y `nginx-mod-http-headers-more` propios del paquete Alpine, y añadiendo `more_clear_headers Server;` en `nginx.conf`. Test `T-SEC-04` pasa correctamente. | Resuelta |
+| INC-10 | 12-05-2026 | Test `T-SEC-06` (IDOR: acceso a espacio privado ajeno) fallaba con estado esperado 404 pero el endpoint devuelve 403 cuando se intenta acceder a un espacio privado de otro usuario. El comportamiento del backend es correcto: devuelve 403 Forbidden (el recurso existe pero el acceso está denegado). Corregido ajustando el estado esperado del test a 403. | Resuelta |
+| INC-11 | 12-05-2026 | `DELETE /users/{id}` devolvía HTTP 500 al eliminar un usuario que tenía registros relacionados con restricciones FK `ON DELETE NO ACTION` (SpacePermissions, Friendships, Messages, RecommendationRatings, DocumentVersions y DocumentPublications en documentos ajenos). Corregido añadiendo el método `CleanupUserRelationsAsync` en `UserService` que elimina explícitamente esos registros antes de llamar a `UserManager.DeleteAsync`. Test `T-ADMIN-20` añadido para cubrir este escenario; el endpoint devuelve 204 No Content. | Resuelta |
