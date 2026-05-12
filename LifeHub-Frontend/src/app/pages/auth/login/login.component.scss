@@ -24,10 +24,10 @@
   z-index: 1;
   min-height: 100vh;
   box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 1fr minmax(340px, 430px);
-  gap: $space-8;
+  display: flex;
+  justify-content: center;
   align-items: center;
+  gap: $space-8;
   padding: clamp(1rem, 2.8vw, 2rem);
 }
 
