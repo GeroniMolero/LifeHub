@@ -265,7 +265,7 @@ Los backups se guardan en `backups/` con el formato `<DB_NAME>_<timestamp>.bak`.
 
 Estado verificado a fecha **2026-05-12**:
 
-- Resultado integración API: **63/63 PASS**, **0 FAIL**, **0 SKIP**.
+- Resultado integración API: **69/69 PASS**, **0 FAIL**, **0 SKIP**.
 - Suite unitaria backend: **160 tests** (xUnit).
 - Suite unitaria frontend: **4 specs** (Jasmine/Karma).
 
@@ -294,16 +294,17 @@ No requiere servidor ni base de datos — se ejecutan en local en segundos.
 
 ### Tests de integración E2E (requieren servidor)
 
-La suite cubre **63 casos de prueba** sobre la API REST del backend, agrupados en siete módulos:
+La suite cubre **69 casos de prueba** sobre la API REST del backend, agrupados en ocho módulos:
 
 | Módulo | Casos | Qué se verifica |
 |--------|-------|------------------|
-| AUTH | 9 | Registro, login, activación de usuario de pruebas, validación de campos, tokens inválidos |
-| DOCS | 9 | CRUD de documentos, versionado, control de acceso |
+| AUTH | 10 | Registro, login, activación de usuario de pruebas, validación de campos y contraseña, tokens inválidos |
+| DOCS | 10 | CRUD de documentos, versionado, control de acceso, shape paginada del listado |
 | SPACES | 5 | CRUD de espacios creativos, validación de nombre |
 | COL | 3 | Permisos de colaboración (Viewer vs Editor), acceso a documentos compartidos |
 | PUBLICATIONS | 11 | Flujo completo de publicaciones, casos negativos (sin token, documento ajeno, tras despublicar) |
-| ADMIN | 20 | Acceso por rol, gestión de dominios, usuarios, backup, logs de actividad y eliminación con relaciones activas |
+| ADMIN | 21 | Acceso por rol, gestión de dominios, usuarios, backup, logs de actividad, eliminación con relaciones activas, shape paginada |
+| MENSAJES | 3 | Conversación paginada, control de autenticación, envío de mensajes |
 | SEGURIDAD | 6 | Acceso sin token, token manipulado, cabeceras de seguridad HTTP, IDOR |
 
 Los tests crean un usuario temporal propio y lo eliminan al finalizar — la base de datos queda limpia. Los tests de administrador requieren credenciales de admin en el `.env`.
@@ -410,6 +411,7 @@ LifeHub/
 - Restricciones de longitud en base de datos (EF Core `HasMaxLength`)
 - Sanitización XSS en backend: `IHtmlSanitizer` sanitiza el contenido HTML antes de persistir
 - Cabeceras HTTP de seguridad (`X-Content-Type-Options`, `X-Frame-Options`) y cabecera `Server` suprimida
+- Rate limiting en endpoints de autenticación para mitigar ataques de fuerza bruta
 - Protección de rutas con Guards
 - No almacenamiento de contenido protegido por derechos de autor
 
