@@ -1,4 +1,5 @@
 using AutoMapper;
+using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
 using Microsoft.AspNetCore.Identity;
@@ -10,11 +11,13 @@ namespace LifeHub.Services.Users
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
+        private readonly ApplicationDbContext _context;
 
-        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper)
+        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper, ApplicationDbContext context)
         {
             _userManager = userManager;
             _mapper = mapper;
+            _context = context;
         }
 
         public async Task<ServiceResult<PublicUserDto>> GetUserAsync(string id)
@@ -87,6 +90,8 @@ namespace LifeHub.Services.Users
             if (user == null)
                 return ServiceResult<bool>.Unauthorized("Sesión inválida. Inicia sesión de nuevo.");
 
+            await CleanupUserRelationsAsync(userId);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
                 return ServiceResult<bool>.BadRequest("No se pudo eliminar la cuenta.");
@@ -103,11 +108,40 @@ namespace LifeHub.Services.Users
             if (user == null)
                 return ServiceResult<bool>.NotFound("Usuario no encontrado.");
 
+            await CleanupUserRelationsAsync(id);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
                 return ServiceResult<bool>.BadRequest("No se pudo eliminar el usuario.");
 
             return ServiceResult<bool>.Ok(true);
+        }
+
+        private async Task CleanupUserRelationsAsync(string userId)
+        {
+            await _context.SpacePermissions
+                .Where(p => p.UserId == userId || p.GrantedByUserId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.Friendships
+                .Where(f => f.RequesterId == userId || f.ReceiverId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.Messages
+                .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.RecommendationRatings
+                .Where(r => r.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.DocumentVersions
+                .Where(v => v.CreatedByUserId == userId && v.Document.UserId != userId)
+                .ExecuteDeleteAsync();
+
+            await _context.DocumentPublications
+                .Where(p => p.PublishedByUserId == userId && p.Document.UserId != userId)
+                .ExecuteDeleteAsync();
         }
 
         public async Task<ServiceResult<bool>> ChangePasswordAsync(string userId, ChangePasswordDto dto)
