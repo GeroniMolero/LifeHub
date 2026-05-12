@@ -31,6 +31,18 @@
             "styles": [
               "src/styles.scss"
             ],
+            "budgets": [
+              {
+                "type": "initial",
+                "maximumWarning": "3mb",
+                "maximumError": "6mb"
+              },
+              {
+                "type": "anyComponentStyle",
+                "maximumWarning": "14kb",
+                "maximumError": "20kb"
+              }
+            ],
             "scripts": []
           },
           "configurations": {
