@@ -175,15 +175,19 @@
 | Seguridad | 6 | 6 | 0 | 0 |
 | **TOTAL** | **69** | **69** | **0** | **0** |
 
-### Tests unitarios frontend — Jasmine (09-05-2026)
+### Tests unitarios frontend — Jasmine (12-05-2026)
 
 | Archivo | Tests | OK |
 |---------|-------|----|
 | `auth.service.spec.ts` | 17 | 17 |
 | `admin.service.spec.ts` | 13 | 13 |
 | `config.service.spec.ts` | 3 | 3 |
-| `space-workspace.component.spec.ts` | 5 | 5 |
-| **TOTAL** | **38** | **38** |
+| `space-workspace.component.spec.ts` | 11 | 11 |
+| `auth.guard.spec.ts` | 5 | 5 |
+| `guest.guard.spec.ts` | 4 | 4 |
+| `admin.guard.spec.ts` | 4 | 4 |
+| `jwt.interceptor.spec.ts` | 7 | 7 |
+| **TOTAL** | **64** | **64** |
 
 ---
 
@@ -204,3 +208,22 @@
 | INC-11 | 12-05-2026 | `DELETE /users/{id}` devolvía HTTP 500 al eliminar un usuario que tenía registros relacionados con restricciones FK `ON DELETE NO ACTION` (SpacePermissions, Friendships, Messages, RecommendationRatings, DocumentVersions y DocumentPublications en documentos ajenos). Corregido añadiendo el método `CleanupUserRelationsAsync` en `UserService` que elimina explícitamente esos registros antes de llamar a `UserManager.DeleteAsync`. Test `T-ADMIN-20` añadido para cubrir este escenario; el endpoint devuelve 204 No Content. | Resuelta |
 | INC-12 a INC-19 | 12-05-2026 12:51 | Ocho tests de autenticación y seguridad devolvieron HTTP 500 de forma simultánea. Causa raíz: dos pipelines de despliegue se lanzaron en paralelo al hacer push de dos commits a la vez, lo que dejó el contenedor de base de datos detenido. Los endpoints que no requieren BD seguían respondiendo correctamente (HTTP 400/401), confirmando que el backend estaba en marcha pero sin acceso a datos. Resuelto relanzando el último pipeline. **69/69 PASS** tras el redespliegue. | Resuelta |
 | INC-13 a INC-20 | 12-05-2026 15:04 | Ocho tests de autenticación (`T-AUTH-01`, `T-AUTH-02`, `T-AUTH-03`, `T-AUTH-04`, `T-AUTH-05`, `T-AUTH-08`, `T-AUTH-09`, `T-AUTH-10`) devolvieron HTTP 405 al ejecutar la suite contra la IP (`http://178.105.128.94`). Causa raíz: la suite se ejecutó justo después de implementar el redirect HTTP→HTTPS. nginx devuelve 301 ante cualquier petición HTTP; el cliente HTTP convierte las peticiones POST en GET al seguir el redirect, y los endpoints de autenticación no aceptan GET → 405 Method Not Allowed. No es un fallo de la aplicación sino el comportamiento correcto del redirect. Suite ejecutada contra `https://lifehubapp.duckdns.org/api`: **69/69 PASS**. | Resuelta |
+| INC-14 | 12-05-2026 16:27 | Test `T-AUTH-01` (Registro nuevo usuario) fallo: esperado HTTP 200, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-15 | 12-05-2026 16:27 | Test `T-AUTH-02` (Registro email duplicado) fallo: esperado HTTP 400, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-16 | 12-05-2026 16:27 | Test `T-AUTH-03` (Registro email con formato invalido) fallo: esperado HTTP 400, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-17 | 12-05-2026 16:27 | Test `T-AUTH-10` (Registro contrasena corta (< 10 chars) -> 400) fallo: esperado HTTP 400, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-18 | 12-05-2026 16:27 | Test `T-AUTH-08` (Login admin (setup para tests admin)) fallo: esperado HTTP 200, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-19 | 12-05-2026 16:27 | Test `T-AUTH-09` (Login cuenta inactiva -> 401) fallo: esperado HTTP 401, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-20 | 12-05-2026 16:27 | Test `T-AUTH-04` (Login correcto - obtener token) fallo: esperado HTTP 200, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-21 | 12-05-2026 16:27 | Test `T-AUTH-05` (Login contrasena incorrecta) fallo: esperado HTTP 401, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-22 | 12-05-2026 16:27 | Test `T-AUTH-06` (Ruta protegida sin token -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-23 | 12-05-2026 16:27 | Test `T-AUTH-07` (Ruta protegida con token invalido -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-24 | 12-05-2026 16:27 | Test `T-ADMIN-01` (Acceso admin sin token -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-25 | 12-05-2026 16:27 | Test `T-SEC-01` (Token expirado/invalido -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-26 | 12-05-2026 16:27 | Test `T-SEC-03` (Cabeceras de seguridad presentes (nosniff + no-frame)) fallo: esperado HTTP 200, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-27 | 12-05-2026 16:28 | Test `T-AUTH-09` (Login cuenta inactiva -> 401) fallo: esperado HTTP 401, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-28 | 12-05-2026 16:28 | Test `T-AUTH-04` (Login correcto - obtener token) fallo: esperado HTTP 200, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-29 | 12-05-2026 16:28 | Test `T-AUTH-05` (Login contrasena incorrecta) fallo: esperado HTTP 401, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-30 | 12-05-2026 16:33 | Test `T-AUTH-02` (Registro email duplicado) fallo: esperado HTTP 400, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-31 | 12-05-2026 16:33 | Test `T-AUTH-03` (Registro email con formato invalido) fallo: esperado HTTP 400, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-32 | 12-05-2026 16:33 | Test `T-AUTH-10` (Registro contrasena corta (< 10 chars) -> 400) fallo: esperado HTTP 400, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |

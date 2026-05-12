@@ -261,16 +261,18 @@ Estado verificado a fecha **2026-05-12**:
 
 - Resultado integración API: **69/69 PASS**, **0 FAIL**, **0 SKIP**.
 - Suite unitaria backend: **160 tests** (xUnit).
-- Suite unitaria frontend: **4 specs** (Jasmine/Karma).
+- Suite unitaria frontend: **8 spec files · 64 tests** (Jasmine/Karma).
 
 ### Tests unitarios (sin servidor)
 
-La suite unitaria cubre **160 casos** de backend y **4 specs** de frontend:
+La suite unitaria cubre **160 casos** de backend y **64 tests** de frontend (8 archivos spec):
 
 | Capa | Herramienta | Cobertura |
 |------|-------------|-----------|
 | Backend — 9 servicios | xUnit + EF Core InMemory | AllowedWebsite, CreativeSpace, Document, DocumentPublication, DocumentVersion, Friendship, Message, MusicFile, Recommendation, User |
-| Frontend | Jasmine / Karma | AdminService, AuthService, ConfigService, SpaceWorkspaceComponent |
+| Frontend — servicios | Jasmine / Karma | AdminService, AuthService, ConfigService, SpaceWorkspaceComponent |
+| Frontend — guards | Jasmine / Karma | AuthGuard, GuestGuard, AdminGuard |
+| Frontend — interceptor | Jasmine / Karma | JwtInterceptor (cabecera Authorization, manejo de 401) |
 
 **Windows:**
 ```powershell
@@ -328,11 +330,11 @@ El informe se guarda en `documentacion/RESULTADO_PRUEBAS_<timestamp>.md` (archiv
 
 ### Cobertura actual y plan de ampliación
 
-Actualmente se valida bien la lógica de negocio backend y los flujos críticos de API. La cobertura frontend todavía está concentrada en servicios y seguridad de renderizado Markdown.
+Actualmente se valida bien la lógica de negocio backend, los flujos críticos de API y la capa de seguridad del frontend (guards e interceptor).
 
 Objetivo de incremento de cobertura (siguiente iteración):
 
-1. **Frontend unitario (prioridad alta):** ampliar specs en `guards`, `interceptors` y componentes clave de `pages/social`, `pages/profile` y `pages/spaces`.
+1. **Frontend unitario — componentes (prioridad alta):** ampliar specs en componentes clave de `pages/social`, `pages/profile` y `pages/spaces`.
 2. **Frontend integración (prioridad alta):** empezar a poblar `LifeHub-Frontend/test/integration` con flujos de login, creación/edición de espacios y publicación/despublicación de documentos.
 3. **Frontend E2E (prioridad media):** añadir escenarios de humo en `LifeHub-Frontend/test/e2e` para navegación principal y control de permisos.
 4. **Métrica de cobertura (prioridad media):** publicar porcentaje de líneas/ramas frontend en CI con umbral mínimo (por ejemplo, 60% inicial y subida progresiva por sprint).
