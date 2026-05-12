@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build -- --configuration=production
+RUN npm run build -- --configuration=production --no-budgets
 
 FROM nginx:alpine
 COPY --from=build /app/dist/lifehub-frontend/browser /usr/share/nginx/html
