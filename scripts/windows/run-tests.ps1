@@ -166,6 +166,10 @@ Invoke-ApiTest -Id "T-AUTH-03" -Description "Registro email con formato invalido
     -Method POST -Url "/auth/register" -ExpectedStatus 400 `
     -Body @{ email="esto-no-es-email"; fullName="X"; password=$TestPass; confirmPassword=$TestPass }
 
+Invoke-ApiTest -Id "T-AUTH-10" -Description "Registro contrasena corta (< 10 chars) -> 400" `
+    -Method POST -Url "/auth/register" -ExpectedStatus 400 `
+    -Body @{ email="shortpass_$Timestamp@lifehub-auto.test"; fullName="X"; password="Corta1!"; confirmPassword="Corta1!" }
+
 # Mover login admin aqui para poder activar el usuario de test antes de T-AUTH-04
 if ($AdminEmail -and $AdminPass) {
     Invoke-ApiTest -Id "T-AUTH-08" -Description "Login admin (setup para tests admin)" `
@@ -363,6 +367,11 @@ else {
         else {
             Skip-Test -Id "T-DOC-08" -Description "Restaurar version" -Reason "VersionId no disponible"
         }
+
+        Invoke-ApiTest -Id "T-DOC-10" -Description "GET /documents devuelve shape paginada" `
+            -Method GET -Url "/documents" -ExpectedStatus 200 `
+            -Contains '"totalCount"' `
+            -Token $script:UserToken
 
         Invoke-ApiTest -Id "T-DOC-09" -Description "Eliminar documento OK" `
             -Method DELETE -Url "/documents/$($script:DocId)" -ExpectedStatus 204 `
@@ -658,6 +667,11 @@ if ($script:AdminToken) {
         -Contains '"usage"' `
         -Token $script:AdminToken
 
+    Invoke-ApiTest -Id "T-ADMIN-21" -Description "GET /admin/users devuelve shape paginada" `
+        -Method GET -Url "/admin/users" -ExpectedStatus 200 `
+        -Contains '"totalCount"' `
+        -Token $script:AdminToken
+
     Invoke-ApiTest -Id "T-ADMIN-08" -Description "GET /admin/users sin token -> 401" `
         -Method GET -Url "/admin/users" -ExpectedStatus 401
 
@@ -769,12 +783,49 @@ if ($script:AdminToken) {
 else {
     "T-ADMIN-03","T-ADMIN-04","T-ADMIN-05","T-ADMIN-06","T-ADMIN-07","T-ADMIN-08","T-ADMIN-09",
     "T-ADMIN-10","T-ADMIN-11","T-ADMIN-12","T-ADMIN-13","T-ADMIN-14","T-ADMIN-15",
-    "T-ADMIN-16","T-ADMIN-17","T-ADMIN-18","T-ADMIN-19","T-ADMIN-20" | ForEach-Object {
+    "T-ADMIN-16","T-ADMIN-17","T-ADMIN-18","T-ADMIN-19","T-ADMIN-20","T-ADMIN-21" | ForEach-Object {
         Skip-Test -Id $_ -Description "Test admin" -Reason "AdminToken no disponible"
     }
 }
 
-# --- BLOQUE 6: Seguridad adicional ---
+# --- BLOQUE 6: Mensajes ---
+
+Section "MENSAJES"
+
+if ($script:UserToken -and $script:AdminToken) {
+    $script:AdminUserId = $null
+    try {
+        $adminMeResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/users/me" `
+            -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+            -UseBasicParsing -ErrorAction Stop
+        $script:AdminUserId = ($adminMeResp.Content | ConvertFrom-Json).id
+    } catch { }
+
+    if ($script:AdminUserId) {
+        Invoke-ApiTest -Id "T-MSG-01" -Description "GET conversacion devuelve shape paginada" `
+            -Method GET -Url "/messages/conversation/$($script:AdminUserId)" -ExpectedStatus 200 `
+            -Contains '"totalCount"' `
+            -Token $script:UserToken
+
+        Invoke-ApiTest -Id "T-MSG-02" -Description "GET conversacion sin token -> 401" `
+            -Method GET -Url "/messages/conversation/$($script:AdminUserId)" -ExpectedStatus 401
+
+        Invoke-ApiTest -Id "T-MSG-03" -Description "Enviar mensaje -> 201" `
+            -Method POST -Url "/messages" -ExpectedStatus 201 `
+            -Token $script:UserToken `
+            -Body @{ receiverId=$script:AdminUserId; content="Mensaje de test automatico $Timestamp" }
+    } else {
+        Skip-Test -Id "T-MSG-01" -Description "GET conversacion paginada" -Reason "AdminUserId no disponible"
+        Skip-Test -Id "T-MSG-02" -Description "GET conversacion sin token" -Reason "AdminUserId no disponible"
+        Skip-Test -Id "T-MSG-03" -Description "Enviar mensaje" -Reason "AdminUserId no disponible"
+    }
+} else {
+    Skip-Test -Id "T-MSG-01" -Description "GET conversacion paginada" -Reason "Tokens no disponibles"
+    Skip-Test -Id "T-MSG-02" -Description "GET conversacion sin token" -Reason "Tokens no disponibles"
+    Skip-Test -Id "T-MSG-03" -Description "Enviar mensaje" -Reason "Tokens no disponibles"
+}
+
+# --- BLOQUE 7: Seguridad adicional ---
 
 Section "SEGURIDAD"
 
@@ -937,6 +988,7 @@ $groups = [ordered]@{
     "Publicaciones"                     = "T-PUB"
     "Colaboracion en espacios"          = "T-COL"
     "Panel de Administracion"           = "T-ADMIN"
+    "Mensajes"                          = "T-MSG"
     "Seguridad"                         = "T-SEC"
 }
 
