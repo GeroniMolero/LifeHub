@@ -165,6 +165,26 @@ builder.Services.AddAuthorization(options =>
 // =============================
 builder.Services.AddSignalR();
 
+// =============================
+// RATE LIMITING (AUTH)
+// =============================
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+    options.AddFixedWindowLimiter("login", o =>
+    {
+        o.PermitLimit = 5;
+        o.Window = TimeSpan.FromMinutes(1);
+        o.QueueLimit = 0;
+    });
+    options.AddFixedWindowLimiter("register", o =>
+    {
+        o.PermitLimit = 3;
+        o.Window = TimeSpan.FromMinutes(5);
+        o.QueueLimit = 0;
+    });
+});
+
 builder.WebHost.ConfigureKestrel(o => o.AddServerHeader = false);
 
 var app = builder.Build();
@@ -193,6 +213,7 @@ app.Use(async (ctx, next) =>
 });
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -211,7 +232,7 @@ try
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await db.Database.MigrateAsync();
-        await DataSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider);
+        await DataSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider, app.Environment.IsDevelopment());
     }
 }
 catch (Exception ex)
