@@ -44,7 +44,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   showModal = false;
 
-  openModal(): void  { this.showModal = true; }
+  openModal(): void  { this.showModal = true; this.showCreatePassword = false; }
   closeModal(): void { this.showModal = false; }
 
   get modalTitle(): string {
@@ -63,7 +63,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   });
 
   setPasswordForm = this.fb.group({
-    newPassword: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]]
+    newPassword: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128), Validators.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/)]]
   });
 
   roleForm = this.fb.group({
@@ -72,6 +72,8 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   editUserLoading = false;
   editUserError   = '';
+  showSetPassword = false;
+  showCreatePassword = false;
 
   openEditUserModal(user: AdminUser): void {
     this.editingUser = user;
@@ -81,6 +83,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.setPasswordForm.reset({ newPassword: '' });
     this.roleForm.reset({ role: user.roles[0] ?? 'User' });
     this.showEditUserModal = true;
+    this.showSetPassword = false;
   }
 
   closeEditUserModal(): void {
@@ -229,7 +232,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   createUserForm = this.fb.group({
     email:    ['', [Validators.required, Validators.email]],
     fullName: ['', Validators.required],
-    password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]]
+    password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128), Validators.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/)]]
   });
 
   websiteForm = this.fb.group({

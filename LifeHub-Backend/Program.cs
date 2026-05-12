@@ -120,7 +120,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddErrorDescriber<SpanishIdentityErrorDescriber>();
 
 // =============================
 // JWT

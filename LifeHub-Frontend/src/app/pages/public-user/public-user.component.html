@@ -197,12 +197,27 @@
         </div>
         <div class="form-group">
           <label for="newPassword">Nueva contraseña</label>
-          <input type="password" id="newPassword" formControlName="newPassword"
-            [class.is-invalid]="submittedPassword && passwordForm.get('newPassword')?.errors" />
+          <div class="input-wrapper">
+            <input [type]="showNewPassword ? 'text' : 'password'" id="newPassword" formControlName="newPassword"
+              [class.is-invalid]="submittedPassword && passwordForm.get('newPassword')?.errors" />
+            <button type="button" class="password-toggle"
+              (click)="showNewPassword = !showNewPassword"
+              [attr.aria-label]="showNewPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              <svg *ngIf="!showNewPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg *ngIf="showNewPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
           <div *ngIf="submittedPassword && passwordForm.get('newPassword')?.errors" class="error-message">
             <span *ngIf="passwordForm.get('newPassword')?.errors?.['required']">La contraseña es obligatoria.</span>
             <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">La contraseña debe tener al menos 10 caracteres.</span>
             <span *ngIf="passwordForm.get('newPassword')?.errors?.['maxlength']">La contraseña no puede superar los 128 caracteres.</span>
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['pattern']">Debe incluir mayúsculas, minúsculas, un número y un carácter especial.</span>
           </div>
         </div>
         <div class="form-group">

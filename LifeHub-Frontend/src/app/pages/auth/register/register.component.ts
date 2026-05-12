@@ -16,6 +16,7 @@ export class RegisterComponent implements OnInit {
   loading = false;
   submitted = false;
   error = '';
+  showPassword = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -27,7 +28,7 @@ export class RegisterComponent implements OnInit {
     this.registerForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
       fullName: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]],
+      password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128), Validators.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/)]],
       confirmPassword: ['', Validators.required]
     });
   }

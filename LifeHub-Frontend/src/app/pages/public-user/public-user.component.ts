@@ -59,6 +59,7 @@ export class PublicUserComponent implements OnInit, OnDestroy {
 
   showDocPicker = false;
   showSpacePicker = false;
+  showNewPassword = false;
 
   get editVisibleDocs(): Document[] { return this.publicDocuments; }
   get editAvailableDocs(): Document[] {
@@ -346,7 +347,7 @@ export class PublicUserComponent implements OnInit, OnDestroy {
     });
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]],
+      newPassword: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128), Validators.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/)]],
       confirmPassword: ['', Validators.required]
     });
   }
