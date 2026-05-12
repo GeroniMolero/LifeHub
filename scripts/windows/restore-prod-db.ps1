@@ -8,7 +8,11 @@ Param(
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-if (-not $EnvFile) { $EnvFile = Join-Path $ProjectRoot ".env.production" }
+if (-not $EnvFile) {
+    $EnvProd = Join-Path $ProjectRoot ".env.prod"
+    $EnvLegacy = Join-Path $ProjectRoot ".env.production"
+    $EnvFile = if (Test-Path $EnvProd) { $EnvProd } else { $EnvLegacy }
+}
 
 if (-not (Test-Path $EnvFile)) { throw "Archivo de entorno no encontrado: $EnvFile" }
 Write-Host "Usando entorno: $EnvFile" -ForegroundColor DarkGray
@@ -50,7 +54,7 @@ if (-not $BackupFile -and -not $LocalFile) {
     Write-Host "  .\restore-prod-db.ps1 -List                         # ver backups en el servidor"
     Write-Host "  .\restore-prod-db.ps1 -BackupFile <nombre.bak>      # restaurar backup existente en servidor"
     Write-Host "  .\restore-prod-db.ps1 -LocalFile <ruta\local.bak>   # subir desde este equipo y restaurar"
-    Write-Host "  (opcional) -EnvFile <ruta>   usa otro archivo .env  (por defecto .env.production)"
+    Write-Host "  (opcional) -EnvFile <ruta>   usa otro archivo .env  (por defecto .env.prod)"
     exit 1
 }
 

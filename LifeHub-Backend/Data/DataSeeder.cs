@@ -72,7 +72,19 @@ END
                 }
 
                 // Crear usuario administrador
-                var adminEmail = "admin@lifehub.com";
+                var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
+                var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
+
+                if (string.IsNullOrWhiteSpace(adminEmail))
+                {
+                    adminEmail = "admin@lifehub.com";
+                }
+
+                if (string.IsNullOrWhiteSpace(adminPassword))
+                {
+                    adminPassword = "Admin123!";
+                }
+
                 var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
                 if (adminUser == null)
@@ -87,7 +99,7 @@ END
                         CreatedAt = DateTime.UtcNow
                     };
 
-                    var result = await userManager.CreateAsync(admin, "Admin123!");
+                    var result = await userManager.CreateAsync(admin, adminPassword);
 
                     if (result.Succeeded)
                     {
