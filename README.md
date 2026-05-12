@@ -10,7 +10,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 
 ### Sistema de Autenticación
 - Registro e inicio de sesión seguros
-- Las nuevas cuentas requieren activación por un administrador antes de poder iniciar sesión
+- Las nuevas cuentas se activan automáticamente al registrarse
 - Autenticación basada en JWT
 - Gestión de permisos y roles
 - Persistencia de sesión (localStorage)
@@ -102,6 +102,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - **IHtmlSanitizer / HtmlSanitizer**: sanitización de contenido HTML inyectable y sustituible en tests
 - **BusinessRules**: límites de negocio configurables en `appsettings.json` y expuestos al frontend via `GET /api/config/limits`
 - **Result pattern (`ServiceResult<T>`)**: los servicios devuelven resultados tipados en lugar de lanzar excepciones, con mapeo automático a códigos HTTP en el controlador base
+- **DiscordNotificationService**: notificación al administrador vía webhook de Discord cuando se registra un nuevo usuario; se omite silenciosamente si `DISCORD_WEBHOOK_URL` no está configurada
 - Historial de actividad preservado incluso al eliminar cuentas de usuario
 - Validación de entrada en dos capas: Data Annotations en DTOs y restricciones de longitud en base de datos
 - Cabeceras de seguridad HTTP (`X-Content-Type-Options`, `X-Frame-Options`) y cabecera `Server` suprimida
@@ -144,6 +145,7 @@ cp .env.example .env.production  # servidor de producción
 | `BACKEND_CONTAINER` | Nombre del contenedor backend |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Credenciales para los scripts de test |
 | `DOMAIN` | Dominio para HTTPS en producción (ej. `lifehubapp.duckdns.org`). Requerido para que nginx genere el bloque SSL con Let's Encrypt. |
+| `DISCORD_WEBHOOK_URL` | URL del webhook de Discord para notificaciones de nuevos registros. Opcional — si no se define, las notificaciones se desactivan. |
 
 ## Requisitos
 
