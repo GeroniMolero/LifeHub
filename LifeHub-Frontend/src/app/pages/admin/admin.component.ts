@@ -465,7 +465,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.backupError   = '';
     this.adminService.triggerBackup().subscribe({
       next: res => {
-        this.backupResult  = res.backupFile ? `Backup guardado: ${res.backupFile}` : res.message;
+        this.backupResult  = res.message + (res.backupFile ? ` (${res.backupFile})` : '');
         this.backupLoading = false;
       },
       error: err => {

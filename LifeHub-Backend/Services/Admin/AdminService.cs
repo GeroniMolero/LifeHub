@@ -242,7 +242,7 @@ namespace LifeHub.Services.Admin
             return new BackupResultDto
             {
                 Message = "Backup completado correctamente.",
-                BackupFile = backupPath
+                BackupFile = backupFile
             };
         }
 
