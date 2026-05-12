@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
 using LifeHub.DTOs;
 using LifeHub.Utilidades;
+using LifeHub.Services.Notifications;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -19,17 +20,20 @@ namespace LifeHub.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _env;
+        private readonly INotificationService _notifications;
 
         public AuthController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            INotificationService notifications)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _env = env;
+            _notifications = notifications;
         }
 
         [HttpPost("register")]
@@ -60,6 +64,8 @@ namespace LifeHub.Controllers
 
             // Asignar rol por defecto
             await _userManager.AddToRoleAsync(user, "User");
+
+            _ = _notifications.NotifyNewUserAsync();
 
             return Ok(new AuthResponseDto { Success = true, Message = "Registro exitoso" });
         }

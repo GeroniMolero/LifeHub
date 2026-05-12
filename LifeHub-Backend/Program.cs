@@ -14,6 +14,7 @@ using LifeHub.Services.Messages;
 using LifeHub.Services.Users;
 using LifeHub.Services.AllowedWebsites;
 using LifeHub.Services.Admin;
+using LifeHub.Services.Notifications;
 using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -62,6 +63,8 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAllowedWebsiteService, AllowedWebsiteService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<INotificationService, DiscordNotificationService>();
 
 // =============================
 // SWAGGER + AUTH JWT
