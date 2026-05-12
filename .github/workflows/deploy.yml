@@ -106,11 +106,12 @@ jobs:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         with:
           host: ${{ secrets.PROD_SERVER_HOST }}
           username: root
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          envs: GITHUB_TOKEN,DB_PASSWORD,JWT_KEY,ADMIN_PASSWORD,ADMIN_EMAIL,GHCR_PAT
+          envs: GITHUB_TOKEN,DB_PASSWORD,JWT_KEY,ADMIN_PASSWORD,ADMIN_EMAIL,GHCR_PAT,DISCORD_WEBHOOK_URL
           script: |
             REPO_URL="https://${{ secrets.GHCR_PAT }}@github.com/${{ github.repository }}.git"
  
@@ -145,6 +146,7 @@ jobs:
             printf 'ADMIN_EMAIL=%s\n'            "$ADMIN_EMAIL"                        >> .env
             printf 'ADMIN_PASSWORD=%s\n'         "$ADMIN_PASSWORD"                     >> .env
             printf 'DOMAIN=%s\n'                 "${{ vars.DOMAIN }}"                  >> .env
+            printf 'DISCORD_WEBHOOK_URL=%s\n'   "$DISCORD_WEBHOOK_URL"                >> .env
  
             chmod 600 .env
 
