@@ -180,8 +180,8 @@ builder.Services.AddRateLimiter(options =>
     });
     options.AddFixedWindowLimiter("register", o =>
     {
-        o.PermitLimit = 3;
-        o.Window = TimeSpan.FromMinutes(5);
+        o.PermitLimit = 10;
+        o.Window = TimeSpan.FromMinutes(10);
         o.QueueLimit = 0;
     });
 });
