@@ -38,6 +38,8 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 
 - Crear, editar y eliminar espacios.
 - Con acceso a editor markdown y recursos multimedia embebidos.
+- Items multimedia posicionables, redimensionables y con control de volumen para vídeos
+- Buscador de documentos en la sidebar del espacio
 - Posibilidad de espacio colaborativo con tu lista de amigos.
 - **Colaboración por roles**: invitados con rol Viewer (solo lectura) o Editor (lectura y escritura)
 - Los editores pueden crear y modificar documentos del espacio
