@@ -200,8 +200,9 @@
           <input type="password" id="newPassword" formControlName="newPassword"
             [class.is-invalid]="submittedPassword && passwordForm.get('newPassword')?.errors" />
           <div *ngIf="submittedPassword && passwordForm.get('newPassword')?.errors" class="error-message">
-            <span *ngIf="passwordForm.get('newPassword')?.errors?.['required']">La nueva contraseña es requerida</span>
-            <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">Mínimo 6 caracteres</span>
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['required']">La contraseña es obligatoria.</span>
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">La contraseña debe tener al menos 10 caracteres.</span>
+            <span *ngIf="passwordForm.get('newPassword')?.errors?.['maxlength']">La contraseña no puede superar los 128 caracteres.</span>
           </div>
         </div>
         <div class="form-group">

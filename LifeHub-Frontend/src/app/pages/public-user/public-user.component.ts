@@ -346,7 +346,7 @@ export class PublicUserComponent implements OnInit, OnDestroy {
     });
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      newPassword: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]],
       confirmPassword: ['', Validators.required]
     });
   }

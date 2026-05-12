@@ -62,12 +62,13 @@
             type="password"
             id="password"
             formControlName="password"
-            placeholder="Minimo 6 caracteres"
+            placeholder="Mínimo 10 caracteres"
             [class.is-invalid]="submitted && f['password'].errors"
           />
           <div *ngIf="submitted && f['password'].errors" class="error-message">
-            <span *ngIf="f['password'].errors['required']">Contrasena es requerida</span>
-            <span *ngIf="f['password'].errors['minlength']">Minimo 6 caracteres</span>
+            <span *ngIf="f['password'].errors['required']">La contraseña es obligatoria.</span>
+            <span *ngIf="f['password'].errors['minlength']">La contraseña debe tener al menos 10 caracteres.</span>
+            <span *ngIf="f['password'].errors['maxlength']">La contraseña no puede superar los 128 caracteres.</span>
           </div>
         </div>
 
