@@ -37,6 +37,8 @@
   border: $border-width-base solid $color-brand-border-medium;
   background: $color-white;
   box-shadow: $shadow-sm;
+  display: flex;
+  flex-direction: column;
 }
 
 .visual-item-handle {
@@ -56,6 +58,30 @@
   cursor: grabbing;
 }
 
+.visual-item-close {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 0;
+  border-radius: $border-radius-md;
+  background: transparent;
+  color: $color-slate-500;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background-color $transition-fast, color $transition-fast;
+
+  &:hover {
+    background: rgba(231, 76, 60, 0.12);
+    color: $color-danger;
+  }
+}
+
 .visual-item-handle strong,
 .visual-item-handle span {
   font-size: $font-size-sm;
@@ -64,14 +90,56 @@
 .visual-media {
   display: block;
   width: 100%;
-  max-height: 20rem;
+  flex: 1;
+  min-height: 0;
   object-fit: contain;
 }
 
 .visual-embed {
-  aspect-ratio: 16 / 9;
-  max-height: none;
   border: 0;
+}
+
+.visual-volume-bar {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-1 $space-3;
+  background: $color-brand-050;
+  border-top: $border-width-base solid $color-brand-border-medium;
+  flex-shrink: 0;
+
+  input[type='range'] {
+    flex: 1;
+    height: 4px;
+    accent-color: $color-brand-700;
+    cursor: pointer;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+}
+
+.volume-icon {
+  width: 1rem;
+  height: 1rem;
+  fill: $color-slate-600;
+  flex-shrink: 0;
+}
+
+.visual-item-resize {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 40%, $color-brand-border-medium 40%);
+  border-radius: 0 0 $border-radius-lg 0;
+  opacity: 0.6;
+  transition: opacity $transition-fast;
+  z-index: 1;
+
+  &:hover { opacity: 1; }
 }
 
 .editor-empty-state,

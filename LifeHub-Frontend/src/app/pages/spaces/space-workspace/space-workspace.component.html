@@ -204,7 +204,9 @@
       (setActiveTab)="setActiveTab($event)"
       (saveDocument)="saveDocument()"
       (deleteDocument)="deleteDocument($event)"
-      (startDraggingMedia)="startDraggingMedia($event.event, $event.id)">
+      (startDraggingMedia)="startDraggingMedia($event.event, $event.id)"
+      (startResizingMedia)="startResizingMedia($event.event, $event.id)"
+      (closeVisualItem)="activeVisualMediaIds.delete($event)">
     </app-space-editor-main>
 
     <aside class="workspace-sidebar">
@@ -214,7 +216,8 @@
         [documents]="documents"
         [selectedDocument]="selectedDocument"
         (openCreateDocument)="openDocumentModal('create')"
-        (selectDocument)="selectDocument($event)">
+        (selectDocument)="selectDocument($event)"
+        (deselectDocument)="deselectDocument()">
       </app-space-documents-sidebar>
 
     </aside>

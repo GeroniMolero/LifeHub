@@ -19,8 +19,17 @@ export class SpaceDocumentsSidebarComponent {
 
   @Output() openCreateDocument = new EventEmitter<void>();
   @Output() selectDocument = new EventEmitter<Document>();
+  @Output() deselectDocument = new EventEmitter<void>();
 
   searchQuery = '';
+
+  onDocumentClick(doc: Document): void {
+    if (doc.id === this.selectedDocument?.id) {
+      this.deselectDocument.emit();
+    } else {
+      this.selectDocument.emit(doc);
+    }
+  }
 
   get filteredDocuments(): Document[] {
     const q = this.searchQuery.trim().toLowerCase();

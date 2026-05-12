@@ -8,6 +8,10 @@
         <header class="visual-item-handle" (pointerdown)="startDraggingMedia.emit({ event: $event, id: item.id })">
           <strong>{{ item.label }}</strong>
           <span>{{ isEmbedReference(item) ? (item.provider || 'Embed') : (isVideoReference(item) ? 'Video' : 'Imagen') }}</span>
+          <button class="visual-item-close" type="button"
+                  (pointerdown)="$event.stopPropagation()"
+                  (click)="closeVisualItem.emit(item.id)"
+                  title="Cerrar">✕</button>
         </header>
 
         <iframe
@@ -19,12 +23,22 @@
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture">
         </iframe>
 
-        <video
-          *ngIf="isVideoReference(item) && getLocalMediaUrl(item.id)"
-          class="visual-media"
-          controls
-          [src]="getLocalMediaUrl(item.id)!">
-        </video>
+        <ng-container *ngIf="isVideoReference(item) && getLocalMediaUrl(item.id)">
+          <video
+            #vid
+            class="visual-media"
+            controls
+            [src]="getLocalMediaUrl(item.id)!">
+          </video>
+          <div class="visual-volume-bar">
+            <svg class="volume-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+            </svg>
+            <input type="range" min="0" max="1" step="0.01" value="1"
+                   (input)="vid.volume = +$any($event.target).value"
+                   aria-label="Volumen" />
+          </div>
+        </ng-container>
 
         <img
           *ngIf="isImageReference(item) && getLocalMediaUrl(item.id)"
@@ -32,6 +46,9 @@
           [src]="getLocalMediaUrl(item.id)!"
           draggable="false"
           alt="Multimedia del espacio" />
+
+        <div class="visual-item-resize"
+             (pointerdown)="startResizingMedia.emit({ event: $event, id: item.id })"></div>
       </article>
     </div>
 

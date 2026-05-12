@@ -34,6 +34,7 @@ interface VisualMediaLayout {
   x: number;
   y: number;
   width: number;
+  height: number;
   zIndex: number;
 }
 
@@ -99,6 +100,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   visualLayouts = new Map<string, VisualMediaLayout>();
   activeVisualMediaIds = new Set<string>();
   private draggingMedia: { id: string; offsetX: number; offsetY: number } | null = null;
+  private resizingMedia: { id: string; startX: number; startY: number; startWidth: number; startHeight: number } | null = null;
   private zIndexCounter = 10;
 
   readonly allowedEmbedDomains: string[] = [...MEDIA_EMBED_ALLOWED_DOMAINS];
@@ -224,22 +226,34 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
   @HostListener('document:pointermove', ['$event'])
   onPointerMove(event: PointerEvent): void {
-    if (!this.draggingMedia) return;
+    if (this.draggingMedia) {
+      const layout = this.visualLayouts.get(this.draggingMedia.id);
+      if (!layout) return;
 
-    const layout = this.visualLayouts.get(this.draggingMedia.id);
-    if (!layout) return;
+      const canvas = document.querySelector('.main-content-canvas') as HTMLElement | null;
+      const canvasRect = canvas?.getBoundingClientRect();
+      if (!canvasRect) return;
 
-    const canvas = document.querySelector('.main-content-canvas') as HTMLElement | null;
-    const canvasRect = canvas?.getBoundingClientRect();
-    if (!canvasRect) return;
+      layout.x = Math.max(0, event.clientX - canvasRect.left - this.draggingMedia.offsetX);
+      layout.y = Math.max(0, event.clientY - canvasRect.top - this.draggingMedia.offsetY);
+      return;
+    }
 
-    layout.x = Math.max(0, event.clientX - canvasRect.left - this.draggingMedia.offsetX);
-    layout.y = Math.max(0, event.clientY - canvasRect.top - this.draggingMedia.offsetY);
+    if (this.resizingMedia) {
+      const layout = this.visualLayouts.get(this.resizingMedia.id);
+      if (!layout) return;
+
+      const dw = event.clientX - this.resizingMedia.startX;
+      const dh = event.clientY - this.resizingMedia.startY;
+      layout.width = Math.max(200, this.resizingMedia.startWidth + dw);
+      layout.height = Math.max(150, this.resizingMedia.startHeight + dh);
+    }
   }
 
   @HostListener('document:pointerup')
   onPointerUp(): void {
     this.draggingMedia = null;
+    this.resizingMedia = null;
   }
 
   openSettingsModal(): void {
@@ -422,6 +436,12 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.activeTab = 'code';
     this.editDocumentForm.patchValue(document);
     this.updateRenderedPreview();
+  }
+
+  deselectDocument(): void {
+    this.selectedDocument = null;
+    this.editDocumentForm.reset();
+    this.renderedPreview = '';
   }
 
   openImportTab(): void {
@@ -672,6 +692,23 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.bringVisualToFront(id);
   }
 
+  startResizingMedia(event: PointerEvent, id: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const layout = this.visualLayouts.get(id);
+    if (!layout) return;
+
+    this.resizingMedia = {
+      id,
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: layout.width,
+      startHeight: layout.height
+    };
+
+    this.bringVisualToFront(id);
+  }
+
   removeMediaReference(id: string): void {
     if (!this.space) return;
 
@@ -800,10 +837,15 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     }
 
     const offset = this.visualLayouts.size * 24;
+    const isEmbed = reference.type === 'external-embed';
+    const isImage = reference.mimeType?.startsWith('image/');
+    const width = isEmbed ? 380 : (isImage ? 280 : 340);
+    const height = isEmbed ? 260 : (isImage ? 220 : 260);
     this.visualLayouts.set(reference.id, {
       x: 24 + Math.min(offset, 240),
       y: 24 + Math.min(offset, 180),
-      width: reference.type === 'external-embed' ? 360 : (reference.mimeType?.startsWith('image/') ? 260 : 320),
+      width,
+      height,
       zIndex: ++this.zIndexCounter
     });
   }
