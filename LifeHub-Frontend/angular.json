@@ -31,13 +31,6 @@
             "styles": [
               "src/styles.scss"
             ],
-            "budgets": [
-              {
-                "type": "initial",
-                "maximumWarning": "3mb",
-                "maximumError": "10mb"
-              }
-            ],
             "scripts": []
           },
           "configurations": {
@@ -53,6 +46,11 @@
                   "type": "initial",
                   "maximumWarning": "3mb",
                   "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "20kb",
+                  "maximumError": "30kb"
                 }
               ],
               "outputHashing": "all"
