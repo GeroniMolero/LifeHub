@@ -144,6 +144,7 @@ jobs:
             printf 'JWT_KEY=%s\n'                "$JWT_KEY"                            >> .env
             printf 'ADMIN_EMAIL=%s\n'            "$ADMIN_EMAIL"                        >> .env
             printf 'ADMIN_PASSWORD=%s\n'         "$ADMIN_PASSWORD"                     >> .env
+            printf 'DOMAIN=%s\n'                 "${{ vars.DOMAIN }}"                  >> .env
  
             chmod 600 .env
 
