@@ -114,8 +114,10 @@ jobs:
             fi
  
             cd /opt/lifehub
+            git fetch "$REPO_URL" production
             git checkout production
-            git pull "$REPO_URL" production
+            git reset --hard FETCH_HEAD
+            git clean -fd
  
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
  
@@ -138,7 +140,6 @@ jobs:
             printf 'ADMIN_PASSWORD=%s\n' "$ADMIN_PASSWORD" >> .env
  
             chmod 600 .env
- 
-            docker compose pull
-            docker compose up -d
+
+            docker compose up -d --build --force-recreate
             docker compose ps
