@@ -108,8 +108,8 @@ jobs:
           script: |
             REPO_URL="https://${{ secrets.GHCR_PAT }}@github.com/${{ github.repository }}.git"
  
-            if [ ! -d "/opt/lifehub" ]; then
-              mkdir -p /opt/lifehub
+            if [ ! -d "/opt/lifehub/.git" ]; then
+              rm -rf /opt/lifehub
               git clone "$REPO_URL" /opt/lifehub
             fi
  
