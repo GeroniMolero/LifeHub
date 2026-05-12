@@ -31,10 +31,11 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   createError = '';
   showForm = false;
   submitted = false;
+  serverTotalCount = 0;
   readonly DocumentType = DocumentType;
   readonly pageSizeOptions = [5, 10, 20, 50];
-  pageSize = 10;
-  pageSizeControl = new FormControl<number>(10, { nonNullable: true });
+  pageSize = 20;
+  pageSizeControl = new FormControl<number>(20, { nonNullable: true });
   currentPage = 1;
   private filterChangesSub?: Subscription;
   private userChangesSub?: Subscription;
@@ -86,6 +87,7 @@ export class DocumentsComponent implements OnInit, OnDestroy {
 
       this.pageSize = parsed;
       this.currentPage = 1;
+      this.loadDocuments();
     });
 
     this.setHeaderState();
@@ -209,13 +211,11 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   }
 
   get paginatedDocuments(): Document[] {
-    const start = (this.normalizedCurrentPage - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    return this.filteredDocuments.slice(start, end);
+    return this.filteredDocuments;
   }
 
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredDocuments.length / this.pageSize));
+    return Math.max(1, Math.ceil(this.serverTotalCount / this.pageSize));
   }
 
   get normalizedCurrentPage(): number {
@@ -223,14 +223,12 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   }
 
   get startItemIndex(): number {
-    if (this.filteredDocuments.length === 0) {
-      return 0;
-    }
+    if (this.serverTotalCount === 0) return 0;
     return (this.normalizedCurrentPage - 1) * this.pageSize + 1;
   }
 
   get endItemIndex(): number {
-    return Math.min(this.normalizedCurrentPage * this.pageSize, this.filteredDocuments.length);
+    return Math.min(this.normalizedCurrentPage * this.pageSize, this.serverTotalCount);
   }
 
   get hasActiveFilters(): boolean {
@@ -266,12 +264,14 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   goToPreviousPage(): void {
     if (this.normalizedCurrentPage > 1) {
       this.currentPage = this.normalizedCurrentPage - 1;
+      this.loadDocuments();
     }
   }
 
   goToNextPage(): void {
     if (this.normalizedCurrentPage < this.totalPages) {
       this.currentPage = this.normalizedCurrentPage + 1;
+      this.loadDocuments();
     }
   }
 
@@ -332,9 +332,10 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   private loadDocuments(): void {
     this.loading = true;
     this.error = '';
-    this.documentService.getDocuments().subscribe({
-      next: (documents) => {
-        this.documents = documents;
+    this.documentService.getDocumentsPage(this.currentPage, this.pageSize).subscribe({
+      next: (result) => {
+        this.documents = result.items;
+        this.serverTotalCount = result.totalCount;
         this.loading = false;
       },
       error: () => {

@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { AdminService } from './admin.service';
-import { AdminUser, UserUsage } from '../models/auth.model';
+import { AdminUser, PaginatedResult, UserUsage } from '../models/auth.model';
 
 describe('AdminService', () => {
   let service: AdminService;
@@ -31,17 +31,23 @@ describe('AdminService', () => {
   // ── getAdminUsers ─────────────────────────────────────────────────────────
 
   it('getAdminUsers calls GET /admin/users', () => {
+    httpSpy.get.and.returnValue(of({ items: [], totalCount: 0, page: 1, pageSize: 20 }));
     service.getAdminUsers().subscribe();
-    expect(httpSpy.get).toHaveBeenCalledWith(jasmine.stringContaining('/admin/users'));
+    expect(httpSpy.get).toHaveBeenCalledWith(
+      jasmine.stringContaining('/admin/users'),
+      jasmine.any(Object)
+    );
   });
 
-  it('getAdminUsers returns array from response', (done) => {
+  it('getAdminUsers returns paginated result', (done) => {
     const users = [makeAdminUser(), makeAdminUser({ id: 'u2', email: 'u2@test.com' })];
-    httpSpy.get.and.returnValue(of(users));
+    const paginated: PaginatedResult<AdminUser> = { items: users, totalCount: 2, page: 1, pageSize: 20 };
+    httpSpy.get.and.returnValue(of(paginated));
 
     service.getAdminUsers().subscribe(result => {
-      expect(result.length).toBe(2);
-      expect(result[0].usage).toBeDefined();
+      expect(result.items.length).toBe(2);
+      expect(result.totalCount).toBe(2);
+      expect(result.items[0].usage).toBeDefined();
       done();
     });
   });

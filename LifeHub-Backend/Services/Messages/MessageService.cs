@@ -17,16 +17,28 @@ namespace LifeHub.Services.Messages
             _mapper = mapper;
         }
 
-        public async Task<ServiceResult<List<MessageDto>>> GetConversationAsync(string userId, string otherUserId)
+        public async Task<ServiceResult<PaginatedResult<MessageDto>>> GetConversationAsync(string userId, string otherUserId, int page = 1, int pageSize = 50)
         {
-            var messages = await _context.Messages
+            var query = _context.Messages
                 .Where(m =>
                     (m.SenderId == userId && m.ReceiverId == otherUserId) ||
-                    (m.SenderId == otherUserId && m.ReceiverId == userId))
+                    (m.SenderId == otherUserId && m.ReceiverId == userId));
+
+            var totalCount = await query.CountAsync();
+            var messages = await query
+                .OrderByDescending(m => m.SentAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
-            return ServiceResult<List<MessageDto>>.Ok(_mapper.Map<List<MessageDto>>(messages));
+            return ServiceResult<PaginatedResult<MessageDto>>.Ok(new PaginatedResult<MessageDto>
+            {
+                Items = _mapper.Map<List<MessageDto>>(messages),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         public async Task<ServiceResult<MessageDto>> SendMessageAsync(string userId, CreateMessageDto dto)

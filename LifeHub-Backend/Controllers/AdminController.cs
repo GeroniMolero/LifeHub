@@ -20,10 +20,10 @@ namespace LifeHub.Controllers
 
         [HttpGet("users")]
         [Authorize(Policy = "CanViewAdmin")]
-        public async Task<IActionResult> GetAdminUsers()
+        public async Task<IActionResult> GetAdminUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var users = await _adminService.GetAdminUsersAsync();
-            return Ok(users);
+            var result = await _adminService.GetAdminUsersAsync(page, pageSize);
+            return Ok(result);
         }
 
         [HttpPut("users/{id}/toggle-active")]

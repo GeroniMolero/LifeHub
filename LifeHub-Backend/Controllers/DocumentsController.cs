@@ -27,12 +27,12 @@ namespace LifeHub.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetDocuments([FromQuery] int? spaceId = null)
+        public async Task<IActionResult> GetDocuments([FromQuery] int? spaceId = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
             if (authError != null) return authError;
 
-            var result = await _documentService.GetDocumentsAsync(userId, HasPermission("documents.view.all"), spaceId);
+            var result = await _documentService.GetDocumentsAsync(userId, HasPermission("documents.view.all"), spaceId, page, pageSize);
             return ToActionResult(result);
         }
 

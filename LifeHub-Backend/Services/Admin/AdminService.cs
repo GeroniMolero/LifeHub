@@ -28,23 +28,32 @@ namespace LifeHub.Services.Admin
             _configuration = configuration;
         }
 
-        public async Task<List<AdminUserDto>> GetAdminUsersAsync()
+        public async Task<PaginatedResult<AdminUserDto>> GetAdminUsersAsync(int page = 1, int pageSize = 20)
         {
-            var users = await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
+            var totalCount = await _userManager.Users.CountAsync();
+            var users = await _userManager.Users
+                .OrderBy(u => u.Email)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            // Batch usage queries
+            var userIds = users.Select(u => u.Id).ToList();
+
+            // Batch usage queries scoped to this page's users
             var docCounts = await _context.Documents
+                .Where(d => userIds.Contains(d.UserId))
                 .GroupBy(d => d.UserId)
                 .Select(g => new { UserId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.UserId, x => x.Count);
 
             var spaceCounts = await _context.CreativeSpaces
+                .Where(cs => userIds.Contains(cs.OwnerId))
                 .GroupBy(cs => cs.OwnerId)
                 .Select(g => new { OwnerId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.OwnerId, x => x.Count);
 
             var pubStats = await _context.Documents
-                .Where(d => d.Publication != null)
+                .Where(d => userIds.Contains(d.UserId) && d.Publication != null)
                 .Select(d => new { d.UserId, d.Publication!.IsProfileVisible })
                 .GroupBy(x => x.UserId)
                 .Select(g => new
@@ -56,19 +65,19 @@ namespace LifeHub.Services.Admin
                 .ToDictionaryAsync(x => x.UserId, x => new { x.Published, x.ProfileVisible });
 
             var profileVisibleSpaceCounts = await _context.CreativeSpaces
-                .Where(cs => cs.IsPublicProfileVisible)
+                .Where(cs => userIds.Contains(cs.OwnerId) && cs.IsPublicProfileVisible)
                 .GroupBy(cs => cs.OwnerId)
                 .Select(g => new { OwnerId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.OwnerId, x => x.Count);
 
-            var result = new List<AdminUserDto>();
+            var items = new List<AdminUserDto>();
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 var claims = await _userManager.GetClaimsAsync(user);
 
                 pubStats.TryGetValue(user.Id, out var pub);
-                result.Add(new AdminUserDto
+                items.Add(new AdminUserDto
                 {
                     Id = user.Id,
                     Email = user.Email!,
@@ -94,7 +103,13 @@ namespace LifeHub.Services.Admin
                     }
                 });
             }
-            return result;
+            return new PaginatedResult<AdminUserDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         public async Task<AdminUserDto> ToggleActiveAsync(string id, string callerUserId)

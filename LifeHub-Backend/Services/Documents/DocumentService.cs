@@ -23,7 +23,7 @@ namespace LifeHub.Services.Documents
             _rules = rules.Value;
         }
 
-        public async Task<ServiceResult<List<DocumentDto>>> GetDocumentsAsync(string userId, bool canViewAll, int? spaceId = null)
+        public async Task<ServiceResult<PaginatedResult<DocumentDto>>> GetDocumentsAsync(string userId, bool canViewAll, int? spaceId = null, int page = 1, int pageSize = 20)
         {
             var query = _context.Documents.AsQueryable();
 
@@ -40,12 +40,21 @@ namespace LifeHub.Services.Documents
             if (spaceId.HasValue)
                 query = query.Where(d => d.CreativeSpaceId == spaceId.Value);
 
+            var totalCount = await query.CountAsync();
             var documents = await query
                 .Include(d => d.User)
                 .OrderByDescending(d => d.UpdatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return ServiceResult<List<DocumentDto>>.Ok(_mapper.Map<List<DocumentDto>>(documents));
+            return ServiceResult<PaginatedResult<DocumentDto>>.Ok(new PaginatedResult<DocumentDto>
+            {
+                Items = _mapper.Map<List<DocumentDto>>(documents),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            });
         }
 
         public async Task<ServiceResult<DocumentDto>> CopyToSpaceAsync(int documentId, string userId, int targetSpaceId)

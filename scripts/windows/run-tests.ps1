@@ -190,10 +190,10 @@ Invoke-ApiTest -Id "T-AUTH-09" -Description "Login cuenta inactiva -> 401" `
 # Helper: activar el usuario de test con admin antes de intentar login
 if ($script:AdminToken) {
     try {
-        $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users" `
+        $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users?pageSize=100" `
             -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
             -UseBasicParsing -ErrorAction Stop
-        $usersArr = $usersResp.Content | ConvertFrom-Json
+        $usersArr = ($usersResp.Content | ConvertFrom-Json).items
         $testUser  = $usersArr | Where-Object { $_.email -eq $TestEmail } | Select-Object -First 1
         if ($testUser) {
             $script:TestUserId = $testUser.id
@@ -737,10 +737,10 @@ if ($script:AdminToken) {
                 -Headers @{ "Content-Type"="application/json" } `
                 -Body $reg2Body -UseBasicParsing -ErrorAction Stop | Out-Null
 
-            $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users" `
+            $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users?pageSize=100" `
                 -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
                 -UseBasicParsing -ErrorAction Stop
-            $parsed = $usersResp.Content | ConvertFrom-Json
+            $parsed = ($usersResp.Content | ConvertFrom-Json).items
             $script:User2Id = ($parsed | Where-Object { $_.email -eq $User2Email }).id
         } catch { }
 
