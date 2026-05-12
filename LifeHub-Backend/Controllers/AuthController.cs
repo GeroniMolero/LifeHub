@@ -49,7 +49,7 @@ namespace LifeHub.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 EmailConfirmed = true,
-                IsActive = false,
+                IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 

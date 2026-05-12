@@ -185,13 +185,7 @@ if ($AdminEmail -and $AdminPass) {
     Skip-Test -Id "T-AUTH-08" -Description "Login admin" -Reason "ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env"
 }
 
-# T-AUTH-09: el usuario recien registrado tiene IsActive=false, login debe ser 401
-Invoke-ApiTest -Id "T-AUTH-09" -Description "Login cuenta inactiva -> 401" `
-    -Method POST -Url "/auth/login" -ExpectedStatus 401 `
-    -Contains "Esta cuenta no" `
-    -Body @{ email=$TestEmail; password=$TestPass }
-
-# Helper: activar el usuario de test con admin antes de intentar login
+# T-AUTH-09: admin desactiva la cuenta → login bloqueado → admin la reactiva
 if ($script:AdminToken) {
     try {
         $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users?pageSize=100" `
@@ -201,14 +195,32 @@ if ($script:AdminToken) {
         $testUser  = $usersArr | Where-Object { $_.email -eq $TestEmail } | Select-Object -First 1
         if ($testUser) {
             $script:TestUserId = $testUser.id
+            # Desactivar para el test
             Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$($testUser.id)/toggle-active" `
                 -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
                 -Body "{}" -UseBasicParsing -ErrorAction Stop | Out-Null
-            Write-Host "  [INFO] Usuario de test activado (id=$($testUser.id))" -ForegroundColor DarkGray
         }
     } catch {
-        Write-Host "  [WARN] No se pudo activar el usuario de test: $_" -ForegroundColor DarkYellow
+        Write-Host "  [WARN] No se pudo desactivar el usuario de test: $_" -ForegroundColor DarkYellow
     }
+
+    Invoke-ApiTest -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" `
+        -Method POST -Url "/auth/login" -ExpectedStatus 401 `
+        -Contains "Esta cuenta no" `
+        -Body @{ email=$TestEmail; password=$TestPass }
+
+    # Reactivar para los tests siguientes
+    if ($script:TestUserId) {
+        try {
+            Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$script:TestUserId/toggle-active" `
+                -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+                -Body "{}" -UseBasicParsing -ErrorAction Stop | Out-Null
+        } catch {
+            Write-Host "  [WARN] No se pudo reactivar el usuario de test: $_" -ForegroundColor DarkYellow
+        }
+    }
+} else {
+    Skip-Test -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" -Reason "AdminToken no disponible"
 }
 
 Invoke-ApiTest -Id "T-AUTH-04" -Description "Login correcto - obtener token" `
