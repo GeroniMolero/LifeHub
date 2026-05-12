@@ -7,7 +7,7 @@ namespace LifeHub.Data
 {
     public static class DataSeeder
     {
-        public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
+        public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider, bool isDevelopment = false)
         {
             using (var scope = serviceProvider.CreateScope())
             {
@@ -128,33 +128,36 @@ END
                     }
                 }
 
-                // Crear usuarios de prueba
-                var testUsers = new[]
+                if (isDevelopment)
                 {
-                    new { Email = "juan@lifehub.com", Name = "Juan Pérez", Password = "Test123!" },
-                    new { Email = "maria@lifehub.com", Name = "María García", Password = "Test123!" },
-                    new { Email = "carlos@lifehub.com", Name = "Carlos López", Password = "Test123!" }
-                };
-
-                foreach (var testUser in testUsers)
-                {
-                    var existingUser = await userManager.FindByEmailAsync(testUser.Email);
-                    if (existingUser == null)
+                    // Crear usuarios de prueba (solo en Development)
+                    var testUsers = new[]
                     {
-                        var user = new ApplicationUser
-                        {
-                            UserName = testUser.Email,
-                            Email = testUser.Email,
-                            EmailConfirmed = true,
-                            IsActive = true,
-                            FullName = testUser.Name,
-                            CreatedAt = DateTime.UtcNow
-                        };
+                        new { Email = "juan@lifehub.com", Name = "Juan Pérez", Password = "Test123!" },
+                        new { Email = "maria@lifehub.com", Name = "María García", Password = "Test123!" },
+                        new { Email = "carlos@lifehub.com", Name = "Carlos López", Password = "Test123!" }
+                    };
 
-                        var result = await userManager.CreateAsync(user, testUser.Password);
-                        if (result.Succeeded)
+                    foreach (var testUser in testUsers)
+                    {
+                        var existingUser = await userManager.FindByEmailAsync(testUser.Email);
+                        if (existingUser == null)
                         {
-                            await userManager.AddToRoleAsync(user, "User");
+                            var user = new ApplicationUser
+                            {
+                                UserName = testUser.Email,
+                                Email = testUser.Email,
+                                EmailConfirmed = true,
+                                IsActive = true,
+                                FullName = testUser.Name,
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            var result = await userManager.CreateAsync(user, testUser.Password);
+                            if (result.Succeeded)
+                            {
+                                await userManager.AddToRoleAsync(user, "User");
+                            }
                         }
                     }
                 }
