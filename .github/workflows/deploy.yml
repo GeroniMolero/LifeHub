@@ -100,6 +100,11 @@ jobs:
     steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
         with:
           host: ${{ secrets.PROD_SERVER_HOST }}
           username: root
