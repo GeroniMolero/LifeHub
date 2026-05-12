@@ -99,11 +99,16 @@ Clase estática con las constantes compartidas entre servicios (por ejemplo, el 
 
 Extiende `ClaimsPrincipal` con `GetUserId()` para extraer el identificador de usuario del token JWT de forma consistente en toda la aplicación.
 
+### Mensajes de Identity en español — `SpanishIdentityErrorDescriber`
+
+Hereda de `IdentityErrorDescriber` y sobreescribe los mensajes de complejidad de contraseña para que el servidor devuelva los errores en español en lugar del texto por defecto de .NET (`PasswordRequiresDigit`, `PasswordRequiresLower`, `PasswordRequiresUpper`, `PasswordRequiresNonAlphanumeric`, `PasswordTooShort`). Registrado en `Program.cs` con `.AddErrorDescriber<SpanishIdentityErrorDescriber>()`.
+
 ## Validación
 
 - **DTOs de entrada**: Data Annotations (`[Required]`, `[MaxLength]`, `[StringLength]`, `[EmailAddress]`, etc.)
 - **Base de datos**: restricciones `HasMaxLength` en EF Core para todas las columnas de texto
-- **Frontend**: Reactive Forms con validación cliente (Angular)
+- **Frontend**: Reactive Forms con validación cliente (Angular), incluyendo validador de complejidad de contraseña (`Validators.pattern`) que replica la política de Identity
+- **Contraseña**: mínimo 10 caracteres, mayúscula, minúscula, dígito y carácter especial — validado en frontend y backend con mensajes en español vía `SpanishIdentityErrorDescriber`
 - **Cuotas de negocio**: comprobadas en la capa de servicio antes de persistir (máximo de documentos, espacios, versiones, publicaciones y elementos visibles en perfil por usuario)
 
 ## Registro de actividad

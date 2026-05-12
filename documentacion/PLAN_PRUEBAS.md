@@ -1,6 +1,6 @@
 ﻿# Plan de Pruebas — LifeHub
 
-**Fecha:** 08-05-2026 (última actualización)  
+**Fecha:** 12-05-2026 (última actualización)  
 **Versión del proyecto:** master (post-patrones de diseño, validación coherente, scripts robustos)  
 **Entorno de pruebas:** Docker dev stack (lifehub-sql-dev + lifehub-backend-dev) + frontend local
 
@@ -203,3 +203,4 @@
 | INC-10 | 12-05-2026 | Test `T-SEC-06` (IDOR: acceso a espacio privado ajeno) fallaba con estado esperado 404 pero el endpoint devuelve 403 cuando se intenta acceder a un espacio privado de otro usuario. El comportamiento del backend es correcto: devuelve 403 Forbidden (el recurso existe pero el acceso está denegado). Corregido ajustando el estado esperado del test a 403. | Resuelta |
 | INC-11 | 12-05-2026 | `DELETE /users/{id}` devolvía HTTP 500 al eliminar un usuario que tenía registros relacionados con restricciones FK `ON DELETE NO ACTION` (SpacePermissions, Friendships, Messages, RecommendationRatings, DocumentVersions y DocumentPublications en documentos ajenos). Corregido añadiendo el método `CleanupUserRelationsAsync` en `UserService` que elimina explícitamente esos registros antes de llamar a `UserManager.DeleteAsync`. Test `T-ADMIN-20` añadido para cubrir este escenario; el endpoint devuelve 204 No Content. | Resuelta |
 | INC-12 a INC-19 | 12-05-2026 12:51 | Ocho tests de autenticación y seguridad devolvieron HTTP 500 de forma simultánea. Causa raíz: dos pipelines de despliegue se lanzaron en paralelo al hacer push de dos commits a la vez, lo que dejó el contenedor de base de datos detenido. Los endpoints que no requieren BD seguían respondiendo correctamente (HTTP 400/401), confirmando que el backend estaba en marcha pero sin acceso a datos. Resuelto relanzando el último pipeline. **69/69 PASS** tras el redespliegue. | Resuelta |
+| INC-13 a INC-20 | 12-05-2026 15:04 | Ocho tests de autenticación (`T-AUTH-01`, `T-AUTH-02`, `T-AUTH-03`, `T-AUTH-04`, `T-AUTH-05`, `T-AUTH-08`, `T-AUTH-09`, `T-AUTH-10`) devolvieron HTTP 405 al ejecutar la suite contra la IP (`http://178.105.128.94`). Causa raíz: la suite se ejecutó justo después de implementar el redirect HTTP→HTTPS. nginx devuelve 301 ante cualquier petición HTTP; el cliente HTTP convierte las peticiones POST en GET al seguir el redirect, y los endpoints de autenticación no aceptan GET → 405 Method Not Allowed. No es un fallo de la aplicación sino el comportamiento correcto del redirect. Suite ejecutada contra `https://lifehubapp.duckdns.org/api`: **69/69 PASS**. | Resuelta |

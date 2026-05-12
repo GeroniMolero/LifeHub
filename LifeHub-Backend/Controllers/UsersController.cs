@@ -18,7 +18,6 @@ namespace LifeHub.Controllers
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetUser(string id)
         {
             var result = await _userService.GetUserAsync(id);

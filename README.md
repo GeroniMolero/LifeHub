@@ -143,6 +143,7 @@ cp .env.example .env.production  # servidor de producción
 | `SQLCMD_OPTS` | Opciones extra para sqlcmd (vacío en dev, `-C` en prod) |
 | `BACKEND_CONTAINER` | Nombre del contenedor backend |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Credenciales para los scripts de test |
+| `DOMAIN` | Dominio para HTTPS en producción (ej. `lifehubapp.duckdns.org`). Requerido para que nginx genere el bloque SSL con Let's Encrypt. |
 
 ## Requisitos
 
@@ -235,29 +236,22 @@ Los scripts leen la configuración del `.env` por defecto. Usa `-EnvFile` / `-e`
 
 ### Windows
 ```powershell
-# Crear backup (dev)
+# Crear backup (dev local)
 .\scripts\windows\backup-db.ps1
-
-# Crear backup (prod, en la misma máquina)
-.\scripts\windows\backup-db.ps1 -EnvFile .env.production
 
 # Restaurar
 .\scripts\windows\restore-db.ps1 -BackupFile .\backups\LifeHubDB_20260423_143000.bak
-.\scripts\windows\restore-db.ps1 -BackupFile .\backups\LifeHubDB_20260423_143000.bak -EnvFile .env.production
 ```
 
 ### Linux / macOS
 ```bash
-# Crear backup (dev)
+# Crear backup (dev local)
 ./scripts/linux/backup-db.sh
-
-# Crear backup (prod)
-./scripts/linux/backup-db.sh -e .env.production
 
 # Restaurar
 ./scripts/linux/restore-db.sh ./backups/LifeHubDB_20260423_143000.bak
-./scripts/linux/restore-db.sh -e .env.production ./backups/LifeHubDB_20260423_143000.bak
 ```
+
 
 Los backups se guardan en `backups/` con el formato `<DB_NAME>_<timestamp>.bak`.
 
@@ -311,7 +305,7 @@ Los tests crean un usuario temporal propio y lo eliminan al finalizar — la bas
 
 ### Prerequisitos (tests E2E)
 
-- El backend debe estar en marcha (`http://localhost:5000`)
+- El backend debe estar en marcha (`http://localhost:5000` en dev, `https://lifehubapp.duckdns.org/api` en producción)
 - Las variables `ADMIN_EMAIL` y `ADMIN_PASSWORD` en el `.env` de la raíz (sin ellas, los tests de admin se omiten con SKIP)
 
 ### Ejecución automatizada (genera informe Markdown)
@@ -407,9 +401,11 @@ LifeHub/
 
 - Autenticación basada en JWT
 - Hash de contraseñas con Identity
+- **Complejidad de contraseña**: mínimo 10 caracteres, mayúscula, minúscula, dígito y carácter especial — validado tanto en el frontend (Angular Reactive Forms) como en el backend (ASP.NET Identity). Los mensajes de error del servidor se devuelven en español mediante `SpanishIdentityErrorDescriber`
 - Validación en servidor (Data Annotations en DTOs) y cliente (Angular Reactive Forms)
 - Restricciones de longitud en base de datos (EF Core `HasMaxLength`)
 - Sanitización XSS en backend: `IHtmlSanitizer` sanitiza el contenido HTML antes de persistir
+- **HTTPS en producción**: certificado Let's Encrypt gestionado con certbot y renovación automática vía systemd timer. Todas las peticiones HTTP son redirigidas a HTTPS mediante nginx
 - Cabeceras HTTP de seguridad (`X-Content-Type-Options`, `X-Frame-Options`) y cabecera `Server` suprimida
 - Rate limiting en endpoints de autenticación para mitigar ataques de fuerza bruta
 - Protección de rutas con Guards
