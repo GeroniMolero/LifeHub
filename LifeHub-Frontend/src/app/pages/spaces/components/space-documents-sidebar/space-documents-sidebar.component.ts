@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { Document, DocumentType } from '../../../../models/document.model';
@@ -7,7 +8,7 @@ import { Document, DocumentType } from '../../../../models/document.model';
 @Component({
   selector: 'app-space-documents-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './space-documents-sidebar.component.html',
   styleUrls: ['./space-documents-sidebar.component.scss']
 })
@@ -18,6 +19,14 @@ export class SpaceDocumentsSidebarComponent {
 
   @Output() openCreateDocument = new EventEmitter<void>();
   @Output() selectDocument = new EventEmitter<Document>();
+
+  searchQuery = '';
+
+  get filteredDocuments(): Document[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (!q) return this.documents;
+    return this.documents.filter(d => d.title.toLowerCase().includes(q));
+  }
 
   getTypeText(type?: DocumentType | string | number): string {
     const typeMap: { [key: number]: string } = {

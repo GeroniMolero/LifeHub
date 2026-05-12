@@ -167,7 +167,10 @@
     <div *ngIf="mediaTab === 'local'" class="modal-create-form">
       <div class="form-group">
         <label>Archivo</label>
-        <input type="file" accept="audio/*,video/*,image/*" (change)="onLocalFileSelected($event)" />
+        <label class="file-upload-btn">
+          Seleccionar archivo
+          <input type="file" accept="audio/*,video/*,image/*" (change)="onLocalFileSelected($event)" />
+        </label>
       </div>
       <div class="form-group">
         <label>Etiqueta</label>
@@ -214,17 +217,6 @@
         (selectDocument)="selectDocument($event)">
       </app-space-documents-sidebar>
 
-      <app-space-media-sidebar
-        [loadingMedia]="loadingMedia"
-        [mediaReferences]="mediaReferences"
-        [audioMediaReferences]="audioMediaReferences"
-        [activeVisualMediaIds]="activeVisualMediaIds"
-        [localFileBlobUrls]="localFileBlobUrls"
-        (openCreateMedia)="openMediaModal()"
-        (onMediaReferenceClick)="onMediaReferenceClick($event)"
-        (removeMediaReference)="removeMediaReference($event)">
-      </app-space-media-sidebar>
-
     </aside>
   </div>
 </section>
@@ -232,3 +224,15 @@
 <ng-template #loadingTpl>
   <div class="workspace-loading">Cargando espacio...</div>
 </ng-template>
+
+<app-space-media-sidebar
+  *ngIf="space"
+  [loadingMedia]="loadingMedia"
+  [mediaReferences]="mediaReferences"
+  [audioMediaReferences]="audioMediaReferences"
+  [activeVisualMediaIds]="activeVisualMediaIds"
+  [localFileBlobUrls]="localFileBlobUrls"
+  (openCreateMedia)="openMediaModal()"
+  (onMediaReferenceClick)="onMediaReferenceClick($event)"
+  (removeMediaReference)="removeMediaReference($event)">
+</app-space-media-sidebar>

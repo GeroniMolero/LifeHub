@@ -1,47 +1,153 @@
-<div class="sidebar-section">
-  <div class="sidebar-section-header">
-    <span class="sidebar-section-title">Multimedia</span>
-    <button type="button" class="btn-icon" (click)="openCreateMedia.emit()" title="Agregar recurso">+</button>
-  </div>
+<aside class="media-panel" [class.is-collapsed]="isCollapsed">
 
-  <div *ngIf="loadingMedia" class="sidebar-muted">Cargando...</div>
+  <button class="media-panel__toggle" type="button" (click)="toggleCollapsed()"
+          [title]="isCollapsed ? 'Mostrar multimedia' : 'Ocultar multimedia'">
+    <span class="toggle-arrow">{{ isCollapsed ? '◁' : '▷' }}</span>
+    <span class="toggle-note" *ngIf="isCollapsed">♪</span>
+  </button>
 
-  <div *ngIf="!loadingMedia && visualMediaReferences.length === 0 && audioMediaReferences.length === 0" class="sidebar-empty">
-    Sin recursos. Usa <strong>+</strong> para agregar.
-  </div>
+  <div class="media-panel__inner">
 
-  <div *ngIf="!loadingMedia && visualMediaReferences.length === 0 && audioMediaReferences.length > 0" class="sidebar-empty">
-    Sin recursos visuales. Añade un enlace o archivo de imagen/vídeo.
-  </div>
+    <header class="panel-header">
+      <h2 class="panel-title">Multimedia</h2>
+      <div class="panel-header-actions">
+        <button type="button" class="panel-add-btn" (click)="openCreateMedia.emit()" title="Agregar recurso">+</button>
+        <button type="button" class="panel-close-btn" (click)="toggleCollapsed()" title="Cerrar panel">✕</button>
+      </div>
+    </header>
 
-  <ul class="sidebar-media-list" *ngIf="visualMediaReferences.length > 0">
-    <li *ngFor="let item of visualMediaReferences">
-      <div class="sidebar-media-row" [class.active]="isMediaActiveInMain(item.id)" (click)="onMediaReferenceClick.emit(item)">
-        <div class="sidebar-doc-info">
-          <span class="sidebar-doc-name">{{ item.label }}</span>
-          <span class="sidebar-doc-meta">{{ mediaTypeLabel(item) }}</span>
+    <!-- ── Tabs ──────────────────────────────────────────── -->
+    <div class="panel-tabs">
+      <button class="panel-tab" [class.is-active]="activeTab === 'visual'"
+              (click)="activeTab = 'visual'" type="button">
+        Visual
+        <span class="tab-badge" *ngIf="visualMediaReferences.length > 0">{{ visualMediaReferences.length }}</span>
+      </button>
+      <button class="panel-tab" [class.is-active]="activeTab === 'music'"
+              (click)="activeTab = 'music'" type="button">
+        Música
+      </button>
+    </div>
+
+    <!-- ── Tab: Visual ───────────────────────────────────── -->
+    <div class="tab-content tab-content--visual" *ngIf="activeTab === 'visual'">
+      <p *ngIf="loadingMedia" class="panel-muted">Cargando...</p>
+
+      <p *ngIf="!loadingMedia && visualMediaReferences.length === 0" class="panel-empty">
+        Sin recursos visuales. Usa <strong>+</strong> para añadir imágenes, vídeos o embeds.
+      </p>
+
+      <input *ngIf="visualMediaReferences.length > 0"
+             class="track-search" type="search" placeholder="Buscar recurso..."
+             [(ngModel)]="visualSearchQuery" aria-label="Buscar recurso visual" />
+
+      <p *ngIf="!loadingMedia && visualMediaReferences.length > 0 && filteredVisualMediaReferences.length === 0"
+         class="panel-empty">Sin resultados para "<strong>{{ visualSearchQuery }}</strong>".</p>
+
+      <ul class="panel-media-list" *ngIf="filteredVisualMediaReferences.length > 0">
+        <li class="panel-media-item"
+            *ngFor="let item of filteredVisualMediaReferences"
+            [class.is-active]="isMediaActiveInMain(item.id)"
+            (click)="onMediaReferenceClick.emit(item)">
+          <div class="item-info">
+            <span class="item-name">{{ item.label }}</span>
+            <span class="item-meta">{{ mediaTypeLabel(item) }}</span>
+          </div>
+          <button type="button" class="item-remove"
+                  (click)="$event.stopPropagation(); removeMediaReference.emit(item.id)"
+                  title="Quitar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Zm2-10h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── Tab: Música ───────────────────────────────────── -->
+    <div class="tab-content tab-content--music" *ngIf="activeTab === 'music'">
+
+      <div class="reproductor" *ngIf="playerTracks.length > 0; else noAudioUrls">
+
+        <div class="track-art">
+          <img [src]="currentTrack?.image || 'assets/images/music-fallback.jpg'"
+               [alt]="currentTrack?.title || 'Portada'"
+               loading="lazy" />
         </div>
-        <button type="button" class="btn-icon btn-icon-danger" (click)="$event.stopPropagation(); removeMediaReference.emit(item.id)" title="Quitar">×</button>
-      </div>
-    </li>
-  </ul>
 
-  <div class="music-player" *ngIf="audioMediaReferences.length > 0">
-    <div class="music-player-header">
-      <span class="sidebar-form-label">Música</span>
-      <span class="music-session-badge">Solo sesión</span>
-    </div>
-    <p class="music-session-note">
-      Los archivos de audio locales solo están disponibles mientras no recargues la página.
-      Para música persistente añade un enlace de Spotify.
-    </p>
-    <div class="music-track" *ngFor="let item of audioMediaReferences">
-      <div class="music-track-header">
-        <span class="music-track-title">{{ item.label }}</span>
-        <button type="button" class="btn-icon btn-icon-danger" (click)="removeMediaReference.emit(item.id)" title="Quitar">×</button>
+        <div class="reproductor-body">
+          <p class="now-playing" [title]="currentTrack?.title || ''">
+            {{ currentTrack?.title || 'Sin reproducción' }}
+          </p>
+
+          <div class="ctrl-row">
+            <button type="button" class="ctrl-btn" (click)="prevTrack()" title="Anterior">◄◄</button>
+            <button type="button" class="ctrl-btn ctrl-btn--play" [class.is-playing]="isPlaying"
+                    (click)="togglePlay()" [title]="isPlaying ? 'Pausar' : 'Reproducir'">
+              {{ isPlaying ? '⏸' : '▶' }}
+            </button>
+            <button type="button" class="ctrl-btn" (click)="nextTrack()" title="Siguiente">►►</button>
+            <button type="button" class="ctrl-btn ctrl-btn--mute" [class.is-active]="isMuted"
+                    (click)="toggleMute()" [title]="isMuted ? 'Activar sonido' : 'Silenciar'">
+              <span class="mute-icon" [class.is-muted]="isMuted">♪</span>
+            </button>
+          </div>
+
+          <div class="progress-wrap">
+            <input type="range" min="0" max="1000" [value]="progressValue"
+                   aria-label="Progreso" (input)="onProgressInput($event)" />
+            <div class="time-labels">
+              <span>{{ currentTimeLabel }}</span>
+              <span>{{ totalTimeLabel }}</span>
+            </div>
+          </div>
+
+          <div class="volume-wrap">
+            <span class="volume-label">Vol</span>
+            <input type="range" min="0" max="1" step="0.01" [value]="volumeValue"
+                   aria-label="Volumen" (input)="onVolumeInput($event)" />
+          </div>
+        </div>
       </div>
-      <audio *ngIf="getLocalMediaUrl(item.id)" controls [src]="getLocalMediaUrl(item.id)!"></audio>
-      <span *ngIf="!getLocalMediaUrl(item.id)" class="sidebar-muted">Audio no disponible en esta sesión.</span>
+
+      <ng-template #noAudioUrls>
+        <p class="panel-muted">Audio no disponible en esta sesión.</p>
+      </ng-template>
+
+      <input class="track-search" type="search" placeholder="Buscar pista..."
+             [(ngModel)]="searchQuery" aria-label="Buscar pista" />
+
+      <ul class="tracklist" #tracklist>
+        <li *ngFor="let track of filteredTracks; trackBy: trackById"
+            class="track-item"
+            [class.is-active]="track.id === currentTrack?.id">
+          <button type="button" class="track-btn" (click)="selectTrack(trackIndexById(track.id))">
+            {{ track.title }}
+          </button>
+          <button type="button" class="item-remove"
+                  *ngIf="!track.isStatic"
+                  (click)="removeMediaReference.emit(track.id)"
+                  title="Quitar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Zm2-10h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+
     </div>
+
   </div>
-</div>
+
+  <audio
+    #audioPlayer
+    preload="metadata"
+    (loadedmetadata)="onLoadedMetadata()"
+    (timeupdate)="onTimeUpdate()"
+    (play)="onPlay()"
+    (pause)="onPause()"
+    (volumechange)="onVolumeUpdate()"
+    (ended)="onEnded()">
+  </audio>
+
+</aside>

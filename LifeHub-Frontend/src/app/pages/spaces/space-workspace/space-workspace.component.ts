@@ -1,4 +1,4 @@
-import { Component, DestroyRef, HostListener, OnDestroy, OnInit, SecurityContext, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, SecurityContext, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -22,6 +22,7 @@ import { DocumentService } from '../../../services/document.service';
 import { DocumentVersionService } from '../../../services/document-version.service';
 import { FriendshipService } from '../../../services/friendship.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
+import { MediaFileStorageService } from '../../../services/media-file-storage.service';
 import { SpaceMediaSessionService } from '../../../services/space-media-session.service';
 import { ToastService } from '../../../services/toast.service';
 import { ModalComponent } from '../../../components/modal/modal.component';
@@ -90,6 +91,8 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   createEmbedForm!: FormGroup;
   localFileLabelControl!: FormControl<string>;
 
+  @ViewChild(SpaceMediaSidebarComponent) private readonly mediaSidebarRef?: SpaceMediaSidebarComponent;
+
   selectedLocalFile: File | null = null;
   selectedMediaId: string | null = null;
   localFileBlobUrls = new Map<string, string>();
@@ -113,6 +116,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     private documentVersionService: DocumentVersionService,
     private friendshipService: FriendshipService,
     private layoutHeaderStateService: LayoutHeaderStateService,
+    private mediaFileStorage: MediaFileStorageService,
     private mediaSessionService: SpaceMediaSessionService,
     private toastService: ToastService
   ) {
@@ -204,6 +208,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.loadDocuments();
           this.loadMediaReferences();
+          this.toastService.info('El panel multimedia está oculto por defecto. Ábrelo con el botón "▶ Multimedia" de la cabecera.', 7000);
         },
         error: () => {
           this.toastService.error('No se pudo cargar el espacio creativo.');
@@ -550,6 +555,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
           reference,
           ...this.mediaReferences.filter(item => item.id !== reference.id)
         ];
+        this.mediaSidebarRef?.show('visual');
         this.closeMediaModal();
         this.loadingMedia = false;
       },
@@ -594,11 +600,19 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     };
 
     const blobUrl = URL.createObjectURL(file);
-    this.localFileBlobUrls.set(reference.id, blobUrl);
+    const updatedUrls = new Map(this.localFileBlobUrls);
+    updatedUrls.set(reference.id, blobUrl);
+    this.localFileBlobUrls = updatedUrls;
     this.ensureVisualLayout(reference);
 
     this.mediaSessionService.addReference(this.space.id, reference);
     this.mediaReferences = [reference, ...this.mediaReferences.filter(item => item.id !== reference.id)];
+
+    this.mediaFileStorage.saveFile(reference.id, file).catch(() => {});
+
+    const tab = file.type.startsWith('audio/') ? 'music' : 'visual';
+    this.mediaSidebarRef?.show(tab);
+
     this.closeMediaModal();
   }
 
@@ -695,6 +709,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.mediaFileStorage.deleteFile(id).catch(() => {});
     this.mediaSessionService.removeReference(this.space.id, id);
     this.mediaReferences = this.mediaReferences.filter(item => item.id !== id);
   }
@@ -741,14 +756,34 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.mediaReferences = [...persistedReferences, ...localSessionReferences];
         this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
         this.loadingMedia = false;
+        this.restoreBlobUrlsFromIndexedDB(localSessionReferences);
       },
       error: () => {
         this.mediaReferences = [...localSessionReferences];
         this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
         this.toastService.error('No se pudieron cargar los enlaces multimedia guardados.');
         this.loadingMedia = false;
+        this.restoreBlobUrlsFromIndexedDB(localSessionReferences);
       }
     });
+  }
+
+  private async restoreBlobUrlsFromIndexedDB(references: SpaceMediaReference[]): Promise<void> {
+    const newMap = new Map(this.localFileBlobUrls);
+
+    for (const ref of references) {
+      if (newMap.has(ref.id)) continue;
+      try {
+        const file = await this.mediaFileStorage.getFile(ref.id);
+        if (file) {
+          newMap.set(ref.id, URL.createObjectURL(file));
+        }
+      } catch {
+        // Si falla IndexedDB para este archivo, se omite sin romper el resto
+      }
+    }
+
+    this.localFileBlobUrls = newMap;
   }
 
   private isVisualReference(item: SpaceMediaReference): boolean {
@@ -779,21 +814,15 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     layout.zIndex = ++this.zIndexCounter;
   }
 
-  private applySpaceState(space: CreativeSpace): void {
-    this.space = space;
-    this.editSpaceForm.patchValue({
-      name: space.name,
-      description: space.description,
-      privacy: space.privacy,
-      isPublicProfileVisible: space.isPublicProfileVisible
-    });
+  private refreshHeader(): void {
+    if (!this.space) return;
     this.layoutHeaderStateService.setOverride({
-      title: space.name,
-      description: space.description?.trim() || 'Editor y multimedia del espacio seleccionado',
+      title: this.space.name,
+      description: this.space.description?.trim() || 'Editor y multimedia del espacio seleccionado',
       meta: [
-        this.getPrivacyText(space.privacy),
-        ...(space.isPublicProfileVisible ? ['Visible en perfil'] : []),
-        `Actualizado ${new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(space.updatedAt))}`
+        this.getPrivacyText(this.space.privacy),
+        ...(this.space.isPublicProfileVisible ? ['Visible en perfil'] : []),
+        `Actualizado ${new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(this.space.updatedAt))}`
       ],
       actions: [
         ...(this.isOwner() ? [{
@@ -808,6 +837,17 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         }
       ]
     });
+  }
+
+  private applySpaceState(space: CreativeSpace): void {
+    this.space = space;
+    this.editSpaceForm.patchValue({
+      name: space.name,
+      description: space.description,
+      privacy: space.privacy,
+      isPublicProfileVisible: space.isPublicProfileVisible
+    });
+    this.refreshHeader();
   }
 
   private ensurePermissionForm(): void {

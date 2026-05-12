@@ -25,6 +25,16 @@
   gap: $space-4;
 }
 
+.header-right {
+  flex: 1;
+  justify-content: flex-end;
+  padding-right: 44px; // leaves clearance for the media panel toggle tab (36px wide)
+}
+
+.header-meta {
+  flex: 0 0 auto;
+}
+
 .header-left {
   flex: 1;
   min-width: 0;
@@ -33,14 +43,6 @@
 .header-info {
   flex: 1;
   min-width: 0;
-}
-
-.header-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 15%;
-  flex-wrap: wrap;
 }
 
 .layout-header h1 {

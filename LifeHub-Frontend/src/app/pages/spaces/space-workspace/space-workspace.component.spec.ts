@@ -19,6 +19,7 @@ describe('SpaceWorkspaceComponent markdown security', () => {
       { getAcceptedFriendships: () => of([]) } as any,
       {} as any,
       {} as any,
+      {} as any,
       {} as any
     ));
   };
