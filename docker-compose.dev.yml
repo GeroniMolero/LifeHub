@@ -38,6 +38,8 @@ services:
       - Jwt__Key=${JWT_KEY}
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     volumes:
       - ./LifeHub-Backend:/app
     working_dir: /app

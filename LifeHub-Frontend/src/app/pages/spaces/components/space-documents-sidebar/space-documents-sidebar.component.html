@@ -1,45 +1,11 @@
 <div class="sidebar-section">
   <div class="sidebar-section-header">
     <span class="sidebar-section-title">Documentos</span>
-    <div class="sidebar-section-actions">
-      <button type="button" class="btn-icon" (click)="openImportPanel.emit()" title="Importar documento existente">↓</button>
-      <button type="button" class="btn-icon" (click)="toggleCreateDocument.emit()" title="Nuevo documento">+</button>
-    </div>
+    <button type="button" class="btn-icon" (click)="openCreateDocument.emit()" title="Nuevo documento">+</button>
   </div>
-
-  <div *ngIf="showImportPanel" class="import-panel">
-    <div *ngIf="loadingImportable" class="sidebar-muted">Cargando...</div>
-    <div *ngIf="!loadingImportable && importableDocuments.length === 0" class="sidebar-muted">
-      No tienes otros documentos disponibles.
-    </div>
-    <ul *ngIf="!loadingImportable && importableDocuments.length > 0" class="sidebar-doc-list import-list">
-      <li *ngFor="let doc of importableDocuments" (click)="importDocument.emit(doc)" title="Importar como copia">
-        <div class="sidebar-doc-info">
-          <span class="sidebar-doc-name">{{ doc.title }}</span>
-          <span class="sidebar-doc-meta">{{ getTypeText(doc.type) }}</span>
-        </div>
-        <span class="import-icon">+</span>
-      </li>
-    </ul>
-  </div>
-
-  <form *ngIf="showCreateDocument" [formGroup]="createDocumentForm" (ngSubmit)="createDocument.emit()" class="sidebar-form">
-    <input type="text" formControlName="title" placeholder="Título *" />
-    <input type="text" formControlName="description" placeholder="Descripción" />
-    <textarea rows="3" formControlName="content" placeholder="Contenido inicial"></textarea>
-    <select formControlName="type">
-      <option [value]="DocumentType.Note">Nota</option>
-      <option [value]="DocumentType.TextFile">Archivo de texto</option>
-      <option [value]="DocumentType.List">Lista</option>
-    </select>
-    <div class="sidebar-form-actions">
-      <button type="submit" class="btn-primary btn-sm" [disabled]="createDocumentForm.invalid || loadingDocuments">Crear</button>
-      <button type="button" class="btn-secondary btn-sm" (click)="toggleCreateDocument.emit()">Cancelar</button>
-    </div>
-  </form>
 
   <div *ngIf="loadingDocuments" class="sidebar-muted">Cargando...</div>
-  <div *ngIf="!loadingDocuments && documents.length === 0 && !showCreateDocument" class="sidebar-empty">
+  <div *ngIf="!loadingDocuments && documents.length === 0" class="sidebar-empty">
     Sin documentos. Usa <strong>+</strong> para crear.
   </div>
 

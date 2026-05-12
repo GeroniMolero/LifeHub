@@ -7,7 +7,7 @@ namespace LifeHub.Data
 {
     public static class DataSeeder
     {
-        public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider, bool isDevelopment = false)
+        public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
         {
             using (var scope = serviceProvider.CreateScope())
             {
@@ -75,35 +75,37 @@ END
                 var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL");
                 var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
-                if (string.IsNullOrWhiteSpace(adminEmail))
+                if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
                 {
-                    adminEmail = "admin@lifehub.com";
+                    Console.WriteLine("[DataSeeder] ADMIN_EMAIL o ADMIN_PASSWORD no están definidas — se omite la creación del administrador.");
                 }
-
-                if (string.IsNullOrWhiteSpace(adminPassword))
+                else
                 {
-                    adminPassword = "Admin123!";
-                }
+                    var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
-                var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
-                if (adminUser == null)
-                {
-                    var admin = new ApplicationUser
+                    if (adminUser == null)
                     {
-                        UserName = adminEmail,
-                        Email = adminEmail,
-                        EmailConfirmed = true,
-                        IsActive = true,
-                        FullName = "Administrador",
-                        CreatedAt = DateTime.UtcNow
-                    };
+                        var admin = new ApplicationUser
+                        {
+                            UserName = adminEmail,
+                            Email = adminEmail,
+                            EmailConfirmed = true,
+                            IsActive = true,
+                            FullName = "Administrador",
+                            CreatedAt = DateTime.UtcNow
+                        };
 
-                    var result = await userManager.CreateAsync(admin, adminPassword);
+                        var result = await userManager.CreateAsync(admin, adminPassword);
 
-                    if (result.Succeeded)
-                    {
-                        await userManager.AddToRoleAsync(admin, "Admin");
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(admin, "Admin");
+                        }
+                        else
+                        {
+                            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                            Console.WriteLine($"[DataSeeder] No se pudo crear el administrador: {errors}");
+                        }
                     }
                 }
 
@@ -128,39 +130,6 @@ END
                     }
                 }
 
-                if (isDevelopment)
-                {
-                    // Crear usuarios de prueba (solo en Development)
-                    var testUsers = new[]
-                    {
-                        new { Email = "juan@lifehub.com", Name = "Juan Pérez", Password = "Test123!" },
-                        new { Email = "maria@lifehub.com", Name = "María García", Password = "Test123!" },
-                        new { Email = "carlos@lifehub.com", Name = "Carlos López", Password = "Test123!" }
-                    };
-
-                    foreach (var testUser in testUsers)
-                    {
-                        var existingUser = await userManager.FindByEmailAsync(testUser.Email);
-                        if (existingUser == null)
-                        {
-                            var user = new ApplicationUser
-                            {
-                                UserName = testUser.Email,
-                                Email = testUser.Email,
-                                EmailConfirmed = true,
-                                IsActive = true,
-                                FullName = testUser.Name,
-                                CreatedAt = DateTime.UtcNow
-                            };
-
-                            var result = await userManager.CreateAsync(user, testUser.Password);
-                            if (result.Succeeded)
-                            {
-                                await userManager.AddToRoleAsync(user, "User");
-                            }
-                        }
-                    }
-                }
 
                 // Seed dominios permitidos para embeds
                 string[] defaultAllowedDomains =

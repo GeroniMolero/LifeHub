@@ -120,6 +120,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
     options.User.RequireUniqueEmail = true;
+    options.Password.RequiredLength = 10;
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -237,7 +238,7 @@ try
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await db.Database.MigrateAsync();
-        await DataSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider, app.Environment.IsDevelopment());
+        await DataSeeder.SeedRolesAndAdminAsync(scope.ServiceProvider);
     }
 }
 catch (Exception ex)

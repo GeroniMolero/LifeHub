@@ -168,13 +168,58 @@ select {
   white-space: nowrap;
 }
 
-.music-player,
+.music-player {
+  display: grid;
+  gap: $space-3;
+  border-top: $border-width-base solid $color-brand-border-medium;
+  padding-top: $space-3;
+}
+
+.music-player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+}
+
+.music-session-badge {
+  font-size: $font-size-xs;
+  background: $color-slate-100;
+  color: $color-slate-600;
+  border: $border-width-base solid $color-slate-400;
+  border-radius: $border-radius-full;
+  padding: $space-1 $space-2;
+  white-space: nowrap;
+}
+
+.music-session-note {
+  font-size: $font-size-sm;
+  color: $color-slate-500;
+  margin: 0;
+  line-height: 1.4;
+}
+
 .music-track {
   display: grid;
   gap: $space-2;
 }
 
+.music-track-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+}
+
 .music-track-title {
   font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
   color: $color-slate-700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+audio {
+  width: 100%;
 }

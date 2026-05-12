@@ -66,11 +66,11 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   mediaError = '';
   renderedPreview = '';
 
-  showCreateDocument = false;
-  showImportPanel = false;
+  showDocumentModal = false;
+  documentModalTab: 'create' | 'import' = 'create';
   importableDocuments: Document[] = [];
   loadingImportable = false;
-  showCreateMedia = false;
+  showMediaModal = false;
   showSettingsModal = false;
   settingsModalTab: 'edit' | 'permissions' = 'edit';
   submittedEdit = false;
@@ -81,6 +81,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   friendsLoading = false;
   currentUserId = '';
   readonly SpacePermissionLevel = SpacePermissionLevel;
+  readonly DocumentType = DocumentType;
   mediaTab: 'embed' | 'local' = 'embed';
 
   editSpaceForm!: FormGroup;
@@ -361,15 +362,32 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     return name || email || 'Usuario sin identificar';
   }
 
-  toggleCreateDocument(): void {
-    this.showCreateDocument = !this.showCreateDocument;
+  openDocumentModal(tab: 'create' | 'import'): void {
+    this.documentModalTab = tab;
+    this.showDocumentModal = true;
+    if (tab === 'import') {
+      this.loadImportableDocuments();
+    }
   }
 
-  toggleCreateMedia(): void {
-    this.showCreateMedia = !this.showCreateMedia;
+  closeDocumentModal(): void {
+    this.showDocumentModal = false;
+    this.createDocumentForm.reset({ title: '', description: '', content: '', type: DocumentType.Note });
+  }
+
+  openMediaModal(): void {
+    this.showMediaModal = true;
     this.mediaTab = 'embed';
     this.mediaError = '';
   }
+
+  closeMediaModal(): void {
+    this.showMediaModal = false;
+    this.selectedLocalFile = null;
+    this.localFileLabelControl.setValue('');
+    this.createEmbedForm.reset({ label: '', url: '' });
+  }
+
 
   createDocument(): void {
     if (this.createDocumentForm.invalid || !this.space) return;
@@ -384,13 +402,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       next: (doc) => {
         this.documents = [doc, ...this.documents];
         this.selectDocument(doc);
-        this.showCreateDocument = false;
-        this.createDocumentForm.reset({
-          title: '',
-          description: '',
-          content: '',
-          type: DocumentType.Note
-        });
+        this.closeDocumentModal();
         this.loadingDocuments = false;
       },
       error: () => {
@@ -407,10 +419,12 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.updateRenderedPreview();
   }
 
-  openImportPanel(): void {
-    this.showImportPanel = !this.showImportPanel;
-    if (!this.showImportPanel) return;
+  openImportTab(): void {
+    this.documentModalTab = 'import';
+    this.loadImportableDocuments();
+  }
 
+  private loadImportableDocuments(): void {
     this.loadingImportable = true;
     this.documentService.getDocuments().subscribe({
       next: (docs) => {
@@ -429,7 +443,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.documentService.copyToSpace(doc.id, this.space.id).subscribe({
       next: (copy) => {
         this.documents = [copy, ...this.documents];
-        this.showImportPanel = false;
+        this.closeDocumentModal();
         this.loadingImportable = false;
         this.toastService.success('Documento importado al espacio.');
       },
@@ -536,7 +550,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
           reference,
           ...this.mediaReferences.filter(item => item.id !== reference.id)
         ];
-        this.createEmbedForm.reset({ label: '', url: '' });
+        this.closeMediaModal();
         this.loadingMedia = false;
       },
       error: () => {
@@ -585,8 +599,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
     this.mediaSessionService.addReference(this.space.id, reference);
     this.mediaReferences = [reference, ...this.mediaReferences.filter(item => item.id !== reference.id)];
-    this.selectedLocalFile = null;
-    this.localFileLabelControl.setValue('');
+    this.closeMediaModal();
   }
 
   get visualMediaReferences(): SpaceMediaReference[] {
@@ -684,6 +697,15 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
     this.mediaSessionService.removeReference(this.space.id, id);
     this.mediaReferences = this.mediaReferences.filter(item => item.id !== id);
+  }
+
+  getDocumentTypeText(type?: DocumentType | string | number): string {
+    const map: { [key: number]: string } = {
+      [DocumentType.Note]: 'Nota',
+      [DocumentType.TextFile]: 'Archivo de texto',
+      [DocumentType.List]: 'Lista'
+    };
+    return type !== undefined ? (map[Number(type)] || 'Nota') : 'Nota';
   }
 
   getPrivacyText(privacy: SpacePrivacy): string {

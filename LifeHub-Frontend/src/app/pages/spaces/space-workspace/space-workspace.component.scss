@@ -172,3 +172,70 @@ input, textarea, select {
 .btn-primary { background: $color-brand-700; color: $color-white; }
 .btn-secondary { background: $color-slate-100; color: $color-slate-700; }
 .btn-danger { background: $color-danger; color: $color-white; }
+
+.allowed-sites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-1;
+  margin-bottom: $space-3;
+
+  small {
+    background: $color-brand-050;
+    border: $border-width-base solid $color-brand-border-medium;
+    border-radius: $border-radius-full;
+    color: $color-slate-700;
+    padding: $space-1 $space-3;
+    font-size: $font-size-sm;
+  }
+}
+
+.import-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: $space-2;
+}
+
+.import-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  border: $border-width-base solid $color-brand-border-medium;
+  border-radius: $border-radius-lg;
+  padding: $space-3;
+  cursor: pointer;
+
+  &:hover { background: $color-brand-050; }
+}
+
+.import-item-info {
+  display: grid;
+  min-width: 0;
+}
+
+.import-item-title {
+  font-weight: $font-weight-medium;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-item-meta {
+  font-size: $font-size-sm;
+  color: $color-slate-600;
+}
+
+.import-icon {
+  flex-shrink: 0;
+  font-size: $font-size-lg;
+  color: $color-brand-700;
+  font-weight: $font-weight-semibold;
+}
+
+.modal-hint {
+  font-size: $font-size-sm;
+  color: $color-slate-600;
+  margin: 0;
+}

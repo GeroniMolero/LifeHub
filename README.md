@@ -75,10 +75,9 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Registro de actividad con filtros y paginación
 - Copias de seguridad bajo demanda
 
-### Reproductor de Música (en desarrollo)
-- Registro de archivos locales
-- Metadatos de canciones (artista, álbum, duración)
-- Gestión de biblioteca local
+### Reproductor de Música
+- Reproducción de archivos de audio locales en el sidebar de espacios creativos (disponibles durante la sesión)
+- Soporte de Spotify vía embed para música persistente sin necesidad de subir archivos
 
 ### Chat en Tiempo Real
 - Conversaciones uno a uno accesibles desde el módulo Social
@@ -205,6 +204,8 @@ npm start
 - Backend: http://localhost:5000
 - Swagger: http://localhost:5000/swagger
 - SQL Server: localhost:1433
+
+> **Credenciales de administrador:** el DataSeeder crea el usuario admin con las credenciales definidas en `ADMIN_EMAIL`/`ADMIN_PASSWORD` del `.env`. Si no están definidas, el admin no se crea (se muestra un aviso en el log del backend). Las cuentas de usuario normal se crean directamente desde el registro.
 
 ## Entorno Nuevo (Otro Ordenador)
 
@@ -405,11 +406,11 @@ LifeHub/
 
 - Autenticación basada en JWT
 - Hash de contraseñas con Identity
-- **Complejidad de contraseña**: mínimo 10 caracteres, mayúscula, minúscula, dígito y carácter especial — validado tanto en el frontend (Angular Reactive Forms) como en el backend (ASP.NET Identity). Los mensajes de error del servidor se devuelven en español mediante `SpanishIdentityErrorDescriber`
+- **Complejidad de contraseña**: mínimo 10 caracteres, mayúscula, minúscula, dígito y carácter especial — validado en el frontend (Angular Reactive Forms) y en el backend (ASP.NET Identity con `RequiredLength = 10`). Los mensajes de error del servidor se devuelven en español mediante `SpanishIdentityErrorDescriber`
 - Validación en servidor (Data Annotations en DTOs) y cliente (Angular Reactive Forms)
 - Restricciones de longitud en base de datos (EF Core `HasMaxLength`)
 - Sanitización XSS en backend: `IHtmlSanitizer` sanitiza el contenido HTML antes de persistir
-- **HTTPS en producción**: certificado Let's Encrypt gestionado con certbot y renovación automática vía systemd timer. Todas las peticiones HTTP son redirigidas a HTTPS mediante nginx
+- **HTTPS en producción**: certificado Let's Encrypt gestionado con certbot y renovación automática. Todas las peticiones HTTP son redirigidas a HTTPS mediante nginx
 - Cabeceras HTTP de seguridad (`X-Content-Type-Options`, `X-Frame-Options`) y cabecera `Server` suprimida
 - Rate limiting en endpoints de autenticación para mitigar ataques de fuerza bruta
 - Protección de rutas con Guards

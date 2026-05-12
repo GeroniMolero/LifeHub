@@ -140,26 +140,3 @@ select {
   padding: $space-2 $space-3;
 }
 
-.sidebar-section-actions {
-  display: flex;
-  align-items: center;
-  gap: $space-2;
-}
-
-.import-panel {
-  border: $border-width-base solid $color-brand-border-medium;
-  border-radius: $border-radius-lg;
-  padding: $space-3;
-  background: $color-brand-050;
-}
-
-.import-list li {
-  background: $color-white;
-}
-
-.import-icon {
-  flex-shrink: 0;
-  font-size: $font-size-lg;
-  color: $color-brand-700;
-  font-weight: $font-weight-semibold;
-}
