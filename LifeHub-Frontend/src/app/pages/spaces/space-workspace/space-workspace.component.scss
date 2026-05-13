@@ -1,7 +1,6 @@
 @use '../../../../styles/design-tokens' as *;
 
 .workspace {
-  max-width: 1400px;
   margin: 0 auto;
   display: grid;
   gap: $space-5;
