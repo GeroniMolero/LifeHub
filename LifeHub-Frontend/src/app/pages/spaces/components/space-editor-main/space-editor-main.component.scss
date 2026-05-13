@@ -261,12 +261,21 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
 
-  .editor-tab-bar {
+  .editor-tab-bar,
+  .editor-toolbar {
     grid-column: 1 / -1;
   }
 
   .editor-pane:not(.preview-pane) {
     border-right: $border-width-base solid $color-brand-border-medium;
+    display: flex;
+    flex-direction: column;
+
+    .code-editor {
+      flex: 1;
+      min-height: 34rem;
+      resize: none;
+    }
   }
 
   @media (max-width: 700px) {
