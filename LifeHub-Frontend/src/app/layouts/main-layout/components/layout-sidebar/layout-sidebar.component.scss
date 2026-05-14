@@ -179,16 +179,6 @@
   opacity: 0.6;
   text-align: center;
   padding-top: $space-2;
-
-  a {
-    color: inherit;
-    text-decoration: none;
-
-    &:hover {
-      color: $color-white;
-      opacity: 1;
-    }
-  }
 }
 
 .sidebar-logout-btn {
