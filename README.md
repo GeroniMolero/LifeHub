@@ -21,20 +21,13 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 # <img width="718" height="171" alt="image" src="https://github.com/user-attachments/assets/edf777e1-fb8d-414b-8d3b-5f3651761ca0" />
 
 
-### Social
+### Inicio
 
-# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/c68f5efc-3d26-4210-897a-6cd932f3d1a8" />
-
-- Panel de contactos con búsqueda de usuarios y solicitudes de amistad
-- Gestión de amigos (enviar/aceptar/rechazar/eliminar) desde el perfil público
-- Conversación directa con cualquier amigo (chat en tiempo real con SignalR)
-- Badge de mensajes no leídos por amigo en el panel Social
-- Feed de actividad de amigos (en desarrollo)
-
+# <img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/844e81bc-17dc-45a9-b92c-b27af8a36677" />
 
 ### Espacios creativos
 
-# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/7a2a1263-cef6-44b4-8c57-9d13ce49ea26" />
+# <img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/e0508d71-96bc-48af-8f11-7c9e6ef4ce8d" />
 
 - Crear, editar y eliminar espacios.
 - Con acceso a editor markdown y recursos multimedia embebidos.
@@ -45,9 +38,10 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Los editores pueden crear y modificar documentos del espacio
 - Solo el propietario puede eliminar documentos
 
+
 ### Gestión de Documentos
 
-# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/5f80560b-4c61-467b-a726-9f7f17b7b2e7" />
+# <img width="1919" height="1033" alt="image" src="https://github.com/user-attachments/assets/a5da7e4a-5336-4f05-95d1-dd1d9bddc086" />
 
 - Crear, editar, eliminar y descargar documentos
 - Editor de texto con **modo split** (código y preview en paralelo)
@@ -58,9 +52,21 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Atribución: cada versión muestra quién la creó
 - **Publicación de documentos**: modal con control de visibilidad en perfil público, autor visible en la vista pública
 
+
+### Social
+
+# <img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/138ed546-2202-44df-9076-92ce923df17e" />
+
+- Panel de contactos con búsqueda de usuarios y solicitudes de amistad
+- Gestión de amigos (enviar/aceptar/rechazar/eliminar) desde el perfil público
+- Conversación directa con cualquier amigo (chat en tiempo real con SignalR)
+- Badge de mensajes no leídos por amigo en el panel Social
+- Feed de actividad de amigos (en desarrollo)
+
+
 ### Perfil
 
-# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/8e6061e8-ea45-4ff7-9c58-bc00c5dba8dc" />
+# <img width="1919" height="1032" alt="image" src="https://github.com/user-attachments/assets/ffce8171-0dd1-42e7-8d68-28596a2183d8" />
 
 - Mostrar nombre, descripción e imagen.
 - Vista pública con grid de dos columnas: documentos publicados y espacios.
@@ -70,7 +76,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 
 ### Panel de administrador
 
-# <img width="1565" height="950" alt="image" src="https://github.com/user-attachments/assets/58dc1465-dc9d-47a7-8701-f0177660a0b5" />
+# <img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/bd8f59be-830d-44f6-8aef-ac1df38e1a50" />
 
 - Gestión de usuarios: activación de cuentas, edición, cambio de rol y eliminación
 - Gestión de dominios permitidos para embebidos
