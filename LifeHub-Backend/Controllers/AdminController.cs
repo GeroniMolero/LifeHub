@@ -12,18 +12,20 @@ namespace LifeHub.Controllers
     public class AdminController : ApiControllerBase
     {
         private readonly IAdminService _adminService;
+        private readonly ILogger<AdminController> _logger;
 
-        public AdminController(IAdminService adminService)
+        public AdminController(IAdminService adminService, ILogger<AdminController> logger)
         {
             _adminService = adminService;
+            _logger = logger;
         }
 
         [HttpGet("users")]
         [Authorize(Policy = "CanViewAdmin")]
-        public async Task<IActionResult> GetAdminUsers()
+        public async Task<IActionResult> GetAdminUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var users = await _adminService.GetAdminUsersAsync();
-            return Ok(users);
+            var result = await _adminService.GetAdminUsersAsync(page, pageSize);
+            return Ok(result);
         }
 
         [HttpPut("users/{id}/toggle-active")]
@@ -134,13 +136,10 @@ namespace LifeHub.Controllers
                 var result = await _adminService.TriggerBackupAsync();
                 return Ok(result);
             }
-            catch (FileNotFoundException ex)
+            catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
+                _logger.LogError(ex, "Error al ejecutar el backup de base de datos.");
+                return StatusCode(500, new { message = "No se pudo completar el backup. Consulta los logs del servidor." });
             }
         }
     }

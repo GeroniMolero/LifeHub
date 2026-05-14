@@ -41,7 +41,7 @@ namespace LifeHub.DTOs
 
     public class AdminSetPasswordDto
     {
-        [Required, MinLength(6), MaxLength(128)]
+        [Required, MinLength(10), MaxLength(128)]
         public string NewPassword { get; set; } = null!;
     }
 
@@ -62,14 +62,6 @@ namespace LifeHub.DTOs
         public string? EntityId { get; set; }
         public string Details { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
-    }
-
-    public class PaginatedResult<T>
-    {
-        public List<T> Items { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
     }
 
     public class ActivityLogQuery

@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
 using LifeHub.DTOs;
 using LifeHub.Utilidades;
+using LifeHub.Services.Notifications;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace LifeHub.Controllers
 {
@@ -18,20 +20,24 @@ namespace LifeHub.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _env;
+        private readonly INotificationService _notifications;
 
         public AuthController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             IConfiguration configuration,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            INotificationService notifications)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _env = env;
+            _notifications = notifications;
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
             if (!ModelState.IsValid)
@@ -47,7 +53,7 @@ namespace LifeHub.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 EmailConfirmed = true,
-                IsActive = false,
+                IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -59,10 +65,13 @@ namespace LifeHub.Controllers
             // Asignar rol por defecto
             await _userManager.AddToRoleAsync(user, "User");
 
+            _ = _notifications.NotifyNewUserAsync();
+
             return Ok(new AuthResponseDto { Success = true, Message = "Registro exitoso" });
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
             if (!ModelState.IsValid)

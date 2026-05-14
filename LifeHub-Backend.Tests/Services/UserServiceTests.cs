@@ -190,7 +190,7 @@ namespace LifeHub.Tests.Services
             using var ctx = TestHelpers.CreateContext();
 
             var result = await Create(ctx).ChangePasswordAsync("ghost",
-                new ChangePasswordDto { CurrentPassword = "old", NewPassword = "New123!" });
+                new ChangePasswordDto { CurrentPassword = "old", NewPassword = "TestPass10!" });
 
             Assert.Equal(ServiceResultStatus.Unauthorized, result.Status);
         }
@@ -202,7 +202,7 @@ namespace LifeHub.Tests.Services
             TestHelpers.AddUser(ctx, "u1");
 
             var result = await Create(ctx).ChangePasswordAsync("u1",
-                new ChangePasswordDto { CurrentPassword = "wrong", NewPassword = "New123!" });
+                new ChangePasswordDto { CurrentPassword = "wrong", NewPassword = "TestPass10!" });
 
             Assert.Equal(ServiceResultStatus.BadRequest, result.Status);
         }

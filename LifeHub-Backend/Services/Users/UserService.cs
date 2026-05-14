@@ -1,8 +1,11 @@
 using AutoMapper;
+using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LifeHub.Services.Users
 {
@@ -10,11 +13,15 @@ namespace LifeHub.Services.Users
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
+        private readonly ApplicationDbContext _context;
+        private readonly BusinessRules _rules;
 
-        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper)
+        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper, ApplicationDbContext context, IOptions<BusinessRules> rules)
         {
             _userManager = userManager;
             _mapper = mapper;
+            _context = context;
+            _rules = rules.Value;
         }
 
         public async Task<ServiceResult<PublicUserDto>> GetUserAsync(string id)
@@ -46,7 +53,7 @@ namespace LifeHub.Services.Users
             return ServiceResult<List<UserDto>>.Ok(result);
         }
 
-        public async Task<ServiceResult<List<UserDto>>> SearchUsersAsync(string currentUserId, string? query)
+        public async Task<ServiceResult<List<PublicUserDto>>> SearchUsersAsync(string currentUserId, string? query)
         {
             var q = _userManager.Users.AsNoTracking().Where(u => u.Id != currentUserId);
 
@@ -55,12 +62,12 @@ namespace LifeHub.Services.Users
                 var term = query.Trim().ToLower();
                 q = q.Where(u =>
                     (u.FullName != null && u.FullName.ToLower().Contains(term)) ||
-                    (u.Email != null && u.Email.ToLower().Contains(term)));
+                    (u.Email != null && u.Email.ToLower() == term));
             }
 
             var users = await q.OrderBy(u => u.FullName ?? u.Email).Take(30).ToListAsync();
 
-            return ServiceResult<List<UserDto>>.Ok(users.Select(u => _mapper.Map<UserDto>(u)).ToList());
+            return ServiceResult<List<PublicUserDto>>.Ok(users.Select(u => _mapper.Map<PublicUserDto>(u)).ToList());
         }
 
         public async Task<ServiceResult<UserDto>> UpdateProfileAsync(string userId, UpdateProfileDto dto)
@@ -87,6 +94,8 @@ namespace LifeHub.Services.Users
             if (user == null)
                 return ServiceResult<bool>.Unauthorized("Sesión inválida. Inicia sesión de nuevo.");
 
+            await CleanupUserRelationsAsync(userId);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
                 return ServiceResult<bool>.BadRequest("No se pudo eliminar la cuenta.");
@@ -103,11 +112,63 @@ namespace LifeHub.Services.Users
             if (user == null)
                 return ServiceResult<bool>.NotFound("Usuario no encontrado.");
 
+            await CleanupUserRelationsAsync(id);
+
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
                 return ServiceResult<bool>.BadRequest("No se pudo eliminar el usuario.");
 
             return ServiceResult<bool>.Ok(true);
+        }
+
+        private async Task CleanupUserRelationsAsync(string userId)
+        {
+            await _context.SpacePermissions
+                .Where(p => p.UserId == userId || p.GrantedByUserId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.Friendships
+                .Where(f => f.RequesterId == userId || f.ReceiverId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.Messages
+                .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.RecommendationRatings
+                .Where(r => r.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            await _context.DocumentVersions
+                .Where(v => v.CreatedByUserId == userId && v.Document.UserId != userId)
+                .ExecuteDeleteAsync();
+
+            await _context.DocumentPublications
+                .Where(p => p.PublishedByUserId == userId && p.Document.UserId != userId)
+                .ExecuteDeleteAsync();
+        }
+
+        public async Task<ServiceResult<UserUsageDto>> GetUsageAsync(string userId)
+        {
+            var docCount               = await _context.Documents.CountAsync(d => d.UserId == userId);
+            var spaceCount             = await _context.CreativeSpaces.CountAsync(cs => cs.OwnerId == userId);
+            var publishedCount         = await _context.Documents.CountAsync(d => d.UserId == userId && d.Publication != null);
+            var profileVisibleDocs     = await _context.Documents.CountAsync(d => d.UserId == userId && d.Publication != null && d.Publication.IsProfileVisible);
+            var profileVisibleSpaces   = await _context.CreativeSpaces.CountAsync(cs => cs.OwnerId == userId && cs.IsPublicProfileVisible);
+
+            return ServiceResult<UserUsageDto>.Ok(new UserUsageDto
+            {
+                DocumentsCount                = docCount,
+                SpacesCount                   = spaceCount,
+                PublishedDocumentsCount       = publishedCount,
+                ProfileVisibleDocumentsCount  = profileVisibleDocs,
+                ProfileVisibleSpacesCount     = profileVisibleSpaces,
+                MaxDocuments                  = _rules.MaxDocumentsPerUser,
+                MaxSpaces                     = _rules.MaxSpacesPerUser,
+                MaxPublishedDocuments         = _rules.MaxPublishedDocumentsPerUser,
+                MaxProfileVisibleDocuments    = _rules.MaxProfileVisibleDocumentsPerUser,
+                MaxProfileVisibleSpaces       = _rules.MaxProfileVisibleSpacesPerUser
+            });
         }
 
         public async Task<ServiceResult<bool>> ChangePasswordAsync(string userId, ChangePasswordDto dto)

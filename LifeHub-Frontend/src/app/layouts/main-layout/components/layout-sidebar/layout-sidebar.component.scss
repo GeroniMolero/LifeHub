@@ -169,6 +169,18 @@
   }
 }
 
+.sidebar-copyright {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  font-size: 0.625rem;
+  color: $color-slate-400;
+  opacity: 0.6;
+  text-align: center;
+  padding-top: $space-2;
+}
+
 .sidebar-logout-btn {
   display: flex;
   align-items: center;

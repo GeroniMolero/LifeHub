@@ -18,7 +18,6 @@ namespace LifeHub.Controllers
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetUser(string id)
         {
             var result = await _userService.GetUserAsync(id);
@@ -52,6 +51,17 @@ namespace LifeHub.Controllers
             if (authError != null) return authError;
 
             var result = await _userService.SearchUsersAsync(userId, q);
+            return ToActionResult(result);
+        }
+
+        [HttpGet("me/usage")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUserUsage()
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null) return authError;
+
+            var result = await _userService.GetUsageAsync(userId);
             return ToActionResult(result);
         }
 

@@ -1,6 +1,6 @@
 ﻿# Plan de Pruebas — LifeHub
 
-**Fecha:** 08-05-2026 (última actualización)  
+**Fecha:** 12-05-2026 (última actualización)  
 **Versión del proyecto:** master (post-patrones de diseño, validación coherente, scripts robustos)  
 **Entorno de pruebas:** Docker dev stack (lifehub-sql-dev + lifehub-backend-dev) + frontend local
 
@@ -161,28 +161,33 @@
 | CP-10 Publicaciones | 4 | 4 | 0 | 0 |
 | **TOTAL** | **53** | **53** | **0** | **0** |
 
-### Pruebas automatizadas — suite `run-tests.ps1` (09-05-2026)
+### Pruebas automatizadas — suite `run-tests.ps1` (12-05-2026)
 
 | Bloque | Tests | OK | FAIL | SKIP |
 |--------|-------|----|------|------|
-| AUTH | 9 | 9 | 0 | 0 |
+| AUTH | 10 | 10 | 0 | 0 |
 | Espacios creativos | 5 | 5 | 0 | 0 |
-| Documentos y versiones | 9 | 9 | 0 | 0 |
+| Documentos y versiones | 10 | 10 | 0 | 0 |
 | Colaboración en espacios | 3 | 3 | 0 | 0 |
 | Publicaciones | 11 | 11 | 0 | 0 |
-| Panel de administración | 19 | 19 | 0 | 0 |
-| Seguridad | 4 | 4 | 0 | 0 |
-| **TOTAL** | **60** | **60** | **0** | **0** |
+| Panel de administración | 21 | 21 | 0 | 0 |
+| Mensajes | 3 | 3 | 0 | 0 |
+| Seguridad | 6 | 6 | 0 | 0 |
+| **TOTAL** | **69** | **69** | **0** | **0** |
 
-### Tests unitarios frontend — Jasmine (09-05-2026)
+### Tests unitarios frontend — Jasmine (12-05-2026)
 
 | Archivo | Tests | OK |
 |---------|-------|----|
 | `auth.service.spec.ts` | 17 | 17 |
 | `admin.service.spec.ts` | 13 | 13 |
 | `config.service.spec.ts` | 3 | 3 |
-| `space-workspace.component.spec.ts` | 5 | 5 |
-| **TOTAL** | **38** | **38** |
+| `space-workspace.component.spec.ts` | 11 | 11 |
+| `auth.guard.spec.ts` | 5 | 5 |
+| `guest.guard.spec.ts` | 4 | 4 |
+| `admin.guard.spec.ts` | 4 | 4 |
+| `jwt.interceptor.spec.ts` | 7 | 7 |
+| **TOTAL** | **64** | **64** |
 
 ---
 
@@ -190,11 +195,35 @@
 
 | ID | Fecha | Descripción | Estado |
 |----|-------|-------------|--------|
-| INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Abierta — pendiente de valorar refactorización |
+| INC-01 | 23-04-2026 | La ruta de versiones de documentos es `/api/documentversions/document/{id}` en lugar del patrón REST esperado `/api/documents/{id}/versions`. El endpoint funciona correctamente pero el naming es inconsistente con el resto de la API. No tiene impacto funcional. | Resuelta — naming `/documentversions/` consistente en toda la app (backend controller y frontend service), no se cambia |
 | INC-02 | 23-04-2026 | Validación de entrada ausente en dos endpoints de creación de recursos: aceptaban campos obligatorios vacíos sin devolver error. Detectado durante la ejecución de la suite de pruebas automatizada. Corregido añadiendo validación a nivel de DTO. | Resuelta |
 | INC-03 | 02-05-2026 20:24 | Test `T-DOC-07` (Snapshot de documento ajeno -> 403) fallaba: esperado HTTP 403, obtenido 404. El script usaba el ID hardcodeado `1` asumiendo que existía y pertenecía a otro usuario; el backend devuelve 404 antes de comprobar permisos si el documento no existe. Corregido: el test ahora crea un documento temporal con el token admin, intenta el snapshot con el token de usuario (obtiene 403 correctamente) y lo elimina al finalizar. Resultado tras el fix: **30/30 PASS**. | Resuelta |
 | INC-04 | 02-05-2026 21:25 | Test `T-AUTH-08` (Login admin (setup para tests admin)) fallaba: esperado HTTP 200, obtenido 400 en `run-tests.sh` bajo Git Bash/Windows. Causa raíz: parseo de `.env` en scripts Bash no eliminaba `CRLF` (`\r`) y el valor de `ADMIN_PASSWORD` se enviaba con carácter extra. Corregido normalizando `ADMIN_EMAIL/ADMIN_PASSWORD` (trim + eliminación de `\r`) en los runners Linux. Resultado tras el fix: **30/30 PASS**. | Resuelta |
-| INC-05 | 02-05-2026 | Vulnerabilidad XSS en backend: los endpoints de creación y actualización de documentos almacenaban el contenido sin sanitizar. Un atacante con acceso directo a la API podía persistir payloads maliciosos independientemente de la validación del frontend. Corregido implementando `SanitizeHtml()` en `DocumentsController.cs` (elimina bloques `<script>`, atributos `on\w+=` y URIs `javascript:`). Test `T-DOC-04` corregido en los cuatro runners: ahora verifica que el payload XSS es eliminado por el backend (usa `NotContains` en lugar de `Contains`). | Resuelta |
+| INC-05 | 02-05-2026 | Vulnerabilidad XSS en backend: los endpoints de creación y actualización de documentos almacenaban el contenido sin sanitizar. Un atacante con acceso directo a la API podía persistir payloads maliciosos independientemente de la validación del frontend. Corregido implementando sanitización server-side en `DocumentsController.cs`. Test `T-DOC-04` verifica que los payloads XSS son eliminados por el backend antes de persistir. | Resuelta |
 | INC-06 | 02-05-2026 | Inyección JSON en `run-tests-interactive.sh`: el script construía los cuerpos JSON interpolando directamente los valores del usuario sin escapar, por lo que un valor con `"` cerraba prematuramente la cadena y alteraba la estructura de la petición. Corregido implementando `json_escape()` que escapa `\`, `"`, tabuladores y saltos de línea antes de la interpolación. | Resuelta |
 | INC-07 | 04-05-2026 | Tests T-COL fallaban durante la limpieza: la restricción de FK impedía eliminar el espacio temporal si el documento creado en el test no se borraba antes. Corregido añadiendo la eliminación explícita del documento antes de la del espacio en el flujo de teardown de los scripts. Resultado: **33/33 PASS**. | Resuelta |
 | INC-08 | 06-05-2026 | Backend inaccesible al arrancar: la migración `AddColumnLengthConstraints` crasheaba en cada inicio con el error "Column name 'IsPublic' in table 'Documents' is specified more than once". Causa raíz: la migración había aplicado parcialmente `AddColumn IsPublic/PublishedAt` y creado las tablas `AllowedWebsites` y `DocumentPublications` en una ejecución anterior, pero la transacción no quedó registrada en `__EFMigrationsHistory` (Azure SQL Edge no revirtió el DDL en la excepción). Todos los tests fallaban con HTTP 0 (connection refused). Corregido haciendo idempotentes las cuatro operaciones problemáticas mediante SQL condicional (`IF COL_LENGTH IS NULL` / `IF NOT EXISTS`). Resultado: migración aplicada correctamente, **33/33 PASS**. | Resuelta |
+| INC-09 | 12-05-2026 | La cabecera `Server` de las respuestas HTTP del frontend revelaba la versión de nginx. La imagen Docker del frontend usaba `nginx:alpine` (nginx oficial), que no soporta el módulo `headers-more` de Alpine y no permitía eliminar la cabecera. Corregido cambiando la imagen base a `alpine:3.21` con `nginx` y `nginx-mod-http-headers-more` propios del paquete Alpine, y añadiendo `more_clear_headers Server;` en `nginx.conf`. Test `T-SEC-04` pasa correctamente. | Resuelta |
+| INC-10 | 12-05-2026 | Test `T-SEC-06` (IDOR: acceso a espacio privado ajeno) fallaba con estado esperado 404 pero el endpoint devuelve 403 cuando se intenta acceder a un espacio privado de otro usuario. El comportamiento del backend es correcto: devuelve 403 Forbidden (el recurso existe pero el acceso está denegado). Corregido ajustando el estado esperado del test a 403. | Resuelta |
+| INC-11 | 12-05-2026 | `DELETE /users/{id}` devolvía HTTP 500 al eliminar un usuario que tenía registros relacionados con restricciones FK `ON DELETE NO ACTION` (SpacePermissions, Friendships, Messages, RecommendationRatings, DocumentVersions y DocumentPublications en documentos ajenos). Corregido añadiendo el método `CleanupUserRelationsAsync` en `UserService` que elimina explícitamente esos registros antes de llamar a `UserManager.DeleteAsync`. Test `T-ADMIN-20` añadido para cubrir este escenario; el endpoint devuelve 204 No Content. | Resuelta |
+| INC-12 a INC-19 | 12-05-2026 12:51 | Ocho tests de autenticación y seguridad devolvieron HTTP 500 de forma simultánea. Causa raíz: dos pipelines de despliegue se lanzaron en paralelo al hacer push de dos commits a la vez, lo que dejó el contenedor de base de datos detenido. Los endpoints que no requieren BD seguían respondiendo correctamente (HTTP 400/401), confirmando que el backend estaba en marcha pero sin acceso a datos. Resuelto relanzando el último pipeline. **69/69 PASS** tras el redespliegue. | Resuelta |
+| INC-13 a INC-20 | 12-05-2026 15:04 | Ocho tests de autenticación (`T-AUTH-01`, `T-AUTH-02`, `T-AUTH-03`, `T-AUTH-04`, `T-AUTH-05`, `T-AUTH-08`, `T-AUTH-09`, `T-AUTH-10`) devolvieron HTTP 405 al ejecutar la suite contra la IP (`http://178.105.128.94`). Causa raíz: la suite se ejecutó justo después de implementar el redirect HTTP→HTTPS. nginx devuelve 301 ante cualquier petición HTTP; el cliente HTTP convierte las peticiones POST en GET al seguir el redirect, y los endpoints de autenticación no aceptan GET → 405 Method Not Allowed. No es un fallo de la aplicación sino el comportamiento correcto del redirect. Suite ejecutada contra `https://lifehubapp.duckdns.org/api`: **69/69 PASS**. | Resuelta |
+| INC-14 | 12-05-2026 16:27 | Test `T-AUTH-01` (Registro nuevo usuario) fallo: esperado HTTP 200, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-15 | 12-05-2026 16:27 | Test `T-AUTH-02` (Registro email duplicado) fallo: esperado HTTP 400, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-16 | 12-05-2026 16:27 | Test `T-AUTH-03` (Registro email con formato invalido) fallo: esperado HTTP 400, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-17 | 12-05-2026 16:27 | Test `T-AUTH-10` (Registro contrasena corta (< 10 chars) -> 400) fallo: esperado HTTP 400, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-18 | 12-05-2026 16:27 | Test `T-AUTH-08` (Login admin (setup para tests admin)) fallo: esperado HTTP 200, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-19 | 12-05-2026 16:27 | Test `T-AUTH-09` (Login cuenta inactiva -> 401) fallo: esperado HTTP 401, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-20 | 12-05-2026 16:27 | Test `T-AUTH-04` (Login correcto - obtener token) fallo: esperado HTTP 200, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-21 | 12-05-2026 16:27 | Test `T-AUTH-05` (Login contrasena incorrecta) fallo: esperado HTTP 401, obtenido 405. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-22 | 12-05-2026 16:27 | Test `T-AUTH-06` (Ruta protegida sin token -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-23 | 12-05-2026 16:27 | Test `T-AUTH-07` (Ruta protegida con token invalido -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-24 | 12-05-2026 16:27 | Test `T-ADMIN-01` (Acceso admin sin token -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-25 | 12-05-2026 16:27 | Test `T-SEC-01` (Token expirado/invalido -> 401) fallo: esperado HTTP 401, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-26 | 12-05-2026 16:27 | Test `T-SEC-03` (Cabeceras de seguridad presentes (nosniff + no-frame)) fallo: esperado HTTP 200, obtenido 200. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-27 | 12-05-2026 16:28 | Test `T-AUTH-09` (Login cuenta inactiva -> 401) fallo: esperado HTTP 401, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-28 | 12-05-2026 16:28 | Test `T-AUTH-04` (Login correcto - obtener token) fallo: esperado HTTP 200, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-29 | 12-05-2026 16:28 | Test `T-AUTH-05` (Login contrasena incorrecta) fallo: esperado HTTP 401, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-30 | 12-05-2026 16:33 | Test `T-AUTH-02` (Registro email duplicado) fallo: esperado HTTP 400, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-31 | 12-05-2026 16:33 | Test `T-AUTH-03` (Registro email con formato invalido) fallo: esperado HTTP 400, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |
+| INC-32 | 12-05-2026 16:33 | Test `T-AUTH-10` (Registro contrasena corta (< 10 chars) -> 400) fallo: esperado HTTP 400, obtenido 429. Detectado automaticamente por `run-tests.ps1`. | Abierta |

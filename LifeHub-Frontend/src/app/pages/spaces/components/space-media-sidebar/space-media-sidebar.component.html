@@ -1,54 +1,153 @@
-<div class="sidebar-section">
-  <div class="sidebar-section-header">
-    <span class="sidebar-section-title">Multimedia</span>
-    <button type="button" class="btn-icon" (click)="toggleCreateMedia.emit()" title="Agregar recurso">+</button>
-  </div>
+<aside class="media-panel" [class.is-collapsed]="isCollapsed">
 
-  <div *ngIf="showCreateMedia" class="sidebar-form media-form">
-    <div class="media-form-tabs">
-      <button type="button" class="tab-btn" [class.active]="mediaTab === 'embed'" (click)="setMediaTab.emit('embed')">Enlace</button>
-      <button type="button" class="tab-btn" [class.active]="mediaTab === 'local'" (click)="setMediaTab.emit('local')">Archivo local</button>
-    </div>
+  <button class="media-panel__toggle" type="button" (click)="toggleCollapsed()"
+          [title]="isCollapsed ? 'Mostrar multimedia' : 'Ocultar multimedia'">
+    <span class="toggle-arrow">{{ isCollapsed ? '◁' : '▷' }}</span>
+    <span class="toggle-note" *ngIf="isCollapsed">♪</span>
+  </button>
 
-    <form *ngIf="mediaTab === 'embed'" [formGroup]="createEmbedForm" (ngSubmit)="addEmbedReference.emit()">
-      <div class="allowed-sites">
-        <small *ngFor="let domain of allowedEmbedDomains">{{ domain }}</small>
+  <div class="media-panel__inner">
+
+    <header class="panel-header">
+      <h2 class="panel-title">Multimedia</h2>
+      <div class="panel-header-actions">
+        <button type="button" class="panel-add-btn" (click)="openCreateMedia.emit()" title="Agregar recurso">+</button>
+        <button type="button" class="panel-close-btn" (click)="toggleCollapsed()" title="Cerrar panel">✕</button>
       </div>
-      <input type="text" formControlName="label" placeholder="Título" />
-      <input type="url" formControlName="url" placeholder="https://..." />
-      <button type="submit" class="btn-primary btn-sm" [disabled]="createEmbedForm.invalid || loadingMedia">Guardar enlace</button>
-    </form>
+    </header>
 
-    <div *ngIf="mediaTab === 'local'" class="sidebar-form-sub">
-      <input type="file" accept="audio/*,video/*,image/*" (change)="onLocalFileSelected.emit($event)" />
-      <input type="text" [formControl]="localFileLabelControl" placeholder="Etiqueta (opcional)" />
-      <button type="button" class="btn-primary btn-sm" [disabled]="!selectedLocalFile || loadingMedia" (click)="addLocalFileReference.emit()">Guardar referencia</button>
+    <!-- ── Tabs ──────────────────────────────────────────── -->
+    <div class="panel-tabs">
+      <button class="panel-tab" [class.is-active]="activeTab === 'visual'"
+              (click)="activeTab = 'visual'" type="button">
+        Visual
+        <span class="tab-badge" *ngIf="visualMediaReferences.length > 0">{{ visualMediaReferences.length }}</span>
+      </button>
+      <button class="panel-tab" [class.is-active]="activeTab === 'music'"
+              (click)="activeTab = 'music'" type="button">
+        Música
+      </button>
     </div>
-  </div>
 
-  <div *ngIf="loadingMedia" class="sidebar-muted">Cargando...</div>
-  <div *ngIf="!loadingMedia && mediaReferences.length === 0 && !showCreateMedia" class="sidebar-empty">
-    Sin recursos. Usa <strong>+</strong> para agregar.
-  </div>
+    <!-- ── Tab: Visual ───────────────────────────────────── -->
+    <div class="tab-content tab-content--visual" *ngIf="activeTab === 'visual'">
+      <p *ngIf="loadingMedia" class="panel-muted">Cargando...</p>
 
-  <ul class="sidebar-media-list" *ngIf="mediaReferences.length > 0">
-    <li *ngFor="let item of mediaReferences">
-      <div class="sidebar-media-row" [class.active]="isMediaActiveInMain(item.id)" (click)="onMediaReferenceClick.emit(item)">
-        <div class="sidebar-doc-info">
-          <span class="sidebar-doc-name">{{ item.label }}</span>
-          <span class="sidebar-doc-meta">{{ item.type === 'external-embed' ? (item.provider || 'Embed') : 'Local' }}</span>
+      <p *ngIf="!loadingMedia && visualMediaReferences.length === 0" class="panel-empty">
+        Sin recursos visuales. Usa <strong>+</strong> para añadir imágenes, vídeos o embeds.
+      </p>
+
+      <input *ngIf="visualMediaReferences.length > 0"
+             class="track-search" type="search" placeholder="Buscar recurso..."
+             [(ngModel)]="visualSearchQuery" aria-label="Buscar recurso visual" />
+
+      <p *ngIf="!loadingMedia && visualMediaReferences.length > 0 && filteredVisualMediaReferences.length === 0"
+         class="panel-empty">Sin resultados para "<strong>{{ visualSearchQuery }}</strong>".</p>
+
+      <ul class="panel-media-list" *ngIf="filteredVisualMediaReferences.length > 0">
+        <li class="panel-media-item"
+            *ngFor="let item of filteredVisualMediaReferences"
+            [class.is-active]="isMediaActiveInMain(item.id)"
+            (click)="onMediaReferenceClick.emit(item)">
+          <div class="item-info">
+            <span class="item-name">{{ item.label }}</span>
+            <span class="item-meta">{{ mediaTypeLabel(item) }}</span>
+          </div>
+          <button type="button" class="item-remove"
+                  (click)="$event.stopPropagation(); removeMediaReference.emit(item.id)"
+                  title="Quitar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Zm2-10h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── Tab: Música ───────────────────────────────────── -->
+    <div class="tab-content tab-content--music" *ngIf="activeTab === 'music'">
+
+      <div class="reproductor" *ngIf="playerTracks.length > 0; else noAudioUrls">
+
+        <div class="track-art">
+          <img [src]="currentTrack?.image || 'assets/images/music-fallback.jpg'"
+               [alt]="currentTrack?.title || 'Portada'"
+               loading="lazy" />
         </div>
-        <button type="button" class="btn-icon btn-icon-danger" (click)="$event.stopPropagation(); removeMediaReference.emit(item.id)" title="Quitar">×</button>
-      </div>
-    </li>
-  </ul>
 
-  <div class="music-player" *ngIf="audioMediaReferences.length > 0">
-    <p class="sidebar-form-label">Reproductor de musica</p>
-    <div class="music-track" *ngFor="let item of audioMediaReferences">
-      <span class="music-track-title">{{ item.label }}</span>
-      <audio *ngIf="getLocalMediaUrl(item.id)" controls [src]="getLocalMediaUrl(item.id)!"></audio>
-      <span *ngIf="!getLocalMediaUrl(item.id)" class="sidebar-muted">Audio local no disponible en esta sesión.</span>
+        <div class="reproductor-body">
+          <p class="now-playing" [title]="currentTrack?.title || ''">
+            {{ currentTrack?.title || 'Sin reproducción' }}
+          </p>
+
+          <div class="ctrl-row">
+            <button type="button" class="ctrl-btn" (click)="prevTrack()" title="Anterior">◄◄</button>
+            <button type="button" class="ctrl-btn ctrl-btn--play" [class.is-playing]="isPlaying"
+                    (click)="togglePlay()" [title]="isPlaying ? 'Pausar' : 'Reproducir'">
+              {{ isPlaying ? '⏸' : '▶' }}
+            </button>
+            <button type="button" class="ctrl-btn" (click)="nextTrack()" title="Siguiente">►►</button>
+            <button type="button" class="ctrl-btn ctrl-btn--mute" [class.is-active]="isMuted"
+                    (click)="toggleMute()" [title]="isMuted ? 'Activar sonido' : 'Silenciar'">
+              <span class="mute-icon" [class.is-muted]="isMuted">♪</span>
+            </button>
+          </div>
+
+          <div class="progress-wrap">
+            <input type="range" min="0" max="1000" [value]="progressValue"
+                   aria-label="Progreso" (input)="onProgressInput($event)" />
+            <div class="time-labels">
+              <span>{{ currentTimeLabel }}</span>
+              <span>{{ totalTimeLabel }}</span>
+            </div>
+          </div>
+
+          <div class="volume-wrap">
+            <span class="volume-label">Vol</span>
+            <input type="range" min="0" max="1" step="0.01" [value]="volumeValue"
+                   aria-label="Volumen" (input)="onVolumeInput($event)" />
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noAudioUrls>
+        <p class="panel-muted">Audio no disponible en esta sesión.</p>
+      </ng-template>
+
+      <input class="track-search" type="search" placeholder="Buscar pista..."
+             [(ngModel)]="searchQuery" aria-label="Buscar pista" />
+
+      <ul class="tracklist" #tracklist>
+        <li *ngFor="let track of filteredTracks; trackBy: trackById"
+            class="track-item"
+            [class.is-active]="track.id === currentTrack?.id">
+          <button type="button" class="track-btn" (click)="selectTrack(trackIndexById(track.id))">
+            {{ track.title }}
+          </button>
+          <button type="button" class="item-remove"
+                  *ngIf="!track.isStatic"
+                  (click)="removeMediaReference.emit(track.id)"
+                  title="Quitar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12Zm2-10h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z" />
+            </svg>
+          </button>
+        </li>
+      </ul>
+
     </div>
+
   </div>
-</div>
+
+  <audio
+    #audioPlayer
+    preload="metadata"
+    (loadedmetadata)="onLoadedMetadata()"
+    (timeupdate)="onTimeUpdate()"
+    (play)="onPlay()"
+    (pause)="onPause()"
+    (volumechange)="onVolumeUpdate()"
+    (ended)="onEnded()">
+  </audio>
+
+</aside>

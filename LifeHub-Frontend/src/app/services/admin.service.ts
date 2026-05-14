@@ -21,8 +21,9 @@ export class AdminService {
 
   constructor(private http: HttpClient) {}
 
-  getAdminUsers(): Observable<AdminUser[]> {
-    return this.http.get<AdminUser[]>(`${this.api}/users`);
+  getAdminUsers(page: number = 1, pageSize: number = 20): Observable<PaginatedResult<AdminUser>> {
+    const params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
+    return this.http.get<PaginatedResult<AdminUser>>(`${this.api}/users`, { params });
   }
 
   toggleUserActive(id: string): Observable<AdminUser> {

@@ -14,7 +14,7 @@ namespace LifeHub.DTOs
         public string FullName { get; set; } = null!;
 
         [Required]
-        [MinLength(6)]
+        [MinLength(10)]
         [MaxLength(128)]
         public string Password { get; set; } = null!;
 

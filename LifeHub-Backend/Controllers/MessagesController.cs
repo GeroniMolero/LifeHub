@@ -19,12 +19,12 @@ namespace LifeHub.Controllers
         }
 
         [HttpGet("conversation/{otherUserId}")]
-        public async Task<IActionResult> GetConversation(string otherUserId)
+        public async Task<IActionResult> GetConversation(string otherUserId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
             var authError = RequireAuthenticatedUserId(out var userId);
             if (authError != null) return authError;
 
-            var result = await _messageService.GetConversationAsync(userId, otherUserId);
+            var result = await _messageService.GetConversationAsync(userId, otherUserId, page, pageSize);
             return ToActionResult(result);
         }
 

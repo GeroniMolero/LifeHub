@@ -215,6 +215,9 @@ if ($doAuth) {
     Invoke-ApiTest -Id "T-AUTH-03" -Description "Registro email con formato invalido" `
         -Method POST -Url "/auth/register" -ExpectedStatus 400 `
         -Body @{ email="esto-no-es-email"; fullName="X"; password=$TestPass; confirmPassword=$TestPass }
+    Invoke-ApiTest -Id "T-AUTH-10" -Description "Registro contrasena corta (< 10 chars) -> 400" `
+        -Method POST -Url "/auth/register" -ExpectedStatus 400 `
+        -Body @{ email="shortpass_$Timestamp@lifehub-auto.test"; fullName="X"; password="Corta1!"; confirmPassword="Corta1!" }
     Invoke-ApiTest -Id "T-AUTH-04" -Description "Login correcto - obtener token" `
         -Method POST -Url "/auth/login" -ExpectedStatus 200 -Contains '"success":true' `
         -Body @{ email=$TestEmail; password=$TestPass } `
@@ -233,6 +236,33 @@ if ($doAuth) {
             -OnPass { param($b); $script:AdminToken = ($b | ConvertFrom-Json).token }
     } else {
         Skip-Test -Id "T-AUTH-08" -Description "Login admin" -Reason "ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env"
+    }
+    if ($script:AdminToken) {
+        try {
+            $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users?pageSize=100" `
+                -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+                -UseBasicParsing -ErrorAction Stop
+            $testUser = ($usersResp.Content | ConvertFrom-Json).items |
+                Where-Object { $_.email -eq $TestEmail } | Select-Object -First 1
+            if ($testUser) {
+                $script:TestUserId = $testUser.id
+                Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$($testUser.id)/toggle-active" `
+                    -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+                    -Body "{}" -UseBasicParsing -ErrorAction Stop | Out-Null
+                Invoke-ApiTest -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" `
+                    -Method POST -Url "/auth/login" -ExpectedStatus 401 -Contains "Esta cuenta no" `
+                    -Body @{ email=$TestEmail; password=$TestPass }
+                Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$($testUser.id)/toggle-active" `
+                    -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+                    -Body "{}" -UseBasicParsing -ErrorAction Stop | Out-Null
+            } else {
+                Skip-Test -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" -Reason "Usuario de test no encontrado en admin"
+            }
+        } catch {
+            Skip-Test -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" -Reason "Error al contactar con admin API"
+        }
+    } else {
+        Skip-Test -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" -Reason "AdminToken no disponible"
     }
 }
 

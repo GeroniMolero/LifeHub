@@ -1,4 +1,4 @@
-import { Component, DestroyRef, HostListener, OnDestroy, OnInit, SecurityContext, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnDestroy, OnInit, SecurityContext, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -22,6 +22,7 @@ import { DocumentService } from '../../../services/document.service';
 import { DocumentVersionService } from '../../../services/document-version.service';
 import { FriendshipService } from '../../../services/friendship.service';
 import { LayoutHeaderStateService } from '../../../services/layout-header-state.service';
+import { MediaFileStorageService } from '../../../services/media-file-storage.service';
 import { SpaceMediaSessionService } from '../../../services/space-media-session.service';
 import { ToastService } from '../../../services/toast.service';
 import { ModalComponent } from '../../../components/modal/modal.component';
@@ -33,6 +34,7 @@ interface VisualMediaLayout {
   x: number;
   y: number;
   width: number;
+  height: number;
   zIndex: number;
 }
 
@@ -66,11 +68,11 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   mediaError = '';
   renderedPreview = '';
 
-  showCreateDocument = false;
-  showImportPanel = false;
+  showDocumentModal = false;
+  documentModalTab: 'create' | 'import' = 'create';
   importableDocuments: Document[] = [];
   loadingImportable = false;
-  showCreateMedia = false;
+  showMediaModal = false;
   showSettingsModal = false;
   settingsModalTab: 'edit' | 'permissions' = 'edit';
   submittedEdit = false;
@@ -81,6 +83,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   friendsLoading = false;
   currentUserId = '';
   readonly SpacePermissionLevel = SpacePermissionLevel;
+  readonly DocumentType = DocumentType;
   mediaTab: 'embed' | 'local' = 'embed';
 
   editSpaceForm!: FormGroup;
@@ -89,12 +92,15 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
   createEmbedForm!: FormGroup;
   localFileLabelControl!: FormControl<string>;
 
+  @ViewChild(SpaceMediaSidebarComponent) private readonly mediaSidebarRef?: SpaceMediaSidebarComponent;
+
   selectedLocalFile: File | null = null;
   selectedMediaId: string | null = null;
   localFileBlobUrls = new Map<string, string>();
   visualLayouts = new Map<string, VisualMediaLayout>();
   activeVisualMediaIds = new Set<string>();
   private draggingMedia: { id: string; offsetX: number; offsetY: number } | null = null;
+  private resizingMedia: { id: string; startX: number; startY: number; startWidth: number; startHeight: number } | null = null;
   private zIndexCounter = 10;
 
   readonly allowedEmbedDomains: string[] = [...MEDIA_EMBED_ALLOWED_DOMAINS];
@@ -112,6 +118,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     private documentVersionService: DocumentVersionService,
     private friendshipService: FriendshipService,
     private layoutHeaderStateService: LayoutHeaderStateService,
+    private mediaFileStorage: MediaFileStorageService,
     private mediaSessionService: SpaceMediaSessionService,
     private toastService: ToastService
   ) {
@@ -203,6 +210,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.loadDocuments();
           this.loadMediaReferences();
+          this.toastService.info('El panel multimedia está oculto por defecto. Ábrelo con el botón "▶ Multimedia" de la cabecera.', 7000);
         },
         error: () => {
           this.toastService.error('No se pudo cargar el espacio creativo.');
@@ -218,22 +226,34 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
 
   @HostListener('document:pointermove', ['$event'])
   onPointerMove(event: PointerEvent): void {
-    if (!this.draggingMedia) return;
+    if (this.draggingMedia) {
+      const layout = this.visualLayouts.get(this.draggingMedia.id);
+      if (!layout) return;
 
-    const layout = this.visualLayouts.get(this.draggingMedia.id);
-    if (!layout) return;
+      const canvas = document.querySelector('.main-content-canvas') as HTMLElement | null;
+      const canvasRect = canvas?.getBoundingClientRect();
+      if (!canvasRect) return;
 
-    const canvas = document.querySelector('.main-content-canvas') as HTMLElement | null;
-    const canvasRect = canvas?.getBoundingClientRect();
-    if (!canvasRect) return;
+      layout.x = Math.max(0, event.clientX - canvasRect.left - this.draggingMedia.offsetX);
+      layout.y = Math.max(0, event.clientY - canvasRect.top - this.draggingMedia.offsetY);
+      return;
+    }
 
-    layout.x = Math.max(0, event.clientX - canvasRect.left - this.draggingMedia.offsetX);
-    layout.y = Math.max(0, event.clientY - canvasRect.top - this.draggingMedia.offsetY);
+    if (this.resizingMedia) {
+      const layout = this.visualLayouts.get(this.resizingMedia.id);
+      if (!layout) return;
+
+      const dw = event.clientX - this.resizingMedia.startX;
+      const dh = event.clientY - this.resizingMedia.startY;
+      layout.width = Math.max(200, this.resizingMedia.startWidth + dw);
+      layout.height = Math.max(150, this.resizingMedia.startHeight + dh);
+    }
   }
 
   @HostListener('document:pointerup')
   onPointerUp(): void {
     this.draggingMedia = null;
+    this.resizingMedia = null;
   }
 
   openSettingsModal(): void {
@@ -361,15 +381,32 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     return name || email || 'Usuario sin identificar';
   }
 
-  toggleCreateDocument(): void {
-    this.showCreateDocument = !this.showCreateDocument;
+  openDocumentModal(tab: 'create' | 'import'): void {
+    this.documentModalTab = tab;
+    this.showDocumentModal = true;
+    if (tab === 'import') {
+      this.loadImportableDocuments();
+    }
   }
 
-  toggleCreateMedia(): void {
-    this.showCreateMedia = !this.showCreateMedia;
+  closeDocumentModal(): void {
+    this.showDocumentModal = false;
+    this.createDocumentForm.reset({ title: '', description: '', content: '', type: DocumentType.Note });
+  }
+
+  openMediaModal(): void {
+    this.showMediaModal = true;
     this.mediaTab = 'embed';
     this.mediaError = '';
   }
+
+  closeMediaModal(): void {
+    this.showMediaModal = false;
+    this.selectedLocalFile = null;
+    this.localFileLabelControl.setValue('');
+    this.createEmbedForm.reset({ label: '', url: '' });
+  }
+
 
   createDocument(): void {
     if (this.createDocumentForm.invalid || !this.space) return;
@@ -384,13 +421,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       next: (doc) => {
         this.documents = [doc, ...this.documents];
         this.selectDocument(doc);
-        this.showCreateDocument = false;
-        this.createDocumentForm.reset({
-          title: '',
-          description: '',
-          content: '',
-          type: DocumentType.Note
-        });
+        this.closeDocumentModal();
         this.loadingDocuments = false;
       },
       error: () => {
@@ -407,10 +438,18 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.updateRenderedPreview();
   }
 
-  openImportPanel(): void {
-    this.showImportPanel = !this.showImportPanel;
-    if (!this.showImportPanel) return;
+  deselectDocument(): void {
+    this.selectedDocument = null;
+    this.editDocumentForm.reset();
+    this.renderedPreview = '';
+  }
 
+  openImportTab(): void {
+    this.documentModalTab = 'import';
+    this.loadImportableDocuments();
+  }
+
+  private loadImportableDocuments(): void {
     this.loadingImportable = true;
     this.documentService.getDocuments().subscribe({
       next: (docs) => {
@@ -429,7 +468,7 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.documentService.copyToSpace(doc.id, this.space.id).subscribe({
       next: (copy) => {
         this.documents = [copy, ...this.documents];
-        this.showImportPanel = false;
+        this.closeDocumentModal();
         this.loadingImportable = false;
         this.toastService.success('Documento importado al espacio.');
       },
@@ -536,7 +575,8 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
           reference,
           ...this.mediaReferences.filter(item => item.id !== reference.id)
         ];
-        this.createEmbedForm.reset({ label: '', url: '' });
+        this.mediaSidebarRef?.show('visual');
+        this.closeMediaModal();
         this.loadingMedia = false;
       },
       error: () => {
@@ -580,13 +620,20 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     };
 
     const blobUrl = URL.createObjectURL(file);
-    this.localFileBlobUrls.set(reference.id, blobUrl);
+    const updatedUrls = new Map(this.localFileBlobUrls);
+    updatedUrls.set(reference.id, blobUrl);
+    this.localFileBlobUrls = updatedUrls;
     this.ensureVisualLayout(reference);
 
     this.mediaSessionService.addReference(this.space.id, reference);
     this.mediaReferences = [reference, ...this.mediaReferences.filter(item => item.id !== reference.id)];
-    this.selectedLocalFile = null;
-    this.localFileLabelControl.setValue('');
+
+    this.mediaFileStorage.saveFile(reference.id, file).catch(() => {});
+
+    const tab = file.type.startsWith('audio/') ? 'music' : 'visual';
+    this.mediaSidebarRef?.show(tab);
+
+    this.closeMediaModal();
   }
 
   get visualMediaReferences(): SpaceMediaReference[] {
@@ -645,6 +692,23 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     this.bringVisualToFront(id);
   }
 
+  startResizingMedia(event: PointerEvent, id: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const layout = this.visualLayouts.get(id);
+    if (!layout) return;
+
+    this.resizingMedia = {
+      id,
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: layout.width,
+      startHeight: layout.height
+    };
+
+    this.bringVisualToFront(id);
+  }
+
   removeMediaReference(id: string): void {
     if (!this.space) return;
 
@@ -682,8 +746,18 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.mediaFileStorage.deleteFile(id).catch(() => {});
     this.mediaSessionService.removeReference(this.space.id, id);
     this.mediaReferences = this.mediaReferences.filter(item => item.id !== id);
+  }
+
+  getDocumentTypeText(type?: DocumentType | string | number): string {
+    const map: { [key: number]: string } = {
+      [DocumentType.Note]: 'Nota',
+      [DocumentType.TextFile]: 'Archivo de texto',
+      [DocumentType.List]: 'Lista'
+    };
+    return type !== undefined ? (map[Number(type)] || 'Nota') : 'Nota';
   }
 
   getPrivacyText(privacy: SpacePrivacy): string {
@@ -719,14 +793,34 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         this.mediaReferences = [...persistedReferences, ...localSessionReferences];
         this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
         this.loadingMedia = false;
+        this.restoreBlobUrlsFromIndexedDB(localSessionReferences);
       },
       error: () => {
         this.mediaReferences = [...localSessionReferences];
         this.mediaReferences.forEach(reference => this.ensureVisualLayout(reference));
         this.toastService.error('No se pudieron cargar los enlaces multimedia guardados.');
         this.loadingMedia = false;
+        this.restoreBlobUrlsFromIndexedDB(localSessionReferences);
       }
     });
+  }
+
+  private async restoreBlobUrlsFromIndexedDB(references: SpaceMediaReference[]): Promise<void> {
+    const newMap = new Map(this.localFileBlobUrls);
+
+    for (const ref of references) {
+      if (newMap.has(ref.id)) continue;
+      try {
+        const file = await this.mediaFileStorage.getFile(ref.id);
+        if (file) {
+          newMap.set(ref.id, URL.createObjectURL(file));
+        }
+      } catch {
+        // Si falla IndexedDB para este archivo, se omite sin romper el resto
+      }
+    }
+
+    this.localFileBlobUrls = newMap;
   }
 
   private isVisualReference(item: SpaceMediaReference): boolean {
@@ -743,10 +837,15 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     }
 
     const offset = this.visualLayouts.size * 24;
+    const isEmbed = reference.type === 'external-embed';
+    const isImage = reference.mimeType?.startsWith('image/');
+    const width = isEmbed ? 380 : (isImage ? 280 : 340);
+    const height = isEmbed ? 260 : (isImage ? 220 : 260);
     this.visualLayouts.set(reference.id, {
       x: 24 + Math.min(offset, 240),
       y: 24 + Math.min(offset, 180),
-      width: reference.type === 'external-embed' ? 360 : (reference.mimeType?.startsWith('image/') ? 260 : 320),
+      width,
+      height,
       zIndex: ++this.zIndexCounter
     });
   }
@@ -757,21 +856,15 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
     layout.zIndex = ++this.zIndexCounter;
   }
 
-  private applySpaceState(space: CreativeSpace): void {
-    this.space = space;
-    this.editSpaceForm.patchValue({
-      name: space.name,
-      description: space.description,
-      privacy: space.privacy,
-      isPublicProfileVisible: space.isPublicProfileVisible
-    });
+  private refreshHeader(): void {
+    if (!this.space) return;
     this.layoutHeaderStateService.setOverride({
-      title: space.name,
-      description: space.description?.trim() || 'Editor y multimedia del espacio seleccionado',
+      title: this.space.name,
+      description: this.space.description?.trim() || 'Editor y multimedia del espacio seleccionado',
       meta: [
-        this.getPrivacyText(space.privacy),
-        ...(space.isPublicProfileVisible ? ['Visible en perfil'] : []),
-        `Actualizado ${new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(space.updatedAt))}`
+        this.getPrivacyText(this.space.privacy),
+        ...(this.space.isPublicProfileVisible ? ['Visible en perfil'] : []),
+        `Actualizado ${new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(this.space.updatedAt))}`
       ],
       actions: [
         ...(this.isOwner() ? [{
@@ -786,6 +879,17 @@ export class SpaceWorkspaceComponent implements OnInit, OnDestroy {
         }
       ]
     });
+  }
+
+  private applySpaceState(space: CreativeSpace): void {
+    this.space = space;
+    this.editSpaceForm.patchValue({
+      name: space.name,
+      description: space.description,
+      privacy: space.privacy,
+      isPublicProfileVisible: space.isPublicProfileVisible
+    });
+    this.refreshHeader();
   }
 
   private ensurePermissionForm(): void {

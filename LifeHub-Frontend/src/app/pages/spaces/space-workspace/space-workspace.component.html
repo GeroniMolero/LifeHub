@@ -1,3 +1,4 @@
+<!-- ── Modal: Ajustes del espacio ─────────────────────────── -->
 <app-modal title="Ajustes del espacio" [visible]="showSettingsModal" (closed)="closeSettingsModal()">
   <div class="modal-tabs" *ngIf="isOwner()">
     <button type="button" class="modal-tab-btn" [class.active]="settingsModalTab === 'edit'" (click)="setSettingsModalTab('edit')">Editar</button>
@@ -80,9 +81,115 @@
   </div>
 </app-modal>
 
-<section class="workspace" *ngIf="!loading; else loadingTpl">
+<!-- ── Modal: Nuevo documento / Importar ──────────────────── -->
+<app-modal title="Documentos" [visible]="showDocumentModal" (closed)="closeDocumentModal()">
+  <div class="modal-tabs">
+    <button type="button" class="modal-tab-btn" [class.active]="documentModalTab === 'create'" (click)="documentModalTab = 'create'">Nuevo</button>
+    <button type="button" class="modal-tab-btn" [class.active]="documentModalTab === 'import'" (click)="openImportTab()">Importar</button>
+  </div>
 
-  <!-- ── Main workspace body ────────────────────────────── -->
+  <div class="modal-tab-body">
+    <form *ngIf="documentModalTab === 'create'" [formGroup]="createDocumentForm" (ngSubmit)="createDocument()" class="modal-create-form">
+      <div class="form-group">
+        <label>Título *</label>
+        <input type="text" formControlName="title" placeholder="Nombre del documento" />
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <input type="text" formControlName="description" placeholder="Descripción opcional" />
+      </div>
+      <div class="form-group">
+        <label>Contenido inicial</label>
+        <textarea rows="4" formControlName="content" placeholder="Puedes dejarlo vacío y editar después"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select formControlName="type">
+          <option [value]="DocumentType.Note">Nota</option>
+          <option [value]="DocumentType.TextFile">Archivo de texto</option>
+          <option [value]="DocumentType.List">Lista</option>
+        </select>
+      </div>
+      <div class="modal-form-actions">
+        <button type="button" class="btn-secondary" (click)="closeDocumentModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="createDocumentForm.invalid || loadingDocuments">
+          {{ loadingDocuments ? 'Creando...' : 'Crear documento' }}
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="documentModalTab === 'import'">
+      <div *ngIf="loadingImportable" class="loading">Cargando documentos...</div>
+      <div *ngIf="!loadingImportable && importableDocuments.length === 0" class="empty">
+        No tienes otros documentos disponibles para importar.
+      </div>
+      <ul *ngIf="!loadingImportable && importableDocuments.length > 0" class="import-list">
+        <li *ngFor="let doc of importableDocuments" (click)="importDocument(doc)" class="import-item">
+          <div class="import-item-info">
+            <span class="import-item-title">{{ doc.title }}</span>
+            <span class="import-item-meta">{{ getDocumentTypeText(doc.type) }}</span>
+          </div>
+          <span class="import-icon">+</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</app-modal>
+
+<!-- ── Modal: Agregar multimedia ──────────────────────────── -->
+<app-modal title="Agregar multimedia" [visible]="showMediaModal" (closed)="closeMediaModal()">
+  <div class="modal-tabs">
+    <button type="button" class="modal-tab-btn" [class.active]="mediaTab === 'embed'" (click)="mediaTab = 'embed'">Enlace</button>
+    <button type="button" class="modal-tab-btn" [class.active]="mediaTab === 'local'" (click)="mediaTab = 'local'">Archivo local</button>
+  </div>
+
+  <div class="modal-tab-body">
+    <form *ngIf="mediaTab === 'embed'" [formGroup]="createEmbedForm" (ngSubmit)="addEmbedReference()" class="modal-create-form">
+      <div class="allowed-sites">
+        <small *ngFor="let domain of allowedEmbedDomains">{{ domain }}</small>
+      </div>
+      <div class="form-group">
+        <label>Título</label>
+        <input type="text" formControlName="label" placeholder="Nombre para este recurso" />
+      </div>
+      <div class="form-group">
+        <label>URL</label>
+        <input type="url" formControlName="url" placeholder="https://..." />
+      </div>
+      <div class="modal-form-actions">
+        <button type="button" class="btn-secondary" (click)="closeMediaModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="createEmbedForm.invalid || loadingMedia">
+          {{ loadingMedia ? 'Guardando...' : 'Añadir enlace' }}
+        </button>
+      </div>
+    </form>
+
+    <div *ngIf="mediaTab === 'local'" class="modal-create-form">
+      <div class="form-group">
+        <label>Archivo</label>
+        <label class="file-upload-btn">
+          Seleccionar archivo
+          <input type="file" accept="audio/*,video/*,image/*" (change)="onLocalFileSelected($event)" />
+        </label>
+      </div>
+      <div class="form-group">
+        <label>Etiqueta</label>
+        <input type="text" [formControl]="localFileLabelControl" placeholder="Nombre opcional (usa el nombre del archivo si se deja vacío)" />
+      </div>
+      <p class="modal-hint" *ngIf="selectedLocalFile">
+        Archivo seleccionado: <strong>{{ selectedLocalFile.name }}</strong>
+      </p>
+      <div class="modal-form-actions">
+        <button type="button" class="btn-secondary" (click)="closeMediaModal()">Cancelar</button>
+        <button type="button" class="btn-primary" [disabled]="!selectedLocalFile || loadingMedia" (click)="addLocalFileReference()">
+          Añadir archivo
+        </button>
+      </div>
+    </div>
+  </div>
+</app-modal>
+
+<section class="workspace" *ngIf="!loading; else loadingTpl">
   <div class="workspace-body" *ngIf="space">
 
     <app-space-editor-main
@@ -97,55 +204,38 @@
       (setActiveTab)="setActiveTab($event)"
       (saveDocument)="saveDocument()"
       (deleteDocument)="deleteDocument($event)"
-      (startDraggingMedia)="startDraggingMedia($event.event, $event.id)">
+      (startDraggingMedia)="startDraggingMedia($event.event, $event.id)"
+      (startResizingMedia)="startResizingMedia($event.event, $event.id)"
+      (closeVisualItem)="activeVisualMediaIds.delete($event)">
     </app-space-editor-main>
 
-    <!-- ===== Right: Sidebar ===== -->
     <aside class="workspace-sidebar">
 
       <app-space-documents-sidebar
-        [showCreateDocument]="showCreateDocument"
-        [createDocumentForm]="createDocumentForm"
         [loadingDocuments]="loadingDocuments"
         [documents]="documents"
         [selectedDocument]="selectedDocument"
-        [showImportPanel]="showImportPanel"
-        [importableDocuments]="importableDocuments"
-        [loadingImportable]="loadingImportable"
-        (toggleCreateDocument)="toggleCreateDocument()"
-        (createDocument)="createDocument()"
+        (openCreateDocument)="openDocumentModal('create')"
         (selectDocument)="selectDocument($event)"
-        (openImportPanel)="openImportPanel()"
-        (importDocument)="importDocument($event)">
+        (deselectDocument)="deselectDocument()">
       </app-space-documents-sidebar>
 
-      <app-space-media-sidebar
-        [showCreateMedia]="showCreateMedia"
-        [mediaTab]="mediaTab"
-        [createEmbedForm]="createEmbedForm"
-        [localFileLabelControl]="localFileLabelControl"
-        [selectedLocalFile]="selectedLocalFile"
-        [allowedEmbedDomains]="allowedEmbedDomains"
-        [mediaError]="mediaError"
-        [loadingMedia]="loadingMedia"
-        [mediaReferences]="mediaReferences"
-        [audioMediaReferences]="audioMediaReferences"
-        [activeVisualMediaIds]="activeVisualMediaIds"
-        [localFileBlobUrls]="localFileBlobUrls"
-        (toggleCreateMedia)="toggleCreateMedia()"
-        (setMediaTab)="mediaTab = $event"
-        (addEmbedReference)="addEmbedReference()"
-        (onLocalFileSelected)="onLocalFileSelected($event)"
-        (addLocalFileReference)="addLocalFileReference()"
-        (onMediaReferenceClick)="onMediaReferenceClick($event)"
-        (removeMediaReference)="removeMediaReference($event)">
-      </app-space-media-sidebar>
-
     </aside>
-
   </div>
 </section>
 
 <ng-template #loadingTpl>
   <div class="workspace-loading">Cargando espacio...</div>
 </ng-template>
+
+<app-space-media-sidebar
+  *ngIf="space"
+  [loadingMedia]="loadingMedia"
+  [mediaReferences]="mediaReferences"
+  [audioMediaReferences]="audioMediaReferences"
+  [activeVisualMediaIds]="activeVisualMediaIds"
+  [localFileBlobUrls]="localFileBlobUrls"
+  (openCreateMedia)="openMediaModal()"
+  (onMediaReferenceClick)="onMediaReferenceClick($event)"
+  (removeMediaReference)="removeMediaReference($event)">
+</app-space-media-sidebar>

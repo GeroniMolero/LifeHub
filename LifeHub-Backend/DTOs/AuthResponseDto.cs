@@ -49,7 +49,7 @@ namespace LifeHub.DTOs
         public string CurrentPassword { get; set; } = null!;
 
         [Required]
-        [MinLength(6)]
+        [MinLength(10)]
         [MaxLength(128)]
         public string NewPassword { get; set; } = null!;
     }

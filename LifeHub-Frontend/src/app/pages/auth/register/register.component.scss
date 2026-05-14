@@ -24,7 +24,7 @@
   z-index: 1;
   min-height: 100vh;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   gap: $space-8;
   padding: clamp(1rem, 2.8vw, 2rem);
@@ -141,6 +141,38 @@
   position: relative;
   z-index: 1;
   margin-bottom: $space-5;
+}
+
+.input-wrapper {
+  position: relative;
+
+  input {
+    padding-right: 2.8rem;
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  right: $space-3;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  color: $color-slate-500;
+  display: flex;
+  align-items: center;
+  line-height: 0;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: $color-slate-700;
+  }
 }
 
 .form-group label {
@@ -292,6 +324,18 @@ button:disabled {
     width: 84px;
     height: 84px;
   }
+}
+
+.auth-copyright {
+  position: absolute;
+  bottom: $space-4;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  text-align: center;
+  font-size: 0.625rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
 }
 
 @keyframes authPanelIn {

@@ -1,7 +1,6 @@
 @use '../../../../styles/design-tokens' as *;
 
 .workspace {
-  max-width: 1400px;
   margin: 0 auto;
   display: grid;
   gap: $space-5;
@@ -9,7 +8,7 @@
 
 .workspace-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 270px;
   gap: $space-5;
   align-items: start;
 }
@@ -20,16 +19,9 @@
 }
 
 .workspace-sidebar {
-  background: $color-white;
-  border: $border-width-base solid $color-brand-border-medium;
-  border-radius: $border-radius-2xl;
-  box-shadow: $shadow-brand-soft;
-  display: grid;
-  gap: $space-4;
-  padding: $space-4;
   position: sticky;
   top: $space-4;
-  overflow: hidden;
+  align-self: start;
 }
 
 .workspace-loading {
@@ -43,6 +35,7 @@
 
   .workspace-sidebar {
     position: static;
+    align-self: auto;
   }
 }
 
@@ -92,11 +85,34 @@
   display: grid;
   gap: $space-1;
 
-  label {
+  label:not(.file-upload-btn) {
     font-size: $font-size-sm;
     font-weight: $font-weight-medium;
     color: $color-text-secondary;
   }
+}
+
+.form-group .file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: 0.45rem 0.9rem;
+  background: $color-slate-100;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-md;
+  color: $color-slate-700;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: $color-brand-050;
+    border-color: $color-brand-border-medium;
+    color: $color-brand-900;
+  }
+
+  input[type='file'] { display: none; }
 }
 
 input, textarea, select {
@@ -172,3 +188,70 @@ input, textarea, select {
 .btn-primary { background: $color-brand-700; color: $color-white; }
 .btn-secondary { background: $color-slate-100; color: $color-slate-700; }
 .btn-danger { background: $color-danger; color: $color-white; }
+
+.allowed-sites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-1;
+  margin-bottom: $space-3;
+
+  small {
+    background: $color-brand-050;
+    border: $border-width-base solid $color-brand-border-medium;
+    border-radius: $border-radius-full;
+    color: $color-slate-700;
+    padding: $space-1 $space-3;
+    font-size: $font-size-sm;
+  }
+}
+
+.import-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: $space-2;
+}
+
+.import-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  border: $border-width-base solid $color-brand-border-medium;
+  border-radius: $border-radius-lg;
+  padding: $space-3;
+  cursor: pointer;
+
+  &:hover { background: $color-brand-050; }
+}
+
+.import-item-info {
+  display: grid;
+  min-width: 0;
+}
+
+.import-item-title {
+  font-weight: $font-weight-medium;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-item-meta {
+  font-size: $font-size-sm;
+  color: $color-slate-600;
+}
+
+.import-icon {
+  flex-shrink: 0;
+  font-size: $font-size-lg;
+  color: $color-brand-700;
+  font-weight: $font-weight-semibold;
+}
+
+.modal-hint {
+  font-size: $font-size-sm;
+  color: $color-slate-600;
+  margin: 0;
+}

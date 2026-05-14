@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Document, CreateDocumentRequest, DocumentType, UpdateDocumentRequest } from '../models/document.model';
+import { PaginatedResult } from '../models/auth.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
@@ -13,8 +15,15 @@ export class DocumentService {
   constructor(private http: HttpClient) {}
 
   getDocuments(spaceId?: number): Observable<Document[]> {
-    const params = spaceId != null ? `?spaceId=${spaceId}` : '';
-    return this.http.get<Document[]>(`${this.apiUrl}${params}`);
+    let params = new HttpParams().set('pageSize', '1000');
+    if (spaceId != null) params = params.set('spaceId', spaceId.toString());
+    return this.http.get<PaginatedResult<Document>>(this.apiUrl, { params }).pipe(map(r => r.items));
+  }
+
+  getDocumentsPage(page: number, pageSize: number, spaceId?: number): Observable<PaginatedResult<Document>> {
+    let params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
+    if (spaceId != null) params = params.set('spaceId', spaceId.toString());
+    return this.http.get<PaginatedResult<Document>>(this.apiUrl, { params });
   }
 
   copyToSpace(documentId: number, targetSpaceId: number): Observable<Document> {

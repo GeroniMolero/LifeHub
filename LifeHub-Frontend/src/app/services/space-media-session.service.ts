@@ -8,7 +8,7 @@ export class SpaceMediaSessionService {
   private readonly keyPrefix = 'space-media-session:';
 
   getReferences(spaceId: number): SpaceMediaReference[] {
-    const raw = sessionStorage.getItem(this.getKey(spaceId));
+    const raw = localStorage.getItem(this.getKey(spaceId));
     if (!raw) return [];
 
     try {
@@ -33,7 +33,7 @@ export class SpaceMediaSessionService {
   }
 
   private saveReferences(spaceId: number, references: SpaceMediaReference[]): void {
-    sessionStorage.setItem(this.getKey(spaceId), JSON.stringify(references));
+    localStorage.setItem(this.getKey(spaceId), JSON.stringify(references));
   }
 
   private getKey(spaceId: number): string {

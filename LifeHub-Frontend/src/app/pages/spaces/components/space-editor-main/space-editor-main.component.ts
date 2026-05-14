@@ -11,6 +11,7 @@ interface VisualMediaLayout {
   x: number;
   y: number;
   width: number;
+  height: number;
   zIndex: number;
 }
 
@@ -35,6 +36,8 @@ export class SpaceEditorMainComponent {
   @Output() saveDocument = new EventEmitter<void>();
   @Output() deleteDocument = new EventEmitter<number>();
   @Output() startDraggingMedia = new EventEmitter<{ event: PointerEvent; id: string }>();
+  @Output() startResizingMedia = new EventEmitter<{ event: PointerEvent; id: string }>();
+  @Output() closeVisualItem = new EventEmitter<string>();
 
   private trustedEmbedCache = new Map<string, SafeResourceUrl>();
 
@@ -68,12 +71,13 @@ export class SpaceEditorMainComponent {
   getVisualStyle(id: string): { [key: string]: string } {
     const layout = this.visualLayouts.get(id);
     if (!layout) {
-      return { left: '0px', top: '0px', width: '300px', zIndex: '1' };
+      return { left: '0px', top: '0px', width: '300px', height: '240px', zIndex: '1' };
     }
     return {
       left: `${layout.x}px`,
       top: `${layout.y}px`,
       width: `${layout.width}px`,
+      height: `${layout.height}px`,
       zIndex: `${layout.zIndex}`
     };
   }

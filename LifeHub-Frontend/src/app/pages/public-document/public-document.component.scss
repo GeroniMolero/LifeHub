@@ -168,6 +168,7 @@
   display: block;
   line-height: 1.7;
   min-width: 0;
+  padding: 0 $space-6;
   overflow-wrap: break-word;
   word-break: break-word;
 
@@ -180,14 +181,12 @@
 
   p {
     margin: $space-3 0;
-    max-width: 72ch;
     color: $color-slate-700;
   }
 
   ul, ol { margin: $space-3 0; padding-left: $space-6; }
   li {
     margin: $space-1 0;
-    max-width: 72ch;
     color: $color-slate-700;
   }
 
@@ -319,6 +318,22 @@
   border: $border-width-base solid $color-brand-border-medium;
   border-radius: $border-radius-xl;
   box-shadow: $shadow-brand-soft;
+}
+
+.public-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-6 $space-4 $space-8;
+  font-size: 0.625rem;
+  color: $color-text-secondary;
+  opacity: 0.7;
+
+  .footer-sep {
+    opacity: 0.4;
+  }
 }
 
 @media (max-width: 900px) {

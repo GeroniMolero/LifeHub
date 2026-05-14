@@ -44,7 +44,7 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   showModal = false;
 
-  openModal(): void  { this.showModal = true; }
+  openModal(): void  { this.showModal = true; this.showCreatePassword = false; }
   closeModal(): void { this.showModal = false; }
 
   get modalTitle(): string {
@@ -63,7 +63,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   });
 
   setPasswordForm = this.fb.group({
-    newPassword: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(128)]]
+    newPassword: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128), Validators.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/)]]
   });
 
   roleForm = this.fb.group({
@@ -72,6 +72,8 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   editUserLoading = false;
   editUserError   = '';
+  showSetPassword = false;
+  showCreatePassword = false;
 
   openEditUserModal(user: AdminUser): void {
     this.editingUser = user;
@@ -81,6 +83,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.setPasswordForm.reset({ newPassword: '' });
     this.roleForm.reset({ role: user.roles[0] ?? 'User' });
     this.showEditUserModal = true;
+    this.showSetPassword = false;
   }
 
   closeEditUserModal(): void {
@@ -174,6 +177,16 @@ export class AdminComponent implements OnInit, OnDestroy {
   createUserError  = '';
   createUserLoading = false;
 
+  usersPage = 1;
+  usersPageSize = 20;
+  usersTotalCount = 0;
+  get usersTotalPages(): number { return Math.max(1, Math.ceil(this.usersTotalCount / this.usersPageSize)); }
+  changeUsersPage(page: number): void {
+    if (page < 1 || page > this.usersTotalPages) return;
+    this.usersPage = page;
+    this.loadAdminUsers();
+  }
+
   websitesLoading = false;
   websitesError   = '';
   createWebsiteError  = '';
@@ -219,7 +232,7 @@ export class AdminComponent implements OnInit, OnDestroy {
   createUserForm = this.fb.group({
     email:    ['', [Validators.required, Validators.email]],
     fullName: ['', Validators.required],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+    password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128), Validators.pattern(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/)]]
   });
 
   websiteForm = this.fb.group({
@@ -452,7 +465,7 @@ export class AdminComponent implements OnInit, OnDestroy {
     this.backupError   = '';
     this.adminService.triggerBackup().subscribe({
       next: res => {
-        this.backupResult  = res.backupFile ? `Backup guardado: ${res.backupFile}` : res.message;
+        this.backupResult  = res.message + (res.backupFile ? ` (${res.backupFile})` : '');
         this.backupLoading = false;
       },
       error: err => {
@@ -467,9 +480,9 @@ export class AdminComponent implements OnInit, OnDestroy {
   private loadAdminUsers(): void {
     this.usersLoading = true;
     this.usersError   = '';
-    this.adminService.getAdminUsers().subscribe({
-      next: users => { this.adminUsers = users; this.usersLoading = false; },
-      error: err  => { this.usersError = err?.error?.message || 'No se pudo cargar usuarios.'; this.usersLoading = false; }
+    this.adminService.getAdminUsers(this.usersPage, this.usersPageSize).subscribe({
+      next: result => { this.adminUsers = result.items; this.usersTotalCount = result.totalCount; this.usersLoading = false; },
+      error: err   => { this.usersError = err?.error?.message || 'No se pudo cargar usuarios.'; this.usersLoading = false; }
     });
   }
 

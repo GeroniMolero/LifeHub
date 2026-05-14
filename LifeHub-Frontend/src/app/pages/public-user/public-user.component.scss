@@ -359,6 +359,38 @@
   color: $color-danger;
 }
 
+.input-wrapper {
+  position: relative;
+
+  input {
+    padding-right: 2.8rem;
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  right: $space-3;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  color: $color-slate-500;
+  display: flex;
+  align-items: center;
+  line-height: 0;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: $color-slate-700;
+  }
+}
+
 .profile-picture-preview {
   display: flex;
   align-items: center;

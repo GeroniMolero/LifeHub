@@ -7,13 +7,12 @@
     </button>
     <div class="header-info">
       <p class="header-kicker">{{ headerDescription }}</p>
-      <div class="header-title-row">
-        <h1>{{ headerTitle }}</h1>
-        <div class="header-meta" *ngIf="headerMeta.length > 0">
-          <span *ngFor="let item of headerMeta">{{ item }}</span>
-        </div>
-      </div>
+      <h1>{{ headerTitle }}</h1>
     </div>
+  </div>
+
+  <div class="header-meta" *ngIf="headerMeta.length > 0">
+    <span *ngFor="let item of headerMeta">{{ item }}</span>
   </div>
 
   <div class="header-right" *ngIf="headerActions.length > 0">

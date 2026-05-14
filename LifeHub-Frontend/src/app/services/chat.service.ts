@@ -1,10 +1,11 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
 import { API_BASE_URL, HUB_BASE_URL } from '../config/api.config';
 import { AuthService } from './auth.service';
 import { MessageDto } from '../models/message.model';
+import { PaginatedResult } from '../models/auth.model';
 
 @Injectable({ providedIn: 'root' })
 export class ChatService implements OnDestroy {
@@ -62,8 +63,9 @@ export class ChatService implements OnDestroy {
     this.hub?.invoke('MarkMessageAsReadAsync', messageId).catch(() => {});
   }
 
-  getConversation(userId: string): Observable<MessageDto[]> {
-    return this.http.get<MessageDto[]>(`${API_BASE_URL}/messages/conversation/${userId}`);
+  getConversation(userId: string, page: number = 1, pageSize: number = 50): Observable<PaginatedResult<MessageDto>> {
+    const params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
+    return this.http.get<PaginatedResult<MessageDto>>(`${API_BASE_URL}/messages/conversation/${userId}`, { params });
   }
 
   getUnreadCount(): Observable<number> {

@@ -174,6 +174,10 @@ invoke_api_test "T-AUTH-03" "Registro email con formato invalido" POST /auth/reg
     "{\"email\":\"esto-no-es-email\",\"fullName\":\"X\",\"password\":\"$TEST_PASS\",\"confirmPassword\":\"$TEST_PASS\"}" \
     "" "400" || true
 
+invoke_api_test "T-AUTH-10" "Registro contrasena corta (< 10 chars) -> 400" POST /auth/register \
+    "{\"email\":\"shortpass_${TIMESTAMP}@lifehub-auto.test\",\"fullName\":\"X\",\"password\":\"Corta1!\",\"confirmPassword\":\"Corta1!\"}" \
+    "" "400" || true
+
 if invoke_api_test "T-AUTH-04" "Login correcto - obtener token" POST /auth/login \
     "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASS\"}" \
     "" "200" '"success":true'; then
@@ -198,6 +202,28 @@ if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASS" ]; then
     fi
 else
     skip_test "T-AUTH-08" "Login admin" "ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env"
+fi
+
+# T-AUTH-09: admin desactiva la cuenta → login bloqueado → admin la reactiva
+if [ -n "$ADMIN_TOKEN" ]; then
+    USERS_RESP=$(curl -s -w "\n%{http_code}" -X GET "$BASE_URL/admin/users?pageSize=100" \
+        -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json")
+    TEST_USER_ID=$(echo "$USERS_RESP" | head -1 | grep -o '"id":"[^"]*","email":"'"$TEST_EMAIL"'"' | grep -o '"id":"[^"]*"' | sed 's/"id":"//;s/"//')
+    if [ -n "$TEST_USER_ID" ]; then
+        # Desactivar
+        curl -s -X PUT "$BASE_URL/admin/users/$TEST_USER_ID/toggle-active" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" -d "{}" > /dev/null
+        invoke_api_test "T-AUTH-09" "Cuenta desactivada por admin -> login bloqueado (401)" POST /auth/login \
+            "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASS\"}" \
+            "" "401" "Esta cuenta no" || true
+        # Reactivar
+        curl -s -X PUT "$BASE_URL/admin/users/$TEST_USER_ID/toggle-active" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" -d "{}" > /dev/null
+    else
+        skip_test "T-AUTH-09" "Cuenta desactivada por admin -> login bloqueado (401)" "No se pudo obtener el ID del usuario de test"
+    fi
+else
+    skip_test "T-AUTH-09" "Cuenta desactivada por admin -> login bloqueado (401)" "AdminToken no disponible"
 fi
 
 # --- BLOQUE 2: ESPACIOS CREATIVOS ---

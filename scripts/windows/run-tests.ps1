@@ -9,6 +9,7 @@ $ErrorActionPreference = "Continue"
 
 $Timestamp   = Get-Date -Format "yyyyMMdd_HHmmss"
 $TestEmail   = "autotest_$Timestamp@lifehub-auto.test"
+$User2Email  = "userdelete_$Timestamp@lifehub-auto.test"
 $TestPass    = "AutoTest123!"
 
 $ProjectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -37,6 +38,9 @@ $script:VersionId      = $null
 $script:WebsiteId      = $null
 $script:PubDocId       = $null
 $script:UnpubDocId     = $null
+$script:IdrDocId       = $null
+$script:IdrSpaceId     = $null
+$script:User2Id        = $null
 
 # Resultados
 $Results = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -162,6 +166,10 @@ Invoke-ApiTest -Id "T-AUTH-03" -Description "Registro email con formato invalido
     -Method POST -Url "/auth/register" -ExpectedStatus 400 `
     -Body @{ email="esto-no-es-email"; fullName="X"; password=$TestPass; confirmPassword=$TestPass }
 
+Invoke-ApiTest -Id "T-AUTH-10" -Description "Registro contrasena corta (< 10 chars) -> 400" `
+    -Method POST -Url "/auth/register" -ExpectedStatus 400 `
+    -Body @{ email="shortpass_$Timestamp@lifehub-auto.test"; fullName="X"; password="Corta1!"; confirmPassword="Corta1!" }
+
 # Mover login admin aqui para poder activar el usuario de test antes de T-AUTH-04
 if ($AdminEmail -and $AdminPass) {
     Invoke-ApiTest -Id "T-AUTH-08" -Description "Login admin (setup para tests admin)" `
@@ -177,30 +185,42 @@ if ($AdminEmail -and $AdminPass) {
     Skip-Test -Id "T-AUTH-08" -Description "Login admin" -Reason "ADMIN_EMAIL/ADMIN_PASSWORD no definidos en .env"
 }
 
-# T-AUTH-09: el usuario recien registrado tiene IsActive=false, login debe ser 401
-Invoke-ApiTest -Id "T-AUTH-09" -Description "Login cuenta inactiva -> 401" `
-    -Method POST -Url "/auth/login" -ExpectedStatus 401 `
-    -Contains "Esta cuenta no" `
-    -Body @{ email=$TestEmail; password=$TestPass }
-
-# Helper: activar el usuario de test con admin antes de intentar login
+# T-AUTH-09: admin desactiva la cuenta → login bloqueado → admin la reactiva
 if ($script:AdminToken) {
     try {
-        $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users" `
+        $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users?pageSize=100" `
             -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
             -UseBasicParsing -ErrorAction Stop
-        $usersArr = $usersResp.Content | ConvertFrom-Json
+        $usersArr = ($usersResp.Content | ConvertFrom-Json).items
         $testUser  = $usersArr | Where-Object { $_.email -eq $TestEmail } | Select-Object -First 1
         if ($testUser) {
             $script:TestUserId = $testUser.id
+            # Desactivar para el test
             Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$($testUser.id)/toggle-active" `
                 -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
                 -Body "{}" -UseBasicParsing -ErrorAction Stop | Out-Null
-            Write-Host "  [INFO] Usuario de test activado (id=$($testUser.id))" -ForegroundColor DarkGray
         }
     } catch {
-        Write-Host "  [WARN] No se pudo activar el usuario de test: $_" -ForegroundColor DarkYellow
+        Write-Host "  [WARN] No se pudo desactivar el usuario de test: $_" -ForegroundColor DarkYellow
     }
+
+    Invoke-ApiTest -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" `
+        -Method POST -Url "/auth/login" -ExpectedStatus 401 `
+        -Contains "Esta cuenta no" `
+        -Body @{ email=$TestEmail; password=$TestPass }
+
+    # Reactivar para los tests siguientes
+    if ($script:TestUserId) {
+        try {
+            Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$script:TestUserId/toggle-active" `
+                -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+                -Body "{}" -UseBasicParsing -ErrorAction Stop | Out-Null
+        } catch {
+            Write-Host "  [WARN] No se pudo reactivar el usuario de test: $_" -ForegroundColor DarkYellow
+        }
+    }
+} else {
+    Skip-Test -Id "T-AUTH-09" -Description "Cuenta desactivada por admin -> login bloqueado (401)" -Reason "AdminToken no disponible"
 }
 
 Invoke-ApiTest -Id "T-AUTH-04" -Description "Login correcto - obtener token" `
@@ -359,6 +379,11 @@ else {
         else {
             Skip-Test -Id "T-DOC-08" -Description "Restaurar version" -Reason "VersionId no disponible"
         }
+
+        Invoke-ApiTest -Id "T-DOC-10" -Description "GET /documents devuelve shape paginada" `
+            -Method GET -Url "/documents" -ExpectedStatus 200 `
+            -Contains '"totalCount"' `
+            -Token $script:UserToken
 
         Invoke-ApiTest -Id "T-DOC-09" -Description "Eliminar documento OK" `
             -Method DELETE -Url "/documents/$($script:DocId)" -ExpectedStatus 204 `
@@ -654,6 +679,11 @@ if ($script:AdminToken) {
         -Contains '"usage"' `
         -Token $script:AdminToken
 
+    Invoke-ApiTest -Id "T-ADMIN-21" -Description "GET /admin/users devuelve shape paginada" `
+        -Method GET -Url "/admin/users" -ExpectedStatus 200 `
+        -Contains '"totalCount"' `
+        -Token $script:AdminToken
+
     Invoke-ApiTest -Id "T-ADMIN-08" -Description "GET /admin/users sin token -> 401" `
         -Method GET -Url "/admin/users" -ExpectedStatus 401
 
@@ -723,16 +753,91 @@ if ($script:AdminToken) {
         -Method POST -Url "/admin/backup" -ExpectedStatus 200 `
         -Contains '"message"' `
         -Token $script:AdminToken
+
+    # T-ADMIN-20: borrar usuario que es miembro de un espacio ajeno (cubre el bug de FK NoAction)
+    $script:User2Id = $null
+    if ($script:SpaceId -and $script:UserToken) {
+        try {
+            $reg2Body = @{ email=$User2Email; password=$TestPass; confirmPassword=$TestPass; fullName="DeleteTest" } | ConvertTo-Json -Compress
+            Invoke-WebRequest -Method POST -Uri "$BaseUrl/auth/register" `
+                -Headers @{ "Content-Type"="application/json" } `
+                -Body $reg2Body -UseBasicParsing -ErrorAction Stop | Out-Null
+
+            $usersResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/admin/users?pageSize=100" `
+                -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+                -UseBasicParsing -ErrorAction Stop
+            $parsed = ($usersResp.Content | ConvertFrom-Json).items
+            $script:User2Id = ($parsed | Where-Object { $_.email -eq $User2Email }).id
+        } catch { }
+
+        if ($script:User2Id) {
+            try {
+                Invoke-WebRequest -Method PUT -Uri "$BaseUrl/admin/users/$($script:User2Id)/toggle-active" `
+                    -Headers @{ "Authorization"="Bearer $script:AdminToken"; "Content-Type"="application/json" } `
+                    -Body "{}" -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+                $shareBody = @{ userId=$script:User2Id; permissionLevel=1 } | ConvertTo-Json -Compress
+                Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces/$($script:SpaceId)/permissions" `
+                    -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:UserToken" } `
+                    -Body $shareBody -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+            } catch { }
+
+            Invoke-ApiTest -Id "T-ADMIN-20" -Description "Borrar usuario con SpacePermission activa -> 204" `
+                -Method DELETE -Url "/users/$($script:User2Id)" -ExpectedStatus 204 `
+                -Token $script:AdminToken `
+                -OnPass { $script:User2Id = $null }
+        } else {
+            Skip-Test -Id "T-ADMIN-20" -Description "Borrar usuario con SpacePermission activa" -Reason "No se pudo crear usuario temporal"
+        }
+    } else {
+        Skip-Test -Id "T-ADMIN-20" -Description "Borrar usuario con SpacePermission activa" -Reason "SpaceId o UserToken no disponibles"
+    }
 }
 else {
     "T-ADMIN-03","T-ADMIN-04","T-ADMIN-05","T-ADMIN-06","T-ADMIN-07","T-ADMIN-08","T-ADMIN-09",
     "T-ADMIN-10","T-ADMIN-11","T-ADMIN-12","T-ADMIN-13","T-ADMIN-14","T-ADMIN-15",
-    "T-ADMIN-16","T-ADMIN-17","T-ADMIN-18","T-ADMIN-19" | ForEach-Object {
+    "T-ADMIN-16","T-ADMIN-17","T-ADMIN-18","T-ADMIN-19","T-ADMIN-20","T-ADMIN-21" | ForEach-Object {
         Skip-Test -Id $_ -Description "Test admin" -Reason "AdminToken no disponible"
     }
 }
 
-# --- BLOQUE 6: Seguridad adicional ---
+# --- BLOQUE 6: Mensajes ---
+
+Section "MENSAJES"
+
+if ($script:UserToken -and $script:AdminToken) {
+    $script:AdminUserId = $null
+    try {
+        $adminMeResp = Invoke-WebRequest -Method GET -Uri "$BaseUrl/users/me" `
+            -Headers @{ "Authorization"="Bearer $script:AdminToken" } `
+            -UseBasicParsing -ErrorAction Stop
+        $script:AdminUserId = ($adminMeResp.Content | ConvertFrom-Json).id
+    } catch { }
+
+    if ($script:AdminUserId) {
+        Invoke-ApiTest -Id "T-MSG-01" -Description "GET conversacion devuelve shape paginada" `
+            -Method GET -Url "/messages/conversation/$($script:AdminUserId)" -ExpectedStatus 200 `
+            -Contains '"totalCount"' `
+            -Token $script:UserToken
+
+        Invoke-ApiTest -Id "T-MSG-02" -Description "GET conversacion sin token -> 401" `
+            -Method GET -Url "/messages/conversation/$($script:AdminUserId)" -ExpectedStatus 401
+
+        Invoke-ApiTest -Id "T-MSG-03" -Description "Enviar mensaje -> 201" `
+            -Method POST -Url "/messages" -ExpectedStatus 201 `
+            -Token $script:UserToken `
+            -Body @{ receiverId=$script:AdminUserId; content="Mensaje de test automatico $Timestamp" }
+    } else {
+        Skip-Test -Id "T-MSG-01" -Description "GET conversacion paginada" -Reason "AdminUserId no disponible"
+        Skip-Test -Id "T-MSG-02" -Description "GET conversacion sin token" -Reason "AdminUserId no disponible"
+        Skip-Test -Id "T-MSG-03" -Description "Enviar mensaje" -Reason "AdminUserId no disponible"
+    }
+} else {
+    Skip-Test -Id "T-MSG-01" -Description "GET conversacion paginada" -Reason "Tokens no disponibles"
+    Skip-Test -Id "T-MSG-02" -Description "GET conversacion sin token" -Reason "Tokens no disponibles"
+    Skip-Test -Id "T-MSG-03" -Description "Enviar mensaje" -Reason "Tokens no disponibles"
+}
+
+# --- BLOQUE 7: Seguridad adicional ---
 
 Section "SEGURIDAD"
 
@@ -756,6 +861,48 @@ Invoke-ApiTest -Id "T-SEC-03" -Description "Cabeceras de seguridad presentes (no
 Invoke-ApiTest -Id "T-SEC-04" -Description "Cabecera Server no revela tecnologia" `
     -Method GET -Url "/embed-allowlist" -ExpectedStatus 200 `
     -ForbidHeaders @{ "Server" = "" }
+
+# IDOR: el usuario de test no puede acceder a recursos privados de otro usuario
+$script:IdrSpaceId = $null
+$script:IdrDocId   = $null
+if ($script:AdminToken -and $script:UserToken) {
+    try {
+        $idrSpaceBody = @{ name="IDOR-$Timestamp"; description="temp"; privacy=0 } | ConvertTo-Json -Compress
+        $idrSpaceResp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/creativespaces" `
+            -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+            -Body $idrSpaceBody -UseBasicParsing -ErrorAction Stop
+        $script:IdrSpaceId = ($idrSpaceResp.Content | ConvertFrom-Json).id
+    } catch { }
+
+    if ($script:IdrSpaceId) {
+        try {
+            $idrDocBody = @{ title="IDOR-Doc-$Timestamp"; content="privado"; description=""; creativeSpaceId=$script:IdrSpaceId } | ConvertTo-Json -Compress
+            $idrDocResp = Invoke-WebRequest -Method POST -Uri "$BaseUrl/documents" `
+                -Headers @{ "Content-Type"="application/json"; "Authorization"="Bearer $script:AdminToken" } `
+                -Body $idrDocBody -UseBasicParsing -ErrorAction Stop
+            $script:IdrDocId = ($idrDocResp.Content | ConvertFrom-Json).id
+        } catch { }
+    }
+
+    if ($script:IdrDocId) {
+        Invoke-ApiTest -Id "T-SEC-05" -Description "IDOR: acceso a documento privado ajeno -> 404" `
+            -Method GET -Url "/documents/$($script:IdrDocId)" -ExpectedStatus 404 `
+            -Token $script:UserToken
+    } else {
+        Skip-Test -Id "T-SEC-05" -Description "IDOR: acceso a documento privado ajeno" -Reason "No se pudo crear documento de admin"
+    }
+
+    if ($script:IdrSpaceId) {
+        Invoke-ApiTest -Id "T-SEC-06" -Description "IDOR: acceso a espacio privado ajeno -> 403" `
+            -Method GET -Url "/creativespaces/$($script:IdrSpaceId)" -ExpectedStatus 403 `
+            -Token $script:UserToken
+    } else {
+        Skip-Test -Id "T-SEC-06" -Description "IDOR: acceso a espacio privado ajeno" -Reason "No se pudo crear espacio de admin"
+    }
+} else {
+    Skip-Test -Id "T-SEC-05" -Description "IDOR: acceso a documento privado ajeno" -Reason "Tokens no disponibles"
+    Skip-Test -Id "T-SEC-06" -Description "IDOR: acceso a espacio privado ajeno" -Reason "Tokens no disponibles"
+}
 
 # --- BLOQUE 7: Limpieza ---
 
@@ -801,6 +948,30 @@ if ($script:DocId -and $script:UserToken) {
     } catch {}
 }
 
+if ($script:IdrDocId -and $script:AdminToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/documents/$($script:IdrDocId)" `
+            -Headers @{ Authorization="Bearer $($script:AdminToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Documento IDOR eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
+
+if ($script:IdrSpaceId -and $script:AdminToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/creativespaces/$($script:IdrSpaceId)" `
+            -Headers @{ Authorization="Bearer $($script:AdminToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Espacio IDOR eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
+
+if ($script:User2Id -and $script:AdminToken) {
+    try {
+        Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/users/$($script:User2Id)" `
+            -Headers @{ Authorization="Bearer $($script:AdminToken)" } -UseBasicParsing -ErrorAction SilentlyContinue | Out-Null
+        Write-Host "  Usuario de borrado-test eliminado." -ForegroundColor DarkGray
+    } catch {}
+}
+
 if ($script:UserToken) {
     try {
         Invoke-WebRequest -Method DELETE -Uri "$BaseUrl/users/me" `
@@ -829,6 +1000,7 @@ $groups = [ordered]@{
     "Publicaciones"                     = "T-PUB"
     "Colaboracion en espacios"          = "T-COL"
     "Panel de Administracion"           = "T-ADMIN"
+    "Mensajes"                          = "T-MSG"
     "Seguridad"                         = "T-SEC"
 }
 

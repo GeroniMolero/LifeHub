@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User } from '../models/auth.model';
+import { User, UserUsage } from '../models/auth.model';
 import { API_BASE_URL } from '../config/api.config';
 
 @Injectable({
@@ -18,6 +18,10 @@ export class UserService {
 
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/me`);
+  }
+
+  getUsage(): Observable<UserUsage> {
+    return this.http.get<UserUsage>(`${this.apiUrl}/me/usage`);
   }
 
   getUsers(): Observable<User[]> {

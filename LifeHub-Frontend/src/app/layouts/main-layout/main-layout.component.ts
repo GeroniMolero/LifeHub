@@ -62,7 +62,9 @@ export class MainLayoutComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(override => {
         this.headerOverride = override;
-        this.applyHeaderState();
+        // BehaviorSubject emits synchronously during child ngOnInit, which is mid-CD cycle.
+        // Deferring to microtask prevents NG0100 without causing a visible flash.
+        Promise.resolve().then(() => this.applyHeaderState());
       });
 
     this.router.events

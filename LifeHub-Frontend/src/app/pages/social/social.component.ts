@@ -30,8 +30,12 @@ export class SocialComponent implements OnInit {
   newMessage = '';
   currentUserId = '';
   loadingMessages = false;
+  loadingMoreMessages = false;
   sendingMessage = false;
   unreadPerFriend: Record<string, number> = {};
+  private conversationPage = 1;
+  private conversationTotalCount = 0;
+  get hasMoreMessages(): boolean { return this.messages.length < this.conversationTotalCount; }
 
   // Friends state
   friendships: Friendship[] = [];
@@ -252,7 +256,7 @@ export class SocialComponent implements OnInit {
   // ── Display helpers ───────────────────────────────────────────────────────
 
   initial(user: User): string {
-    return (user.fullName || user.email || 'U').charAt(0).toUpperCase();
+    return (user.fullName || 'U').charAt(0).toUpperCase();
   }
 
   formatTime(dateStr: string): string {
@@ -312,14 +316,31 @@ export class SocialComponent implements OnInit {
     });
   }
 
+  loadMoreMessages(): void {
+    if (!this.selectedFriend || this.loadingMoreMessages || !this.hasMoreMessages) return;
+    this.loadingMoreMessages = true;
+    this.conversationPage++;
+    this.chatService.getConversation(this.selectedFriend.id, this.conversationPage).subscribe({
+      next: result => {
+        this.messages = [...result.items, ...this.messages];
+        this.conversationTotalCount = result.totalCount;
+        this.loadingMoreMessages = false;
+      },
+      error: () => { this.loadingMoreMessages = false; }
+    });
+  }
+
   private loadConversation(userId: string): void {
+    this.conversationPage = 1;
+    this.conversationTotalCount = 0;
     this.loadingMessages = true;
-    this.chatService.getConversation(userId).subscribe({
-      next: messages => {
-        this.messages = messages;
+    this.chatService.getConversation(userId, 1).subscribe({
+      next: result => {
+        this.messages = result.items;
+        this.conversationTotalCount = result.totalCount;
         this.loadingMessages = false;
         this.scrollToBottom();
-        const unread = messages.filter(m => !m.isRead && m.senderId === userId);
+        const unread = result.items.filter(m => !m.isRead && m.senderId === userId);
         unread.forEach(m => this.chatService.markAsRead(m.id));
         if (unread.length > 0) this.chatService.decrementUnread(unread.length);
       },

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 using LifeHub.Data;
 using AutoMapper;
 using LifeHub.Utilidades;
@@ -13,6 +14,7 @@ using LifeHub.Services.Messages;
 using LifeHub.Services.Users;
 using LifeHub.Services.AllowedWebsites;
 using LifeHub.Services.Admin;
+using LifeHub.Services.Notifications;
 using Microsoft.AspNetCore.Identity;
 using LifeHub.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -61,6 +63,8 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAllowedWebsiteService, AllowedWebsiteService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<INotificationService, DiscordNotificationService>();
 
 // =============================
 // SWAGGER + AUTH JWT
@@ -116,10 +120,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
     options.User.RequireUniqueEmail = true;
+    options.Password.RequiredLength = 10;
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+.AddDefaultTokenProviders()
+.AddErrorDescriber<SpanishIdentityErrorDescriber>();
 
 // =============================
 // JWT
@@ -165,6 +171,26 @@ builder.Services.AddAuthorization(options =>
 // =============================
 builder.Services.AddSignalR();
 
+// =============================
+// RATE LIMITING (AUTH)
+// =============================
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+    options.AddFixedWindowLimiter("login", o =>
+    {
+        o.PermitLimit = 5;
+        o.Window = TimeSpan.FromMinutes(1);
+        o.QueueLimit = 0;
+    });
+    options.AddFixedWindowLimiter("register", o =>
+    {
+        o.PermitLimit = 10;
+        o.Window = TimeSpan.FromMinutes(10);
+        o.QueueLimit = 0;
+    });
+});
+
 builder.WebHost.ConfigureKestrel(o => o.AddServerHeader = false);
 
 var app = builder.Build();
@@ -193,6 +219,7 @@ app.Use(async (ctx, next) =>
 });
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
