@@ -2,8 +2,10 @@ using AutoMapper;
 using LifeHub.Data;
 using LifeHub.DTOs;
 using LifeHub.Models;
+using LifeHub.Utilidades;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace LifeHub.Services.Users
 {
@@ -12,12 +14,14 @@ namespace LifeHub.Services.Users
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IMapper _mapper;
         private readonly ApplicationDbContext _context;
+        private readonly BusinessRules _rules;
 
-        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper, ApplicationDbContext context)
+        public UserService(UserManager<ApplicationUser> userManager, IMapper mapper, ApplicationDbContext context, IOptions<BusinessRules> rules)
         {
             _userManager = userManager;
             _mapper = mapper;
             _context = context;
+            _rules = rules.Value;
         }
 
         public async Task<ServiceResult<PublicUserDto>> GetUserAsync(string id)
@@ -142,6 +146,29 @@ namespace LifeHub.Services.Users
             await _context.DocumentPublications
                 .Where(p => p.PublishedByUserId == userId && p.Document.UserId != userId)
                 .ExecuteDeleteAsync();
+        }
+
+        public async Task<ServiceResult<UserUsageDto>> GetUsageAsync(string userId)
+        {
+            var docCount               = await _context.Documents.CountAsync(d => d.UserId == userId);
+            var spaceCount             = await _context.CreativeSpaces.CountAsync(cs => cs.OwnerId == userId);
+            var publishedCount         = await _context.Documents.CountAsync(d => d.UserId == userId && d.Publication != null);
+            var profileVisibleDocs     = await _context.Documents.CountAsync(d => d.UserId == userId && d.Publication != null && d.Publication.IsProfileVisible);
+            var profileVisibleSpaces   = await _context.CreativeSpaces.CountAsync(cs => cs.OwnerId == userId && cs.IsPublicProfileVisible);
+
+            return ServiceResult<UserUsageDto>.Ok(new UserUsageDto
+            {
+                DocumentsCount                = docCount,
+                SpacesCount                   = spaceCount,
+                PublishedDocumentsCount       = publishedCount,
+                ProfileVisibleDocumentsCount  = profileVisibleDocs,
+                ProfileVisibleSpacesCount     = profileVisibleSpaces,
+                MaxDocuments                  = _rules.MaxDocumentsPerUser,
+                MaxSpaces                     = _rules.MaxSpacesPerUser,
+                MaxPublishedDocuments         = _rules.MaxPublishedDocumentsPerUser,
+                MaxProfileVisibleDocuments    = _rules.MaxProfileVisibleDocumentsPerUser,
+                MaxProfileVisibleSpaces       = _rules.MaxProfileVisibleSpacesPerUser
+            });
         }
 
         public async Task<ServiceResult<bool>> ChangePasswordAsync(string userId, ChangePasswordDto dto)

@@ -1,104 +1,156 @@
-﻿<div class="home-container">
+<div class="home-container">
+
+  <!-- Stats -->
   <section class="stats-grid">
     <article class="stat-card">
-      <small>Espacios</small>
-      <strong>{{ totalSpacesCount }}</strong>
-      <span>Total de espacios disponibles</span>
+      <small>Documentos</small>
+      <div class="stat-value">
+        <strong>{{ usage?.documentsCount ?? '-' }}</strong>
+        <span *ngIf="usage" class="stat-limit">/ {{ usage.maxDocuments }}</span>
+      </div>
+      <div *ngIf="usage" class="stat-bar">
+        <div class="stat-bar-fill"
+          [style.width.%]="usagePercent(usage.documentsCount, usage.maxDocuments)"
+          [class.stat-bar-fill--warning]="usagePercent(usage.documentsCount, usage.maxDocuments) >= 80">
+        </div>
+      </div>
+      <span>Tus documentos</span>
     </article>
 
     <article class="stat-card">
-      <small>Favoritos</small>
-      <strong>{{ favoriteSpacesCount }}</strong>
-      <span>Marcados para acceso rápido</span>
+      <small>Espacios propios</small>
+      <div class="stat-value">
+        <strong>{{ usage?.spacesCount ?? totalSpacesCount }}</strong>
+        <span *ngIf="usage" class="stat-limit">/ {{ usage.maxSpaces }}</span>
+      </div>
+      <div *ngIf="usage" class="stat-bar">
+        <div class="stat-bar-fill"
+          [style.width.%]="usagePercent(usage.spacesCount, usage.maxSpaces)"
+          [class.stat-bar-fill--warning]="usagePercent(usage.spacesCount, usage.maxSpaces) >= 80">
+        </div>
+      </div>
+      <span>Espacios creados por ti</span>
     </article>
 
     <article class="stat-card">
       <small>Amigos</small>
-      <strong>{{ acceptedFriendsCount }}</strong>
+      <div class="stat-value">
+        <strong>{{ acceptedFriendsCount }}</strong>
+      </div>
       <span>Conexiones aceptadas</span>
     </article>
 
     <article class="stat-card">
       <small>Solicitudes</small>
-      <strong>{{ pendingRequestsCount }}</strong>
-      <span>Pendientes por revisar</span>
+      <div class="stat-value">
+        <strong [class.stat-value--alert]="pendingRequestsCount > 0">{{ pendingRequestsCount }}</strong>
+      </div>
+      <span>Pendientes de revisión</span>
     </article>
   </section>
 
+  <!-- Columnas -->
   <section class="home-columns">
+
+    <!-- Documentos recientes -->
     <div class="home-column">
-      <article class="dashboard-card spaces-card">
+      <article class="dashboard-card">
         <div class="card-head">
-          <h3>Espacios favoritos</h3>
-          <a routerLink="/spaces" class="btn-link">Ir a espacios</a>
+          <h3>Documentos recientes</h3>
+          <a routerLink="/documents" class="btn-link">Ver todos</a>
         </div>
-
-        <p *ngIf="loadingSpaces" class="muted">Cargando espacios...</p>
-        <p *ngIf="spacesError" class="error">{{ spacesError }}</p>
-
-        <section>
-          <div class="social-subhead">
-            <small>{{ favoriteSpacesCount }} guardados</small>
-          </div>
-
-          <div class="space-list" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length > 0">
-            <article class="space-item" *ngFor="let space of favoriteSpaces">
-              <div>
-                <strong>{{ space.name }}</strong>
-                <small>{{ space.description || 'Sin descripción' }}</small>
-              </div>
-              <div class="space-actions">
-                <a [routerLink]="['/spaces', space.id]" class="btn-link">Abrir</a>
-              </div>
-            </article>
-          </div>
-
-          <p class="muted" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length === 0">
-            No tienes espacios marcados como favoritos. Márcalos desde Espacios.
-          </p>
-        </section>
-
+        <p *ngIf="loadingDocuments" class="muted">Cargando...</p>
+        <div class="doc-list" *ngIf="!loadingDocuments && recentDocuments.length > 0">
+          <a class="doc-item" *ngFor="let doc of recentDocuments" [routerLink]="['/documents', doc.id]">
+            <div class="doc-item-body">
+              <strong>{{ doc.title }}</strong>
+              <small>{{ formatUpdatedAt(doc.updatedAt) }}</small>
+            </div>
+            <span class="doc-arrow">›</span>
+          </a>
+        </div>
+        <p class="muted centered" *ngIf="!loadingDocuments && recentDocuments.length === 0">
+          Aún no tienes documentos. <a routerLink="/documents" class="btn-link">Crear uno</a>
+        </p>
       </article>
     </div>
 
+    <!-- Espacios favoritos -->
     <div class="home-column">
-      <article class="dashboard-card social-card">
+      <article class="dashboard-card">
+        <div class="card-head">
+          <h3>Espacios favoritos</h3>
+          <a routerLink="/spaces" class="btn-link">Ver todos</a>
+        </div>
+        <p *ngIf="loadingSpaces" class="muted">Cargando...</p>
+        <p *ngIf="spacesError" class="error">{{ spacesError }}</p>
+        <div class="space-list" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length > 0">
+          <article class="space-item" *ngFor="let space of favoriteSpaces">
+            <div>
+              <strong>{{ space.name }}</strong>
+              <small>{{ space.description || 'Sin descripción' }}</small>
+            </div>
+            <a [routerLink]="['/spaces', space.id]" class="btn-link">Abrir</a>
+          </article>
+        </div>
+        <p class="muted centered" *ngIf="!loadingSpaces && !spacesError && favoriteSpaces.length === 0">
+          No tienes favoritos. Márcalos desde <a routerLink="/spaces" class="btn-link">Espacios</a>.
+        </p>
+      </article>
+    </div>
+
+    <!-- Social -->
+    <div class="home-column">
+      <article class="dashboard-card">
         <div class="card-head">
           <h3>Social</h3>
           <a routerLink="/social" class="btn-link">Ir a social</a>
         </div>
-
         <p *ngIf="loadingFriends" class="muted">Cargando...</p>
+        <ng-container *ngIf="!loadingFriends">
 
-        <section class="social-section" *ngIf="!loadingFriends && pendingIncomingRequests.length > 0">
-          <div class="pending-compact">
-            <div class="pending-compact-head">
-              <h4>Solicitudes pendientes</h4>
-              <span>{{ pendingIncomingRequests.length }}</span>
+          <!-- Solicitudes pendientes -->
+          <div *ngIf="pendingIncomingRequests.length > 0" class="social-block">
+            <div class="social-block-head">
+              <h4>Solicitudes</h4>
+              <span class="badge">{{ pendingIncomingRequests.length }}</span>
             </div>
-
-            <article class="friend-item" *ngFor="let friendship of pendingIncomingRequests | slice:0:2">
-              <div>
-                <strong>{{ friendDisplayName(friendship) }}</strong>
-                <small>{{ friendEmail(friendship) }}</small>
+            <article class="friend-item" *ngFor="let f of pendingIncomingRequests | slice:0:2">
+              <div class="friend-info">
+                <span class="friend-avatar">{{ friendDisplayName(f).charAt(0).toUpperCase() }}</span>
+                <div>
+                  <strong>{{ friendDisplayName(f) }}</strong>
+                </div>
               </div>
-              <div class="friend-actions">
-                <button type="button" class="btn-primary" (click)="acceptFriendRequest(friendship.id)">
-                  Aceptar
-                </button>
-              </div>
+              <button type="button" class="btn-primary" (click)="acceptFriendRequest(f.id)">Aceptar</button>
             </article>
-
             <p class="muted" *ngIf="pendingIncomingRequests.length > 2">
-              +{{ pendingIncomingRequests.length - 2 }} solicitudes más en Social
+              +{{ pendingIncomingRequests.length - 2 }} más en Social
             </p>
           </div>
-        </section>
 
-        <p class="muted centered" *ngIf="!loadingFriends && pendingIncomingRequests.length === 0">
-          No tienes solicitudes pendientes.
-        </p>
+          <!-- Lista de amigos -->
+          <div *ngIf="acceptedFriends.length > 0" class="social-block" [class.social-block--bordered]="pendingIncomingRequests.length > 0">
+            <div class="social-block-head">
+              <h4>Amigos</h4>
+            </div>
+            <article class="friend-item" *ngFor="let f of acceptedFriends | slice:0:4" [routerLink]="['/social']">
+              <div class="friend-info">
+                <span class="friend-avatar">{{ friendDisplayName(f).charAt(0).toUpperCase() }}</span>
+                <strong>{{ friendDisplayName(f) }}</strong>
+              </div>
+            </article>
+            <p class="muted" *ngIf="acceptedFriends.length > 4">
+              +{{ acceptedFriends.length - 4 }} más en Social
+            </p>
+          </div>
+
+          <p class="muted centered" *ngIf="pendingIncomingRequests.length === 0 && acceptedFriends.length === 0">
+            Busca amigos desde <a routerLink="/social" class="btn-link">Social</a>.
+          </p>
+        </ng-container>
       </article>
     </div>
+
   </section>
 </div>

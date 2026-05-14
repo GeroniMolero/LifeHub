@@ -8,6 +8,7 @@ namespace LifeHub.Services.Users
         Task<ServiceResult<UserDto>> GetCurrentUserAsync(string userId);
         Task<ServiceResult<List<UserDto>>> GetUsersAsync();
         Task<ServiceResult<List<PublicUserDto>>> SearchUsersAsync(string currentUserId, string? query);
+        Task<ServiceResult<UserUsageDto>> GetUsageAsync(string userId);
         Task<ServiceResult<UserDto>> UpdateProfileAsync(string userId, UpdateProfileDto dto);
         Task<ServiceResult<bool>> DeleteCurrentUserAsync(string userId);
         Task<ServiceResult<bool>> DeleteUserAsync(string id, string callerUserId);

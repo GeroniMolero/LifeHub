@@ -54,6 +54,17 @@ namespace LifeHub.Controllers
             return ToActionResult(result);
         }
 
+        [HttpGet("me/usage")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUserUsage()
+        {
+            var authError = RequireAuthenticatedUserId(out var userId);
+            if (authError != null) return authError;
+
+            var result = await _userService.GetUsageAsync(userId);
+            return ToActionResult(result);
+        }
+
         [HttpPut("me")]
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
