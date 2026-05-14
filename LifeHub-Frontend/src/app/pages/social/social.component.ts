@@ -256,7 +256,7 @@ export class SocialComponent implements OnInit {
   // ── Display helpers ───────────────────────────────────────────────────────
 
   initial(user: User): string {
-    return (user.fullName || user.email || 'U').charAt(0).toUpperCase();
+    return (user.fullName || 'U').charAt(0).toUpperCase();
   }
 
   formatTime(dateStr: string): string {

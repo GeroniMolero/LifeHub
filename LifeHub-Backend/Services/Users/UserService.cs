@@ -49,7 +49,7 @@ namespace LifeHub.Services.Users
             return ServiceResult<List<UserDto>>.Ok(result);
         }
 
-        public async Task<ServiceResult<List<UserDto>>> SearchUsersAsync(string currentUserId, string? query)
+        public async Task<ServiceResult<List<PublicUserDto>>> SearchUsersAsync(string currentUserId, string? query)
         {
             var q = _userManager.Users.AsNoTracking().Where(u => u.Id != currentUserId);
 
@@ -58,12 +58,12 @@ namespace LifeHub.Services.Users
                 var term = query.Trim().ToLower();
                 q = q.Where(u =>
                     (u.FullName != null && u.FullName.ToLower().Contains(term)) ||
-                    (u.Email != null && u.Email.ToLower().Contains(term)));
+                    (u.Email != null && u.Email.ToLower() == term));
             }
 
             var users = await q.OrderBy(u => u.FullName ?? u.Email).Take(30).ToListAsync();
 
-            return ServiceResult<List<UserDto>>.Ok(users.Select(u => _mapper.Map<UserDto>(u)).ToList());
+            return ServiceResult<List<PublicUserDto>>.Ok(users.Select(u => _mapper.Map<PublicUserDto>(u)).ToList());
         }
 
         public async Task<ServiceResult<UserDto>> UpdateProfileAsync(string userId, UpdateProfileDto dto)

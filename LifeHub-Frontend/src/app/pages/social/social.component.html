@@ -27,11 +27,10 @@
         <ng-container *ngIf="!searchingUsers">
           <p class="muted centered" *ngIf="searchResults.length === 0">Sin resultados.</p>
           <div class="friend-row" *ngFor="let user of searchResults">
-            <img *ngIf="user.profilePictureUrl" class="contact-avatar contact-avatar--img" [src]="user.profilePictureUrl" [alt]="user.fullName || user.email" />
-            <span *ngIf="!user.profilePictureUrl" class="contact-avatar">{{ (user.fullName || user.email || 'U').charAt(0).toUpperCase() }}</span>
+            <img *ngIf="user.profilePictureUrl" class="contact-avatar contact-avatar--img" [src]="user.profilePictureUrl" [alt]="user.fullName || 'Usuario'" />
+            <span *ngIf="!user.profilePictureUrl" class="contact-avatar">{{ (user.fullName || 'U').charAt(0).toUpperCase() }}</span>
             <div class="friend-row-text">
-              <strong>{{ user.fullName || user.email }}</strong>
-              <small *ngIf="user.fullName">{{ user.email }}</small>
+              <strong>{{ user.fullName || 'Usuario' }}</strong>
             </div>
             <div class="friend-row-actions">
               <button type="button" class="btn-xs btn-primary-xs"
