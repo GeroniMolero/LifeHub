@@ -8,6 +8,8 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
   padding: $space-layout-sidebar-y $space-4;
   background: $color-brand-900;
   color: $color-sidebar-text;
@@ -16,6 +18,10 @@
   flex-direction: column;
   gap: $space-layout-sidebar-gap;
   z-index: 20;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .sidebar-brand {
