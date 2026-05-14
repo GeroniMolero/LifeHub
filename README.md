@@ -1,6 +1,6 @@
 ﻿# LifeHub
 
-# <img width="1528" height="867" alt="image" src="https://github.com/user-attachments/assets/2e023cb4-c5f1-4fec-9b99-5e4402b35198" />
+# <img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/97b07952-b869-4aa3-b467-d0479762fd99" />
 
 **LifeHub** es un portal web completo desarrollado con **Angular** (frontend) y **.NET 8** (backend), diseñado como un entorno centralizado para herramientas útiles del día a día.
 
@@ -25,6 +25,13 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 
 # <img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/844e81bc-17dc-45a9-b92c-b27af8a36677" />
 
+- Panel de resumen de actividad: contadores de documentos, espacios, amigos y solicitudes pendientes
+- Documentos recientes con acceso directo (últimos 5 modificados)
+- Espacios favoritos marcados desde el módulo Espacios
+- Resumen social: lista de amigos con acceso rápido al chat
+
+---
+
 ### Espacios creativos
 
 # <img width="1919" height="1030" alt="image" src="https://github.com/user-attachments/assets/e0508d71-96bc-48af-8f11-7c9e6ef4ce8d" />
@@ -38,6 +45,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Los editores pueden crear y modificar documentos del espacio
 - Solo el propietario puede eliminar documentos
 
+---
 
 ### Gestión de Documentos
 
@@ -52,6 +60,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Atribución: cada versión muestra quién la creó
 - **Publicación de documentos**: modal con control de visibilidad en perfil público, autor visible en la vista pública
 
+---
 
 ### Social
 
@@ -63,6 +72,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Badge de mensajes no leídos por amigo en el panel Social
 - Feed de actividad de amigos (en desarrollo)
 
+---
 
 ### Perfil
 
@@ -74,6 +84,8 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Modal de previsualización de documentos con markdown renderizado, botones Ver y Descargar.
 - Badges de contador que se deshabilitan al alcanzar los límites configurados.
 
+---
+
 ### Panel de administrador
 
 # <img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/bd8f59be-830d-44f6-8aef-ac1df38e1a50" />
@@ -82,6 +94,8 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Gestión de dominios permitidos para embebidos
 - Registro de actividad con filtros y paginación
 - Copias de seguridad bajo demanda
+
+---
 
 ### Reproductor de Música
 - Reproducción de archivos de audio locales en el sidebar de espacios creativos (disponibles durante la sesión)
