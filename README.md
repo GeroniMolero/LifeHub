@@ -88,7 +88,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 
 ### Panel de administrador
 
-# <img width="1919" height="1031" alt="image" src="https://github.com/user-attachments/assets/bd8f59be-830d-44f6-8aef-ac1df38e1a50" />
+# <img width="1919" height="1032" alt="image" src="https://github.com/user-attachments/assets/0b0bb482-d7c6-421b-948e-d33b6a066998" />
 
 - Gestión de usuarios: activación de cuentas, edición, cambio de rol y eliminación
 - Gestión de dominios permitidos para embebidos
