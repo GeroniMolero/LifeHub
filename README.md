@@ -44,6 +44,7 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - **Colaboración por roles**: invitados con rol Viewer (solo lectura) o Editor (lectura y escritura)
 - Los editores pueden crear y modificar documentos del espacio
 - Solo el propietario puede eliminar documentos
+- Reproductor de música en la sidebar: 2 pistas de audio disponibles por defecto y soporte de archivos locales durante la sesión
 
 ---
 
@@ -68,9 +69,8 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 
 - Panel de contactos con búsqueda de usuarios y solicitudes de amistad
 - Gestión de amigos (enviar/aceptar/rechazar/eliminar) desde el perfil público
-- Conversación directa con cualquier amigo (chat en tiempo real con SignalR)
+- Chat en tiempo real con SignalR (WebSockets): mensajería instantánea uno a uno
 - Badge de mensajes no leídos por amigo en el panel Social
-- Feed de actividad de amigos (en desarrollo)
 
 ---
 
@@ -95,14 +95,6 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Copias de seguridad bajo demanda
 
 ---
-
-### Reproductor de Música
-- Reproducción de archivos de audio locales en el sidebar de espacios creativos (disponibles durante la sesión)
-- 2 pistas de audio disponibles por defecto
-
-### Chat en Tiempo Real
-- Conversaciones uno a uno accesibles desde el módulo Social
-- Mensajería instantánea con SignalR (WebSockets)
 
 ## Arquitectura
 
