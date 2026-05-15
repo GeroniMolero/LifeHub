@@ -82,7 +82,6 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 - Vista pública con grid de dos columnas: documentos publicados y espacios.
 - Marcar hasta 3 documentos y 3 espacios como visibles en el perfil.
 - Modal de previsualización de documentos con markdown renderizado, botones Ver y Descargar.
-- Badges de contador que se deshabilitan al alcanzar los límites configurados.
 
 ---
 
@@ -99,17 +98,11 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 
 ### Reproductor de Música
 - Reproducción de archivos de audio locales en el sidebar de espacios creativos (disponibles durante la sesión)
-- Soporte de Spotify vía embed para música persistente sin necesidad de subir archivos
+- 2 pistas de audio disponibles por defecto
 
 ### Chat en Tiempo Real
 - Conversaciones uno a uno accesibles desde el módulo Social
 - Mensajería instantánea con SignalR (WebSockets)
-- Notificaciones de mensajes leídos (en desarrollo)
-
-### Recomendaciones (pendiente)
-- Recomendar películas, series y libros
-- Sistema de calificaciones
-- Comentarios en recomendaciones
 
 ## Arquitectura
 
