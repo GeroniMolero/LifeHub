@@ -126,7 +126,6 @@ Desarrollado como Trabajo de Fin de Grado del ciclo de Desarrollo de Aplicacione
 ## Documentación técnica
 
 - Frontend (general): `LifeHub-Frontend/README.md`
-- Spaces (módulo): `LifeHub-Frontend/src/app/pages/spaces/README.md`
 - Explicación de arrastre multimedia (funcional + técnica): `LifeHub-Frontend/docs/ARRASTRE_MULTIMEDIA.md`
 
 ## Variables de entorno

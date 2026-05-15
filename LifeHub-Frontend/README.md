@@ -23,8 +23,7 @@ Abre `http://localhost:4200/` en tu navegador.
 - **Social**: Panel de contactos, gestión de amigos y chat en tiempo real con SignalR
 - **Espacios creativos**: CRUD de espacios con editor Markdown y recursos embebidos
 - **Documentos**: Crea, edita y descarga documentos en línea
-- **Recomendaciones**: En desarrollo (API backend lista, sin interfaz)
-- **Música**: En desarrollo (API backend lista, sin interfaz)
+- **Música**: Reproductor en la sidebar de espacios creativos
 
 ## Arquitectura y patrones
 
